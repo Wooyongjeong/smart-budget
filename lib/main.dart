@@ -8,6 +8,7 @@ import 'auth/auth_config.dart';
 import 'auth/auth_screen.dart';
 import 'auth/auth_service.dart';
 import 'auth/config_missing_screen.dart';
+import 'features/transactions/transaction_repository.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -58,7 +59,11 @@ class AuthRoot extends StatelessWidget {
       home: StreamBuilder(
         stream: auth.authStateChanges,
         builder: (context, snapshot) => auth.isSignedIn
-            ? BudgetApp(initialTheme: initialTheme, saveTheme: saveTheme)
+            ? BudgetApp(
+                initialTheme: initialTheme,
+                saveTheme: saveTheme,
+                transactionRepository: SupabaseTransactionRepository(),
+              )
             : AuthScreen(service: auth),
       ),
     );
@@ -66,9 +71,19 @@ class AuthRoot extends StatelessWidget {
 }
 
 class BudgetApp extends StatefulWidget {
-  const BudgetApp({super.key, this.initialTheme, required this.saveTheme});
+  const BudgetApp({
+    super.key,
+    this.initialTheme,
+    required this.saveTheme,
+    this.transactionRepository,
+    this.entryPaymentMethods = const [],
+    this.entryMembers = const [],
+  });
   final String? initialTheme;
   final Future<void> Function(String) saveTheme;
+  final TransactionRepository? transactionRepository;
+  final List<PaymentMethodOption> entryPaymentMethods;
+  final List<MemberOption> entryMembers;
 
   @override
   State<BudgetApp> createState() => _BudgetAppState();
@@ -81,6 +96,7 @@ class _BudgetAppState extends State<BudgetApp> {
   );
   int tab = 0;
   bool saving = false;
+  bool openingEntry = false;
   final messenger = GlobalKey<ScaffoldMessengerState>();
 
   Future<void> select(BudgetPalette next) async {
@@ -103,6 +119,62 @@ class _BudgetAppState extends State<BudgetApp> {
     }
   }
 
+  Future<void> openEntry(BuildContext context) async {
+    if (openingEntry) return;
+    setState(() => openingEntry = true);
+    try {
+      final repository = widget.transactionRepository;
+      final data = repository == null
+          ? HouseholdContext(
+              householdId: '',
+              paymentMethods: widget.entryPaymentMethods,
+              members: widget.entryMembers,
+            )
+          : await repository.loadContext();
+      if (!context.mounted) return;
+      await Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => EntryForm(
+            paymentMethods: data.paymentMethods,
+            members: data.members,
+            onConfirm: repository == null
+                ? null
+                : (draft) async {
+                    try {
+                      await repository.save(data.householdId, draft);
+                      if (!context.mounted) return;
+                      Navigator.of(context).pop();
+                      messenger.currentState?.showSnackBar(
+                        const SnackBar(content: Text('거래를 저장했어요.')),
+                      );
+                    } on TransactionSaveException catch (error) {
+                      messenger.currentState?.showSnackBar(
+                        SnackBar(
+                          content: Text('거래를 저장하지 못했어요. (${error.code})'),
+                        ),
+                      );
+                    } catch (_) {
+                      messenger.currentState?.showSnackBar(
+                        const SnackBar(
+                          content: Text('거래를 저장하지 못했어요. 다시 시도해 주세요.'),
+                        ),
+                      );
+                    }
+                  },
+          ),
+        ),
+      );
+    } catch (_) {
+      if (mounted) {
+        messenger.currentState?.showSnackBar(
+          const SnackBar(content: Text('가계부 정보를 불러오지 못했어요. 다시 시도해 주세요.')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => openingEntry = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) => MaterialApp(
     title: '우리 가계부',
@@ -122,14 +194,10 @@ class _BudgetAppState extends State<BudgetApp> {
                         ListTile(
                           leading: const Icon(Icons.edit_outlined),
                           title: const Text('직접 입력'),
-                          subtitle: const Text('수입과 지출 입력 화면 미리보기'),
+                          subtitle: const Text('수입과 지출을 가계부에 저장'),
                           onTap: () {
                             Navigator.pop(sheetContext);
-                            Navigator.of(context).push(
-                              MaterialPageRoute<void>(
-                                builder: (_) => const EntryForm(),
-                              ),
-                            );
+                            openEntry(context);
                           },
                         ),
                         const ListTile(

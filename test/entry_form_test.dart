@@ -1,9 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:smart_budget/main.dart';
+import 'package:smart_budget/features/transactions/transaction_repository.dart';
 
 Future<void> openForm(WidgetTester tester) async {
-  await tester.pumpWidget(BudgetApp(saveTheme: (_) async {}));
+  await tester.pumpWidget(
+    BudgetApp(
+      saveTheme: (_) async {},
+      entryPaymentMethods: const [
+        PaymentMethodOption(
+          id: '11111111-1111-4111-8111-111111111111',
+          name: '현금',
+          kind: 'cash',
+        ),
+      ],
+      entryMembers: const [
+        MemberOption(id: '22222222-2222-4222-8222-222222222222', name: '나'),
+      ],
+    ),
+  );
   await tester.tap(find.text('기록하기'));
   await tester.pumpAndSettle();
   await tester.tap(find.text('직접 입력'));
