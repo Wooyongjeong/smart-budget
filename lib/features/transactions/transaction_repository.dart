@@ -46,6 +46,7 @@ class TransactionQueryResult {
 abstract interface class TransactionRepository {
   Future<HouseholdContext> loadContext();
   Future<void> save(String householdId, TransactionDraft draft);
+  Future<void> saveMany(String householdId, List<TransactionDraft> drafts);
   Future<TransactionQueryResult> query(
     String householdId,
     DateTime start,
@@ -115,6 +116,15 @@ class SupabaseTransactionRepository implements TransactionRepository {
 
   @override
   Future<void> save(String householdId, TransactionDraft draft) async {
+    await saveMany(householdId, [draft]);
+  }
+
+  @override
+  Future<void> saveMany(
+    String householdId,
+    List<TransactionDraft> drafts,
+  ) async {
+    if (drafts.isEmpty) return;
     final requestId = _requestId();
     try {
       await client.rpc(
@@ -122,18 +132,20 @@ class SupabaseTransactionRepository implements TransactionRepository {
         params: {
           'p_household_id': householdId,
           'p_request_id': requestId,
-          'p_entries': [
-            {
-              'kind': draft.kind.name,
-              'occurred_on': _dateOnly(draft.occurredOn),
-              'amount_won': draft.amountWon,
-              'merchant': draft.merchant,
-              'category': draft.category,
-              'payment_method_id': draft.paymentMethodId,
-              'member_id': draft.memberId,
-              'memo': draft.memo.isEmpty ? null : draft.memo,
-            },
-          ],
+          'p_entries': drafts
+              .map(
+                (draft) => {
+                  'kind': draft.kind.name,
+                  'occurred_on': _dateOnly(draft.occurredOn),
+                  'amount_won': draft.amountWon,
+                  'merchant': draft.merchant,
+                  'category': draft.category,
+                  'payment_method_id': draft.paymentMethodId,
+                  'member_id': draft.memberId,
+                  'memo': draft.memo.isEmpty ? null : draft.memo,
+                },
+              )
+              .toList(),
         },
       );
     } on PostgrestException catch (error) {

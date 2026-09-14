@@ -1,5 +1,13 @@
 # Construction 진행
 
+## T07 — AI 이용내역 검토 fixture
+
+구현 브랜치: `feat/t07-ai-review-fixture`.
+
+실제 이미지/모델 호출 없이 고정 fixture 2건을 분석 예시로 제공한다. 사용자는 각 항목을 선택 해제하거나 날짜·사용처·금액을 수정한 뒤 선택 항목을 T04 `save_transactions` RPC로 일괄 저장할 수 있다. 선택 항목이 없으면 저장 버튼이 비활성이고, 취소하면 저장 변경이 없다. T08에서 이미지 입력과 실제 공급자 adapter를 연결한다.
+
+검증: `flutter analyze` 문제 없음, `flutter test` 10개 통과, fixture 선택 해제 후 1건 일괄 저장 위젯 테스트 통과. 실제 이미지 분석은 의도적으로 미구현이다.
+
 ## T06 — 캘린더·기간별 내역 조회
 
 구현 브랜치: `feat/t06-period-queries`.

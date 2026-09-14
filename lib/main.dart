@@ -9,6 +9,7 @@ import 'auth/auth_screen.dart';
 import 'auth/auth_service.dart';
 import 'auth/config_missing_screen.dart';
 import 'features/transactions/transaction_repository.dart';
+import 'features/transactions/ai_review_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -190,6 +191,27 @@ class _BudgetAppState extends State<BudgetApp> {
     }
   }
 
+  Future<void> openAiReview(BuildContext context) async {
+    final repository = widget.transactionRepository;
+    if (repository == null) return;
+    try {
+      final data = await repository.loadContext();
+      if (!context.mounted) return;
+      await Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) =>
+              AiReviewScreen(repository: repository, contextData: data),
+        ),
+      );
+    } catch (_) {
+      if (mounted) {
+        messenger.currentState?.showSnackBar(
+          const SnackBar(content: Text('가계부 정보를 불러오지 못했어요. 다시 시도해 주세요.')),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) => MaterialApp(
     title: '우리 가계부',
@@ -215,11 +237,14 @@ class _BudgetAppState extends State<BudgetApp> {
                             openEntry(context);
                           },
                         ),
-                        const ListTile(
-                          enabled: false,
+                        ListTile(
+                          onTap: () {
+                            Navigator.pop(sheetContext);
+                            openAiReview(context);
+                          },
                           leading: Icon(Icons.image_outlined),
                           title: Text('이용내역 캡처'),
-                          subtitle: Text('AI 분석 기능 준비 중'),
+                          subtitle: Text('분석 예시 검토'),
                         ),
                       ],
                     ),
