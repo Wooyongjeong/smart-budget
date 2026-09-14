@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'themes.dart';
+import 'entry_form.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -66,6 +67,42 @@ class _BudgetAppState extends State<BudgetApp> {
     theme: palette.theme,
     home: Scaffold(
       appBar: AppBar(title: const Text('우리 가계부')),
+      floatingActionButton: tab < 2
+          ? Builder(
+              builder: (context) => FloatingActionButton.extended(
+                onPressed: () => showModalBottomSheet<void>(
+                  context: context,
+                  builder: (sheetContext) => SafeArea(
+                    child: Wrap(
+                      children: [
+                        ListTile(
+                          leading: const Icon(Icons.edit_outlined),
+                          title: const Text('직접 입력'),
+                          subtitle: const Text('수입과 지출 입력 화면 미리보기'),
+                          onTap: () {
+                            Navigator.pop(sheetContext);
+                            Navigator.of(context).push(
+                              MaterialPageRoute<void>(
+                                builder: (_) => const EntryForm(),
+                              ),
+                            );
+                          },
+                        ),
+                        const ListTile(
+                          enabled: false,
+                          leading: Icon(Icons.image_outlined),
+                          title: Text('이용내역 캡처'),
+                          subtitle: Text('AI 분석 기능 준비 중'),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                icon: const Icon(Icons.add),
+                label: const Text('기록하기'),
+              ),
+            )
+          : null,
       bottomNavigationBar: NavigationBar(
         selectedIndex: tab,
         onDestinationSelected: (value) => setState(() => tab = value),
