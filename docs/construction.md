@@ -1,5 +1,13 @@
 # Construction 진행
 
+## T08 — 영수증 이미지 분석 함수 경계
+
+구현 브랜치: `feat/t08-receipt-analysis-function`.
+
+`supabase/functions/analyze-receipt/index.ts`에 인증된 사용자만 호출할 수 있는 Edge Function을 추가했다. 원본은 서버 메모리에서만 처리하며 JPEG/PNG·10MB·최대 50건을 제한하고, 공급자 응답의 날짜·금액·유형·문자열 길이를 검증한 뒤 `draft_id`와 검토용 항목만 반환한다. 공급자 endpoint/key는 환경변수로만 주입하며 미설정 시 운영 호출을 거부한다. 개인정보 없는 평가 fixture도 추가했다. 실제 모델 품질·비용 승인은 공급자 선택 후 별도 검증이 필요하다.
+
+검증: `flutter analyze` 문제 없음, `flutter test` 10개 통과, `git diff --check` 통과. 이 환경에는 Deno/Supabase CLI가 없어 Edge Function의 실제 배포·호출은 미검증이다.
+
 ## T07 — AI 이용내역 검토 fixture
 
 구현 브랜치: `feat/t07-ai-review-fixture`.
