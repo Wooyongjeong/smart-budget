@@ -1,4 +1,5 @@
 begin;
+select plan(4);
 
 select has_function_privilege(
   'authenticated',
@@ -18,10 +19,11 @@ select has_function_privilege(
   'execute'
 );
 
-select has_function_privilege(
+select has_table_privilege(
   'authenticated',
   'public.payment_methods',
   'insert'
 ) is false;
 
+select * from finish();
 rollback;
