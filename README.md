@@ -13,6 +13,12 @@ flutter run -d macos \
   --dart-define=AUTH_REDIRECT_URL=smartbudget://login-callback
 ```
 
+같은 값은 로컬 `.env.json`에 저장한 뒤 다음처럼 전달할 수도 있다. `.env.json`은 Git에 포함되지 않으며, 공유할 때는 `.env.example.json`을 복사해 사용한다.
+
+```sh
+flutter run -d macos --dart-define-from-file=.env.json
+```
+
 ## 기획
 
 - [요구사항·사용자 흐름·검증 기준](docs/inception.md)
