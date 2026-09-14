@@ -1,11 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'themes.dart';
 import 'entry_form.dart';
+import 'auth/auth_config.dart';
+import 'auth/auth_screen.dart';
+import 'auth/auth_service.dart';
+import 'auth/config_missing_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  final config = SupabaseConfig.fromEnvironment();
+  if (!config.isConfigured) {
+    runApp(const MaterialApp(home: ConfigMissingScreen()));
+    return;
+  }
+  await Supabase.initialize(
+    url: config.url,
+    publishableKey: config.publishableKey,
+  );
   final preferences = SharedPreferencesAsync();
   String? saved;
   try {
@@ -14,11 +28,37 @@ Future<void> main() async {
     // A preferences read failure must not prevent opening the app.
   }
   runApp(
-    BudgetApp(
+    AuthRoot(
+      config: config,
       initialTheme: saved,
       saveTheme: (id) => preferences.setString('theme_id', id),
     ),
   );
+}
+
+class AuthRoot extends StatelessWidget {
+  const AuthRoot({
+    super.key,
+    required this.config,
+    this.initialTheme,
+    required this.saveTheme,
+    this.service,
+  });
+  final SupabaseConfig config;
+  final String? initialTheme;
+  final Future<void> Function(String) saveTheme;
+  final AuthService? service;
+
+  @override
+  Widget build(BuildContext context) {
+    final auth = service ?? SupabaseAuthService(config.redirectUrl);
+    return StreamBuilder(
+      stream: auth.authStateChanges,
+      builder: (context, snapshot) => auth.isSignedIn
+          ? BudgetApp(initialTheme: initialTheme, saveTheme: saveTheme)
+          : AuthScreen(service: auth),
+    );
+  }
 }
 
 class BudgetApp extends StatefulWidget {

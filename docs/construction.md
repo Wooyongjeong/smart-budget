@@ -2,6 +2,12 @@
 
 ## C02 — 공통 입력 폼
 
+## T02 — Supabase 설정·세션·카카오 로그인
+
+브랜치: feat/supabase-kakao-auth. 앱 환경값이 없으면 설정 안내 화면을 표시하고, 값이 모두 있을 때만 Supabase를 초기화한다. 카카오 OAuth 서비스와 로그인 UI를 주입 가능한 경계로 분리했다. 실제 공급자 설정 및 OAuth 성공은 외부 프로젝트 설정 후 검증한다.
+
+검증 결과: `flutter analyze` 문제 없음, 전체 테스트 9개 통과. 완전하지 않은 환경값·HTTP URL 차단, 로그인 취소·실패 메시지, 미구성 실행 경로를 테스트했다. 실제 Supabase/Kakao 호출·iOS/Android 딥링크는 외부 설정 전이라 미실행이다.
+
 T01은 별도 `feat/transaction-draft` 브랜치에서 진행한다. `TransactionDraft` 타입으로 폼의 확정 전 값을 전달하고 AI 초안 주입을 위한 `initialDraft`, 수단·구성원 목록, `onConfirm` 콜백 경계를 추가한다. 현재 기본 앱은 콜백 미지정으로 미리보기만 표시한다.
 
 브랜치: feat/manual-entry-form. PR #1 병합 확인 후 최신 main에서 생성.
