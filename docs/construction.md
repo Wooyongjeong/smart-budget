@@ -1,5 +1,13 @@
 # Construction 진행
 
+## T09 — 초대·탈퇴·접근 회수
+
+구현 브랜치: `feat/t09-household-invitations`.
+
+`invitations`에 원문이 아닌 SHA-256 토큰 해시만 저장하고, `create_invitation`/`accept_invitation`에서 만료·일회성·활성 구성원 2명 정원과 가계부 잠금을 함께 검사한다. `leave_household`는 구성원을 즉시 비활성화하고 마지막 구성원이 나가면 가계부를 archived 처리한다. 초대 테이블 직접 읽기와 구성원 직접 변경은 차단하고 RPC만 실행 가능하게 했다.
+
+검증: `supabase/tests/t09_invitations.sql`에 함수·권한·활성 구성원 유일성 회귀를 추가했다. Supabase CLI/psql이 없어 실제 migration/병렬 세션 검증은 미실행이다.
+
 ## T08 — 영수증 이미지 분석 함수 경계
 
 구현 브랜치: `feat/t08-receipt-analysis-function`.
