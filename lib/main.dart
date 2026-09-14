@@ -52,11 +52,15 @@ class AuthRoot extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final auth = service ?? SupabaseAuthService(config.redirectUrl);
-    return StreamBuilder(
-      stream: auth.authStateChanges,
-      builder: (context, snapshot) => auth.isSignedIn
-          ? BudgetApp(initialTheme: initialTheme, saveTheme: saveTheme)
-          : AuthScreen(service: auth),
+    return MaterialApp(
+      title: '우리 가계부',
+      debugShowCheckedModeBanner: false,
+      home: StreamBuilder(
+        stream: auth.authStateChanges,
+        builder: (context, snapshot) => auth.isSignedIn
+            ? BudgetApp(initialTheme: initialTheme, saveTheme: saveTheme)
+            : AuthScreen(service: auth),
+      ),
     );
   }
 }
