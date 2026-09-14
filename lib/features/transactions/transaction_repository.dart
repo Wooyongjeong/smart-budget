@@ -32,9 +32,25 @@ class HouseholdContext {
   final List<MemberOption> members;
 }
 
+class TransactionQueryResult {
+  const TransactionQueryResult({
+    required this.items,
+    required this.totalIncome,
+    required this.totalExpense,
+  });
+  final List<Map<String, dynamic>> items;
+  final int totalIncome;
+  final int totalExpense;
+}
+
 abstract interface class TransactionRepository {
   Future<HouseholdContext> loadContext();
   Future<void> save(String householdId, TransactionDraft draft);
+  Future<TransactionQueryResult> query(
+    String householdId,
+    DateTime start,
+    DateTime end,
+  );
 }
 
 class TransactionSaveException implements Exception {
@@ -123,6 +139,30 @@ class SupabaseTransactionRepository implements TransactionRepository {
     } on PostgrestException catch (error) {
       throw TransactionSaveException(error.message);
     }
+  }
+
+  @override
+  Future<TransactionQueryResult> query(
+    String householdId,
+    DateTime start,
+    DateTime end,
+  ) async {
+    final result = await client.rpc(
+      'query_transactions',
+      params: {
+        'p_household_id': householdId,
+        'p_start_date': _dateOnly(start),
+        'p_end_date': _dateOnly(end),
+        'p_limit': 100,
+      },
+    );
+    final data = result as Map<String, dynamic>;
+    return TransactionQueryResult(
+      items: (data['items'] as List<dynamic>? ?? [])
+          .cast<Map<String, dynamic>>(),
+      totalIncome: (data['total_income'] as num? ?? 0).toInt(),
+      totalExpense: (data['total_expense'] as num? ?? 0).toInt(),
+    );
   }
 }
 
