@@ -1,0 +1,11 @@
+begin;
+select plan(7);
+select has_table('public', 'invitations', 'invitation table exists');
+select has_function('public', 'create_invitation', array['uuid','interval'], 'create invitation RPC exists');
+select has_function('public', 'accept_invitation', array['text'], 'accept invitation RPC exists');
+select has_function('public', 'leave_household', array['uuid'], 'leave household RPC exists');
+select ok(not has_table_privilege('authenticated', 'public.invitations', 'SELECT'), 'invitation tokens are not directly readable');
+select ok(not has_table_privilege('authenticated', 'public.household_members', 'UPDATE'), 'membership writes stay behind RPC');
+select ok(exists (select 1 from pg_indexes where indexname = 'household_members_active_user'), 'active membership uniqueness remains enforced');
+select * from finish();
+rollback;
