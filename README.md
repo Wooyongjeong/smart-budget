@@ -9,6 +9,7 @@
 - [요구사항·사용자 흐름·검증 기준](docs/inception.md)
 - [설계 결정·진행 기록](docs/decision-log.md)
 - [화면·데이터·권한 상세 설계 초안](docs/design.md)
+- [작업별 구현 계약과 모델 인계 프롬프트](docs/implementation-handoff.md)
 
 ## 개발
 
