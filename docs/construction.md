@@ -8,6 +8,8 @@
 
 검증 결과: `flutter analyze` 문제 없음, 전체 테스트 9개 통과. 완전하지 않은 환경값·HTTP URL 차단, 로그인 취소·실패 메시지, 미구성 실행 경로를 테스트했다. 실제 Supabase/Kakao 호출·iOS/Android 딥링크는 외부 설정 전이라 미실행이다.
 
+실제 설정 테스트에서 Supabase 초기화는 성공했으나 macOS 앱 복귀 직후 `Directionality` 오류를 확인했다. AuthRoot에 MaterialApp을 추가하고 macOS/iOS custom URL scheme과 Android intent-filter를 등록했다. 수정 후 재빌드·세션 복귀를 다시 확인해야 한다.
+
 T01은 별도 `feat/transaction-draft` 브랜치에서 진행한다. `TransactionDraft` 타입으로 폼의 확정 전 값을 전달하고 AI 초안 주입을 위한 `initialDraft`, 수단·구성원 목록, `onConfirm` 콜백 경계를 추가한다. 현재 기본 앱은 콜백 미지정으로 미리보기만 표시한다.
 
 브랜치: feat/manual-entry-form. PR #1 병합 확인 후 최신 main에서 생성.
