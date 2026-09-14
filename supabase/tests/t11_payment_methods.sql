@@ -8,6 +8,12 @@ select has_function_privilege(
 
 select has_function_privilege(
   'authenticated',
+  'public.create_household(text, text)',
+  'execute'
+);
+
+select has_function_privilege(
+  'authenticated',
   'public.add_payment_method(uuid, text, text, uuid)',
   'execute'
 );
