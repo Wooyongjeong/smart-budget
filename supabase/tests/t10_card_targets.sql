@@ -1,0 +1,11 @@
+begin;
+select plan(7);
+select has_table('public', 'card_targets', 'card target table exists');
+select has_function('public', 'add_card_payment_method', array['uuid','text','text','uuid'], 'card registration RPC exists');
+select has_function('public', 'set_card_target', array['uuid','uuid','date','bigint'], 'card target RPC exists');
+select has_function('public', 'set_transaction_performance', array['uuid','integer','boolean'], 'performance toggle RPC exists');
+select has_function('public', 'card_performance', array['uuid','date'], 'performance query RPC exists');
+select ok(not has_table_privilege('authenticated', 'public.card_targets', 'INSERT'), 'card targets cannot be directly inserted');
+select ok(exists (select 1 from pg_constraint where conname = 'card_targets_pkey'), 'card and month are unique');
+select * from finish();
+rollback;
