@@ -4,6 +4,21 @@
 
 현재는 AI-DLC Inception 검토 후 첫 화면을 구현 중이다. 네 탭과 기기별 테마 선택, 수동 수입·지출 입력/확인 미리보기를 제공한다. 캘린더·내역의 기록하기에서 입력 화면을 열 수 있다. 입력은 실제로 저장되지 않으며 Supabase와 AI 연결은 후속 단계이다.
 
+Supabase/Kakao 설정이 없는 실행은 설정 안내 화면을 표시한다. 설정 후에는 다음처럼 값을 주입한다(실제 값은 셸 기록이나 저장소에 남기지 않는다).
+
+```sh
+flutter run -d macos \
+  --dart-define=SUPABASE_URL=https://your-project.supabase.co \
+  --dart-define=SUPABASE_PUBLISHABLE_KEY=your-publishable-key \
+  --dart-define=AUTH_REDIRECT_URL=smartbudget://login-callback
+```
+
+같은 값은 로컬 `.env.json`에 저장한 뒤 다음처럼 전달할 수도 있다. `.env.json`은 Git에 포함되지 않으며, 공유할 때는 `.env.example.json`을 복사해 사용한다.
+
+```sh
+flutter run -d macos --dart-define-from-file=.env.json
+```
+
 ## 기획
 
 - [요구사항·사용자 흐름·검증 기준](docs/inception.md)
