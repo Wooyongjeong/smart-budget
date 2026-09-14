@@ -21,4 +21,6 @@ flutter pub get
 flutter run
 ```
 
+Mac에서 화면을 테스트하려면 `flutter run -d macos`를 실행한다. macOS 지원은 아이폰 연결 없이 탭과 테마를 확인하기 위한 개발용 실행 대상이다.
+
 실제 이용내역 캡처, API 비밀 키, 서명 키는 저장소에 포함하지 않는다.
