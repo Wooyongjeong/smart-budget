@@ -1,5 +1,13 @@
 # Construction 진행
 
+## T03 — 가계부·구성원·결제 수단 DB와 접근 권한
+
+구현 브랜치: `feat/t03-database-access`.
+
+`supabase/migrations/20260914000000_t03_households_and_payment_methods.sql`에 profiles, households, household_members, payment_methods 스키마와 활성 구성원 기반 RLS를 추가했다. 가계부 생성과 결제 수단 등록은 security-definer 함수로만 수행하며 authenticated의 직접 insert/update/delete 권한은 부여하지 않는다. 다른 가계부 사용자는 RLS 조회에서 제외된다. `supabase/tests/t03_household_access.sql`은 로컬 Supabase의 pgTAP 실행 계약과 권한 회귀 사례를 고정한다.
+
+검증: `flutter analyze` 통과, `flutter test` 9개 통과, `git diff --check` 통과. 현재 실행 환경에 Supabase CLI와 psql이 없어 migration/pgTAP의 실제 로컬 DB 실행은 미검증이며, 로컬 검증 시 `supabase start` 후 `supabase db reset` 및 `supabase db test`를 실행해야 한다.
+
 ## C02 — 공통 입력 폼
 
 ## T02 — Supabase 설정·세션·카카오 로그인
