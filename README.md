@@ -8,10 +8,13 @@
 
 - [요구사항·사용자 흐름·검증 기준](docs/inception.md)
 - [설계 결정·진행 기록](docs/decision-log.md)
+- [화면·데이터·권한 상세 설계 초안](docs/design.md)
 
 ## 개발
 
 기본 브랜치는 `main`이다. Flutter SDK 설치 후 다음 명령으로 기본 프로젝트를 실행한다.
+
+기획·설계 문서는 검토 후 `main`에 반영한다. 실제 구현은 `feat/...` 등 별도 기능 브랜치를 생성해 진행하며, 검증과 리뷰를 거쳐 병합한다.
 
 ```sh
 flutter pub get
