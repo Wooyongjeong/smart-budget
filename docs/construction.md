@@ -1,5 +1,13 @@
 # Construction 진행
 
+## T05 — 직접 입력 실제 저장 연결
+
+구현 브랜치: `feat/t05-persist-manual-entry`.
+
+인증된 사용자의 가계부·활성 수단·구성원 목록을 Supabase에서 읽고, 예시 수단/구성원 없이 실제 ID를 `save_transactions` RPC에 전달하도록 직접 입력을 연결했다. 가계부가 없으면 `create_household`로 최초 가계부를 만든다. 저장 성공 시 입력 화면을 닫고 완료 안내를 보여주며, RPC 오류는 화면에 남겨 입력 초안을 유지한다. 요청마다 UUID를 생성해 T04 멱등성 계약을 사용한다.
+
+검증: `flutter analyze` 문제 없음, `flutter test` 9개 통과, `git diff --check` 통과. Supabase 실제 앱 저장은 사용자가 적용한 원격 T03/T04 migration과 인증 세션을 전제로 하며, 수단이 등록되지 않은 경우 폼에서 선택을 요구한다.
+
 ## T04 — 거래 저장·수정·무효화 RPC
 
 구현 브랜치: `feat/t04-transaction-rpcs`.

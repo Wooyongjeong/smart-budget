@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'features/transactions/transaction_draft.dart';
+import 'features/transactions/transaction_repository.dart';
 
 class EntryForm extends StatefulWidget {
   const EntryForm({
@@ -11,8 +12,8 @@ class EntryForm extends StatefulWidget {
     this.onConfirm,
   });
   final TransactionDraft? initialDraft;
-  final List<String> paymentMethods;
-  final List<String> members;
+  final List<PaymentMethodOption> paymentMethods;
+  final List<MemberOption> members;
   final Future<void> Function(TransactionDraft draft)? onConfirm;
 
   @override
@@ -35,12 +36,24 @@ class _EntryFormState extends State<EntryForm> {
   bool asking = false;
   late String category =
       widget.initialDraft?.category ?? (income ? '급여' : '식비');
-  late String payment =
+  late String? payment =
       widget.initialDraft?.paymentMethodId ??
-      (widget.paymentMethods.isEmpty ? '현금' : widget.paymentMethods.first);
-  late String person =
+      (widget.paymentMethods.isEmpty ? null : widget.paymentMethods.first.id);
+  late String? person =
       widget.initialDraft?.memberId ??
-      (widget.members.isEmpty ? '나' : widget.members.first);
+      (widget.members.isEmpty ? null : widget.members.first.id);
+
+  String _paymentName() {
+    final matches = widget.paymentMethods.where(
+      (option) => option.id == payment,
+    );
+    return matches.isEmpty ? '선택 안 됨' : matches.first.name;
+  }
+
+  String _memberName() {
+    final matches = widget.members.where((option) => option.id == person);
+    return matches.isEmpty ? '선택 안 됨' : matches.first.name;
+  }
 
   @override
   void initState() {
@@ -122,7 +135,7 @@ class _EntryFormState extends State<EntryForm> {
         content: SingleChildScrollView(
           child: Text(
             '${income ? '수입' : '지출'} · ${NumberFormat.decimalPattern('ko').format(int.parse(amount.text.trim()))}원\n'
-            '${date.text.trim()}\n${merchant.text.trim()}\n$category · $payment · $person\n'
+            '${date.text.trim()}\n${merchant.text.trim()}\n$category · ${_paymentName()} · ${_memberName()}\n'
             '${memo.text.trim()}\n\n${widget.onConfirm == null ? '미리보기이며 실제 가계부에는 저장되지 않아요.' : '확인 후 저장할 수 있어요.'}',
           ),
         ),
@@ -170,7 +183,7 @@ class _EntryFormState extends State<EntryForm> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Text('입력 화면 미리보기 · 아직 저장되지 않아요.'),
+                const Text('입력 내용 확인 후 가계부에 저장해요.'),
                 const SizedBox(height: 20),
                 SegmentedButton<bool>(
                   segments: const [
@@ -249,29 +262,29 @@ class _EntryFormState extends State<EntryForm> {
                 DropdownButtonFormField<String>(
                   initialValue: payment,
                   decoration: InputDecoration(
-                    labelText: income ? '입금 수단 (예시)' : '결제 수단 (예시)',
+                    labelText: income ? '입금 수단' : '결제 수단',
                   ),
-                  items:
-                      (widget.paymentMethods.isEmpty
-                              ? ['현금', '계좌']
-                              : widget.paymentMethods)
-                          .map(
-                            (v) => DropdownMenuItem(value: v, child: Text(v)),
-                          )
-                          .toList(),
-                  onChanged: (v) => setState(() => payment = v!),
+                  items: widget.paymentMethods
+                      .map(
+                        (v) =>
+                            DropdownMenuItem(value: v.id, child: Text(v.name)),
+                      )
+                      .toList(),
+                  validator: (v) => v == null ? '등록된 수단을 선택해 주세요.' : null,
+                  onChanged: (v) => setState(() => payment = v),
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<String>(
                   initialValue: person,
-                  decoration: const InputDecoration(labelText: '실제 사용자 (예시)'),
-                  items:
-                      (widget.members.isEmpty ? ['나', '배우자'] : widget.members)
-                          .map(
-                            (v) => DropdownMenuItem(value: v, child: Text(v)),
-                          )
-                          .toList(),
-                  onChanged: (v) => setState(() => person = v!),
+                  decoration: const InputDecoration(labelText: '실제 사용자'),
+                  items: widget.members
+                      .map(
+                        (v) =>
+                            DropdownMenuItem(value: v.id, child: Text(v.name)),
+                      )
+                      .toList(),
+                  validator: (v) => v == null ? '구성원을 선택해 주세요.' : null,
+                  onChanged: (v) => setState(() => person = v),
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
