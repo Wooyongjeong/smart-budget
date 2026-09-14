@@ -1,5 +1,13 @@
 # Construction 진행
 
+## T04 — 거래 저장·수정·무효화 RPC
+
+구현 브랜치: `feat/t04-transaction-rpcs`.
+
+T03 스키마에 `transactions`와 `write_requests`를 추가하고 `save_transactions`, `edit_transaction`, `void_transaction` security-definer RPC를 구현했다. 저장은 1~50건 원자 처리, 인증 사용자·활성 구성원·가계부/수단/구성원 소속·수입 수단 규칙을 서버에서 검증한다. 요청 키와 canonical JSON payload hash로 동일 재시도는 기존 결과를 반환하고 본문이 다르면 `idempotency_conflict`를 반환한다. 수정/무효화는 행 잠금과 expected version 검증으로 `version_conflict`를 차단하며 무효화는 물리 삭제 대신 `voided_at`을 기록한다. authenticated의 transactions/write_requests 직접 쓰기는 차단했다.
+
+검증: `supabase/tests/t04_transaction_rpcs.sql`에 migration 재현 후 확인할 테이블·함수·권한·제약 회귀 사례를 기록한다. 이 환경에는 Supabase CLI/psql이 없어 실제 SQL 실행은 미검증이다. Flutter 코드는 변경하지 않았으므로 T04 관련 Flutter 테스트/분석은 다음 실행에서 확인한다.
+
 ## T03 — 가계부·구성원·결제 수단 DB와 접근 권한
 
 구현 브랜치: `feat/t03-database-access`.
