@@ -1,5 +1,13 @@
 # Construction 진행
 
+## T10 — 카드 등록과 월별 실적 목표
+
+구현 브랜치: `feat/t10-card-performance`.
+
+`card_targets`와 거래의 `performance_included` 플래그를 추가하고 카드 등록, 월별 목표 upsert, 거래별 실적 포함/제외, 카드별 월 실적 조회 RPC를 구현했다. 카드+월을 기본 키로 중복 목표를 막고, 활성 구성원만 호출할 수 있게 했다. 상품권과 환불에 따른 실적 조정은 T11 범위로 남긴다.
+
+검증: `supabase/tests/t10_card_targets.sql`에 함수·권한·카드+월 유일성 회귀를 추가했다. Supabase CLI/psql이 없어 실제 migration과 카드 실적 데이터 시나리오는 미실행이다.
+
 ## T09 — 초대·탈퇴·접근 회수
 
 구현 브랜치: `feat/t09-household-invitations`.
