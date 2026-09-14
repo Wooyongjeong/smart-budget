@@ -1,0 +1,6 @@
+[
+  {"name":"single_expense","expected_items":1,"notes":"개인정보 없는 단건 fixture"},
+  {"name":"missing_year","expected_items":1,"notes":"연도 없는 날짜는 null"},
+  {"name":"multi_item","expected_items":2,"notes":"복수 거래"},
+  {"name":"unsupported_type","expected_items":1,"notes":"unknown으로 검토"}
+]
