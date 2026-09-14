@@ -1,5 +1,13 @@
 # Construction 진행
 
+## T06 — 캘린더·기간별 내역 조회
+
+구현 브랜치: `feat/t06-period-queries`.
+
+`query_transactions` RPC를 추가했다. 기간은 `[start_date, end_date)`로 검증하고, 구성원·결제 수단·카테고리 필터를 목록과 합계에 동일하게 적용한다. 무효화 거래는 제외하며 occurred_on/created_at/id 내림차순과 커서 조건을 사용한다. 활성 구성원만 호출할 수 있고 authenticated 외 실행 권한은 없다.
+
+검증: `supabase/tests/t06_transaction_queries.sql`에 RPC 존재·권한·기존 기간 인덱스 회귀를 추가했다. Supabase CLI/psql이 없는 환경이라 실제 SQL 실행은 미검증이다.
+
 ## T05 — 직접 입력 실제 저장 연결
 
 구현 브랜치: `feat/t05-persist-manual-entry`.

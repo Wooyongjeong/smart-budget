@@ -97,7 +97,22 @@ class _BudgetAppState extends State<BudgetApp> {
   int tab = 0;
   bool saving = false;
   bool openingEntry = false;
+  late final Future<TransactionQueryResult>? overview = _loadOverview();
   final messenger = GlobalKey<ScaffoldMessengerState>();
+
+  Future<TransactionQueryResult>? _loadOverview() {
+    final repository = widget.transactionRepository;
+    if (repository == null) return null;
+    return () async {
+      final now = DateTime.now();
+      final context = await repository.loadContext();
+      return repository.query(
+        context.householdId,
+        DateTime(now.year, now.month),
+        DateTime(now.year, now.month + 1),
+      );
+    }();
+  }
 
   Future<void> select(BudgetPalette next) async {
     if (saving || next == palette) return;
@@ -258,14 +273,64 @@ class _BudgetAppState extends State<BudgetApp> {
                 ][tab],
               ),
               const SizedBox(height: 32),
-              const Card(
-                child: Padding(
-                  padding: EdgeInsets.all(24),
-                  child: Text(
-                    '화면 미리보기\n아직 가계부 데이터가 연결되지 않았어요.\n설정에서 앱 테마를 골라보세요.',
+              if (widget.transactionRepository == null)
+                const Card(
+                  child: Padding(
+                    padding: EdgeInsets.all(24),
+                    child: Text('화면 미리보기\n아직 가계부 데이터가 연결되지 않았어요.'),
                   ),
+                )
+              else
+                FutureBuilder<TransactionQueryResult>(
+                  future: overview,
+                  builder: (context, snapshot) {
+                    if (snapshot.hasError) {
+                      return const Card(
+                        child: Padding(
+                          padding: EdgeInsets.all(24),
+                          child: Text('내역을 불러오지 못했어요. 다시 시도해 주세요.'),
+                        ),
+                      );
+                    }
+                    if (!snapshot.hasData) {
+                      return const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(24),
+                          child: CircularProgressIndicator(),
+                        ),
+                      );
+                    }
+                    final result = snapshot.data!;
+                    return Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('이번 달 수입 ${result.totalIncome}원'),
+                            Text('이번 달 지출 ${result.totalExpense}원'),
+                            const SizedBox(height: 12),
+                            if (result.items.isEmpty)
+                              const Text('거래가 없는 기간이에요.')
+                            else
+                              ...result.items
+                                  .take(10)
+                                  .map(
+                                    (item) => ListTile(
+                                      contentPadding: EdgeInsets.zero,
+                                      title: Text(item['merchant'] as String),
+                                      subtitle: Text(
+                                        item['occurred_on'] as String,
+                                      ),
+                                      trailing: Text('${item['amount_won']}원'),
+                                    ),
+                                  ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
                 ),
-              ),
             ] else ...[
               const Text(
                 '앱 테마',
