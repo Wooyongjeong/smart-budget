@@ -8,6 +8,14 @@
 
 검증: `supabase/tests/t10_card_targets.sql`에 함수·권한·카드+월 유일성 회귀를 추가했다. Supabase CLI/psql이 없어 실제 migration과 카드 실적 데이터 시나리오는 미실행이다.
 
+## T11 — 결제 수단 등록·관리 UI
+
+구현 브랜치: `feat/t11-payment-method-ui`.
+
+지갑 탭에서 결제 수단 관리 화면으로 이동해 현금·계좌·체크카드·신용카드를 등록할 수 있다. 카드 포함 모든 수단은 구성원 소유자를 선택할 수 있고, 등록된 수단은 보관 처리해 거래 입력 목록에서 숨긴다. T03의 일반 등록 RPC와 T10의 카드 등록 RPC를 종류에 따라 호출하며, 보관은 `archive_payment_method` RPC로 처리한다. 직접 입력 화면에 등록된 수단이 없으면 등록 화면으로 이동하는 링크를 제공하고, 등록 뒤 거래 입력으로 돌아갈 수 있다.
+
+검증: `flutter analyze` 문제 없음, `flutter test` 전체 통과(11개). `supabase/tests/t11_payment_methods.sql`에 등록·보관 함수 실행 권한과 직접 insert 차단 회귀를 추가했다. Supabase CLI/psql이 없어 실제 migration 적용과 원격 RPC 호출은 미실행이다.
+
 ## T09 — 초대·탈퇴·접근 회수
 
 구현 브랜치: `feat/t09-household-invitations`.

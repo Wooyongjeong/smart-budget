@@ -10,11 +10,13 @@ class EntryForm extends StatefulWidget {
     this.paymentMethods = const [],
     this.members = const [],
     this.onConfirm,
+    this.onManagePaymentMethods,
   });
   final TransactionDraft? initialDraft;
   final List<PaymentMethodOption> paymentMethods;
   final List<MemberOption> members;
   final Future<void> Function(TransactionDraft draft)? onConfirm;
+  final VoidCallback? onManagePaymentMethods;
 
   @override
   State<EntryForm> createState() => _EntryFormState();
@@ -273,6 +275,18 @@ class _EntryFormState extends State<EntryForm> {
                   validator: (v) => v == null ? '등록된 수단을 선택해 주세요.' : null,
                   onChanged: (v) => setState(() => payment = v),
                 ),
+                if (widget.paymentMethods.isEmpty &&
+                    widget.onManagePaymentMethods != null) ...[
+                  const SizedBox(height: 8),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton.icon(
+                      onPressed: widget.onManagePaymentMethods,
+                      icon: const Icon(Icons.add),
+                      label: const Text('결제 수단 등록하기'),
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 16),
                 DropdownButtonFormField<String>(
                   initialValue: person,

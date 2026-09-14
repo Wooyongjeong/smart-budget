@@ -25,6 +25,25 @@ class FakeRepository implements TransactionRepository {
   }
 
   @override
+  Future<PaymentMethodOption> addPaymentMethod(
+    String householdId,
+    String kind,
+    String name,
+    String? ownerMemberId,
+  ) async => PaymentMethodOption(
+    id: 'new-method',
+    name: name,
+    kind: kind,
+    ownerMemberId: ownerMemberId,
+  );
+
+  @override
+  Future<void> archivePaymentMethod(
+    String householdId,
+    String paymentMethodId,
+  ) async {}
+
+  @override
   Future<TransactionQueryResult> query(
     String householdId,
     DateTime start,
