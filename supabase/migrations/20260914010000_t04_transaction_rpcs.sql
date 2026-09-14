@@ -57,7 +57,9 @@ language sql
 immutable
 set search_path = public
 as $$
-  select digest(convert_to(p_operation || ':' || p_payload::text, 'UTF8'), 'sha256');
+  select extensions.digest(
+    convert_to(p_operation || ':' || p_payload::text, 'UTF8'), 'sha256'
+  );
 $$;
 
 create or replace function public._validate_transaction_input(
