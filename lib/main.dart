@@ -1,122 +1,206 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-void main() {
-  runApp(const MyApp());
-}
+import 'themes.dart';
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  // This widget is the root of your application.
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: .fromSeed(seedColor: Colors.deepPurple),
-      ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
-    );
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final preferences = SharedPreferencesAsync();
+  String? saved;
+  try {
+    saved = await preferences.getString('theme_id');
+  } catch (_) {
+    // A preferences read failure must not prevent opening the app.
   }
+  runApp(
+    BudgetApp(
+      initialTheme: saved,
+      saveTheme: (id) => preferences.setString('theme_id', id),
+    ),
+  );
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
+class BudgetApp extends StatefulWidget {
+  const BudgetApp({super.key, this.initialTheme, required this.saveTheme});
+  final String? initialTheme;
+  final Future<void> Function(String) saveTheme;
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<BudgetApp> createState() => _BudgetAppState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+class _BudgetAppState extends State<BudgetApp> {
+  late BudgetPalette palette = palettes.firstWhere(
+    (p) => p.id == widget.initialTheme,
+    orElse: () => palettes.first,
+  );
+  int tab = 0;
+  bool saving = false;
+  final messenger = GlobalKey<ScaffoldMessengerState>();
 
-  void _incrementCounter() {
+  Future<void> select(BudgetPalette next) async {
+    if (saving || next == palette) return;
+    final previous = palette;
     setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
+      palette = next;
+      saving = true;
     });
+    try {
+      await widget.saveTheme(next.id);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => palette = previous);
+      messenger.currentState?.showSnackBar(
+        const SnackBar(content: Text('테마를 저장하지 못했어요. 다시 선택해 주세요.')),
+      );
+    } finally {
+      if (mounted) setState(() => saving = false);
+    }
   }
 
   @override
-  Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
-    return Scaffold(
-      appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
+  Widget build(BuildContext context) => MaterialApp(
+    title: '우리 가계부',
+    debugShowCheckedModeBanner: false,
+    scaffoldMessengerKey: messenger,
+    theme: palette.theme,
+    home: Scaffold(
+      appBar: AppBar(title: const Text('우리 가계부')),
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: tab,
+        onDestinationSelected: (value) => setState(() => tab = value),
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.calendar_month_outlined),
+            label: '캘린더',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.receipt_long_outlined),
+            label: '내역',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.account_balance_wallet_outlined),
+            label: '지갑',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.settings_outlined),
+            label: '설정',
+          ),
+        ],
       ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: .center,
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.all(24),
           children: [
-            const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
+            if (tab != 3) ...[
+              Text(
+                ['함께 기록하는 하루', '우리의 수입과 지출', '결제 수단을 한곳에'][tab],
+                style: const TextStyle(
+                  fontSize: 26,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                [
+                  '날짜별 수입과 지출을 확인할 공간이에요.',
+                  '일·주·월별로 내역을 모아볼 공간이에요.',
+                  '카드 실적과 상품권 잔액을 관리할 공간이에요.',
+                ][tab],
+              ),
+              const SizedBox(height: 32),
+              const Card(
+                child: Padding(
+                  padding: EdgeInsets.all(24),
+                  child: Text(
+                    '화면 미리보기\n아직 가계부 데이터가 연결되지 않았어요.\n설정에서 앱 테마를 골라보세요.',
+                  ),
+                ),
+              ),
+            ] else ...[
+              const Text(
+                '앱 테마',
+                style: TextStyle(fontSize: 26, fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 8),
+              const Text('우리 가계부를 나만의 색으로\n선택한 테마는 이 기기에만 적용돼요.'),
+              const SizedBox(height: 24),
+              ...palettes.map(
+                (option) => Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Semantics(
+                    selected: option == palette,
+                    child: Card(
+                      clipBehavior: Clip.antiAlias,
+                      child: InkWell(
+                        onTap: saving ? null : () => select(option),
+                        child: Padding(
+                          padding: const EdgeInsets.all(20),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      option.name,
+                                      style: const TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                                  if (option == palette)
+                                    const Icon(
+                                      Icons.check_circle,
+                                      semanticLabel: '선택됨',
+                                    ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              Wrap(
+                                spacing: 8,
+                                children:
+                                    [
+                                          option.primary,
+                                          option.secondary,
+                                          option.background,
+                                        ]
+                                        .map(
+                                          (color) => Container(
+                                            width: 44,
+                                            height: 28,
+                                            decoration: BoxDecoration(
+                                              color: color,
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                              border: Border.all(
+                                                color: Colors.black12,
+                                              ),
+                                            ),
+                                          ),
+                                        )
+                                        .toList(),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                '계정 · 공동 가계부',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 8),
+              const Text('카카오 로그인과 배우자 초대는 다음 단계에서 연결할 예정이에요.'),
+            ],
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ),
-    );
-  }
+    ),
+  );
 }

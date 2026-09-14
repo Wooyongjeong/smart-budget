@@ -1,30 +1,96 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
 import 'package:smart_budget/main.dart';
+import 'package:smart_budget/themes.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets('theme selection persists and updates all tabs', (tester) async {
+    String? saved;
+    await tester.pumpWidget(
+      BudgetApp(
+        saveTheme: (id) async {
+          saved = id;
+        },
+      ),
+    );
+    await tester.tap(find.text('설정'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('바다와 모래'));
+    await tester.pumpAndSettle();
+    expect(saved, 'ocean');
+    await tester.tap(find.text('지갑'));
+    await tester.pumpAndSettle();
+    expect(find.text('결제 수단을 한곳에'), findsOneWidget);
+    expect(
+      tester
+          .widget<MaterialApp>(find.byType(MaterialApp))
+          .theme!
+          .colorScheme
+          .primary,
+      palettes[1].primary,
+    );
+    await tester.pumpWidget(const SizedBox());
+    await tester.pumpWidget(
+      BudgetApp(initialTheme: saved, saveTheme: (_) async {}),
+    );
+    expect(
+      tester
+          .widget<MaterialApp>(find.byType(MaterialApp))
+          .theme!
+          .colorScheme
+          .primary,
+      palettes[1].primary,
+    );
+  });
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+  testWidgets(
+    'unsupported theme falls back and save failure restores previous selection',
+    (tester) async {
+      await tester.pumpWidget(
+        BudgetApp(
+          initialTheme: 'unknown',
+          saveTheme: (_) async {
+            throw Exception('disk');
+          },
+        ),
+      );
+      expect(
+        tester
+            .widget<MaterialApp>(find.byType(MaterialApp))
+            .theme!
+            .colorScheme
+            .primary,
+        palettes.first.primary,
+      );
+      await tester.tap(find.text('설정'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('바다와 모래'));
+      await tester.pumpAndSettle();
+      expect(
+        tester
+            .widget<MaterialApp>(find.byType(MaterialApp))
+            .theme!
+            .colorScheme
+            .primary,
+        palettes.first.primary,
+      );
+      expect(find.text('테마를 저장하지 못했어요. 다시 선택해 주세요.'), findsOneWidget);
+    },
+  );
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
-
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+  testWidgets('small display and large text keep settings scrollable', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(375, 667);
+    tester.view.devicePixelRatio = 1;
+    tester.platformDispatcher.textScaleFactorTestValue = 2;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+    await tester.pumpWidget(BudgetApp(saveTheme: (_) async {}));
+    await tester.tap(find.text('설정'));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(find.text('모노 올리브'), 200);
+    expect(tester.takeException(), isNull);
   });
 }
