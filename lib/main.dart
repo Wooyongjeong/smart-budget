@@ -354,9 +354,6 @@ class _BudgetAppState extends State<BudgetApp> {
         selectedIndex: tab,
         onDestinationSelected: (value) {
           setState(() => tab = value);
-          if (value == 2 && widget.transactionRepository != null) {
-            openPaymentMethods(context);
-          }
         },
         destinations: const [
           NavigationDestination(

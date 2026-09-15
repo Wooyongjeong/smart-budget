@@ -101,6 +101,53 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
     }
   }
 
+  Future<void> voucherEvent(PaymentMethodOption method, String kind) async {
+    final controller = TextEditingController();
+    final amount = await showDialog<int>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(kind == 'voucher_use' ? '상품권 사용' : '상품권 초기 잔액·충전'),
+        content: TextField(
+          controller: controller,
+          keyboardType: TextInputType.number,
+          decoration: const InputDecoration(labelText: '금액', suffixText: '원'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('취소'),
+          ),
+          FilledButton(
+            onPressed: () =>
+                Navigator.pop(context, int.tryParse(controller.text.trim())),
+            child: const Text('확인'),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+    if (amount == null || amount <= 0 || !mounted) return;
+    try {
+      await widget.repository.recordVoucherEvent(
+        widget.contextData.householdId,
+        kind,
+        method.id,
+        amount,
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('상품권 내역을 기록했어요.')));
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('상품권 내역을 저장하지 못했어요.')));
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final content = ListView(
@@ -139,12 +186,38 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                 subtitle: Text(
                   '${kinds[method.kind] ?? method.kind}${_ownerLabel(method)}',
                 ),
-                trailing: PopupMenuButton<String>(
-                  onSelected: (_) => archive(method),
-                  itemBuilder: (context) => const [
-                    PopupMenuItem(value: 'archive', child: Text('보관')),
-                  ],
-                ),
+                trailing: method.kind == 'voucher'
+                    ? Wrap(
+                        children: [
+                          IconButton(
+                            tooltip: '초기 잔액·충전',
+                            onPressed: () =>
+                                voucherEvent(method, 'voucher_topup'),
+                            icon: const Icon(Icons.add_circle_outline),
+                          ),
+                          IconButton(
+                            tooltip: '사용',
+                            onPressed: () =>
+                                voucherEvent(method, 'voucher_use'),
+                            icon: const Icon(Icons.remove_circle_outline),
+                          ),
+                          PopupMenuButton<String>(
+                            onSelected: (_) => archive(method),
+                            itemBuilder: (context) => const [
+                              PopupMenuItem(
+                                value: 'archive',
+                                child: Text('보관'),
+                              ),
+                            ],
+                          ),
+                        ],
+                      )
+                    : PopupMenuButton<String>(
+                        onSelected: (_) => archive(method),
+                        itemBuilder: (context) => const [
+                          PopupMenuItem(value: 'archive', child: Text('보관')),
+                        ],
+                      ),
               ),
             ),
           ),
