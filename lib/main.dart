@@ -171,7 +171,9 @@ class _BudgetAppState extends State<BudgetApp> {
   }
 
   void refreshOverview() {
-    setState(() => overview = _loadOverview());
+    setState(() {
+      overview = _loadOverview();
+    });
   }
 
   Future<void> select(BudgetPalette next) async {
