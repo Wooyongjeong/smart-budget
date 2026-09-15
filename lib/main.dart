@@ -236,12 +236,14 @@ class _BudgetAppState extends State<BudgetApp> {
                           content: Text('거래를 저장하지 못했어요. (${error.code})'),
                         ),
                       );
-                    } catch (error) {
+                    } catch (error, stackTrace) {
+                      debugPrint('transaction save failed: $error');
+                      debugPrintStack(stackTrace: stackTrace);
                       messenger.currentState?.showSnackBar(
                         SnackBar(
                           content: Text(
                             '거래를 저장하지 못했어요. '
-                            '${error is TransactionSaveException ? error.code : error.runtimeType}',
+                            '${error is TransactionSaveException ? error.code : error}',
                           ),
                         ),
                       );
