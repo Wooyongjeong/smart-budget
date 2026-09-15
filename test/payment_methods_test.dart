@@ -15,29 +15,68 @@ class _Repository implements TransactionRepository {
   );
 
   @override
-  Future<PaymentMethodOption> addPaymentMethod(String h, String kind, String name, String? owner) async {
-    final method = PaymentMethodOption(id: 'new', name: name, kind: kind, ownerMemberId: owner);
+  Future<PaymentMethodOption> addPaymentMethod(
+    String h,
+    String kind,
+    String name,
+    String? owner,
+  ) async {
+    final method = PaymentMethodOption(
+      id: 'new',
+      name: name,
+      kind: kind,
+      ownerMemberId: owner,
+    );
     methods.add(method);
     return method;
   }
 
   @override
-  Future<void> archivePaymentMethod(String h, String id) async => methods.removeWhere((method) => method.id == id);
+  Future<void> archivePaymentMethod(String h, String id) async =>
+      methods.removeWhere((method) => method.id == id);
+  @override
+  Future<void> recordVoucherEvent(
+    String h,
+    String k,
+    String v,
+    int p,
+    int a,
+  ) async {}
+  @override
+  Future<List<Map<String, dynamic>>> cardPerformance(
+    String h,
+    DateTime m,
+  ) async => [];
+  @override
+  Future<void> setCardTarget(String h, String p, DateTime m, int a) async {}
+  @override
+  Future<int> voucherBalance(String h, String v) async => 0;
   @override
   Future<void> save(String h, TransactionDraft d) async {}
   @override
   Future<void> saveMany(String h, List<TransactionDraft> d) async {}
   @override
-  Future<TransactionQueryResult> query(String h, DateTime s, DateTime e) async =>
+  Future<TransactionQueryResult> query(
+    String h,
+    DateTime s,
+    DateTime e,
+  ) async =>
       const TransactionQueryResult(items: [], totalIncome: 0, totalExpense: 0);
 }
 
 void main() {
-  testWidgets('registers a payment method from the management screen', (tester) async {
+  testWidgets('registers a payment method from the management screen', (
+    tester,
+  ) async {
     final repository = _Repository();
-    await tester.pumpWidget(MaterialApp(
-      home: PaymentMethodsScreen(repository: repository, contextData: await repository.loadContext()),
-    ));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: PaymentMethodsScreen(
+          repository: repository,
+          contextData: await repository.loadContext(),
+        ),
+      ),
+    );
     expect(find.text('등록된 결제 수단이 없어요.'), findsOneWidget);
     await tester.tap(find.text('첫 수단 등록'));
     await tester.pumpAndSettle();

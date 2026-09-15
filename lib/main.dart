@@ -352,7 +352,9 @@ class _BudgetAppState extends State<BudgetApp> {
           : null,
       bottomNavigationBar: NavigationBar(
         selectedIndex: tab,
-        onDestinationSelected: (value) => setState(() => tab = value),
+        onDestinationSelected: (value) {
+          setState(() => tab = value);
+        },
         destinations: const [
           NavigationDestination(
             icon: Icon(Icons.calendar_month_outlined),
@@ -373,186 +375,212 @@ class _BudgetAppState extends State<BudgetApp> {
         ],
       ),
       body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(24),
-          children: [
-            if (tab != 3) ...[
-              Text(
-                ['함께 기록하는 하루', '우리의 수입과 지출', '결제 수단을 한곳에'][tab],
-                style: const TextStyle(
-                  fontSize: 26,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                [
-                  '날짜별 수입과 지출을 확인할 공간이에요.',
-                  '일·주·월별로 내역을 모아볼 공간이에요.',
-                  '카드 실적과 상품권 잔액을 관리할 공간이에요.',
-                ][tab],
-              ),
-              const SizedBox(height: 32),
-              if (tab == 2 && widget.transactionRepository != null)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 16),
-                  child: FilledButton.icon(
-                    onPressed: () => openPaymentMethods(context),
-                    icon: const Icon(Icons.manage_accounts_outlined),
-                    label: const Text('결제 수단 등록·관리'),
-                  ),
-                ),
-              if (tab == 0 && widget.transactionRepository != null)
-                FutureBuilder<TransactionQueryResult>(
-                  future: overview,
-                  builder: (context, snapshot) => CalendarOverview(
-                    selectedDate: selectedDate,
-                    result: snapshot.data,
-                    onDateChanged: (date) =>
-                        setState(() => selectedDate = date),
-                  ),
-                ),
-              if (widget.transactionRepository == null)
-                const Card(
-                  child: Padding(
-                    padding: EdgeInsets.all(24),
-                    child: Text('화면 미리보기\n아직 가계부 데이터가 연결되지 않았어요.'),
-                  ),
-                )
-              else
-                FutureBuilder<TransactionQueryResult>(
-                  future: overview,
-                  builder: (context, snapshot) {
-                    if (snapshot.hasError) {
-                      return const Card(
-                        child: Padding(
-                          padding: EdgeInsets.all(24),
-                          child: Text('내역을 불러오지 못했어요. 다시 시도해 주세요.'),
-                        ),
-                      );
-                    }
-                    if (!snapshot.hasData) {
-                      return const Center(
-                        child: Padding(
-                          padding: EdgeInsets.all(24),
-                          child: CircularProgressIndicator(),
-                        ),
-                      );
-                    }
-                    final result = snapshot.data!;
-                    return Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(24),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('이번 달 수입 ${result.totalIncome}원'),
-                            Text('이번 달 지출 ${result.totalExpense}원'),
-                            const SizedBox(height: 12),
-                            if (result.items.isEmpty)
-                              const Text('거래가 없는 기간이에요.')
-                            else
-                              ...result.items
-                                  .take(10)
-                                  .map(
-                                    (item) => ListTile(
-                                      contentPadding: EdgeInsets.zero,
-                                      title: Text(item['merchant'] as String),
-                                      subtitle: Text(
-                                        item['occurred_on'] as String,
-                                      ),
-                                      trailing: Text('${item['amount_won']}원'),
-                                    ),
-                                  ),
-                          ],
+        child: tab == 2 && widget.transactionRepository != null
+            ? FutureBuilder<HouseholdContext>(
+                future: widget.transactionRepository!.loadContext(),
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  return PaymentMethodsScreen(
+                    repository: widget.transactionRepository!,
+                    contextData: snapshot.data!,
+                    embedded: true,
+                  );
+                },
+              )
+            : ListView(
+                padding: const EdgeInsets.all(24),
+                children: [
+                  if (tab != 3) ...[
+                    Text(
+                      ['함께 기록하는 하루', '우리의 수입과 지출', '결제 수단을 한곳에'][tab],
+                      style: const TextStyle(
+                        fontSize: 26,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      [
+                        '날짜별 수입과 지출을 확인할 공간이에요.',
+                        '일·주·월별로 내역을 모아볼 공간이에요.',
+                        '카드 실적과 상품권 잔액을 관리할 공간이에요.',
+                      ][tab],
+                    ),
+                    const SizedBox(height: 32),
+                    if (tab == 2 && widget.transactionRepository != null)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: FilledButton.icon(
+                          onPressed: () => openPaymentMethods(context),
+                          icon: const Icon(Icons.manage_accounts_outlined),
+                          label: const Text('결제 수단 등록·관리'),
                         ),
                       ),
-                    );
-                  },
-                ),
-            ] else ...[
-              const Text(
-                '앱 테마',
-                style: TextStyle(fontSize: 26, fontWeight: FontWeight.w700),
-              ),
-              const SizedBox(height: 8),
-              const Text('우리 가계부를 나만의 색으로\n선택한 테마는 이 기기에만 적용돼요.'),
-              const SizedBox(height: 24),
-              ...palettes.map(
-                (option) => Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: Semantics(
-                    selected: option == palette,
-                    child: Card(
-                      clipBehavior: Clip.antiAlias,
-                      child: InkWell(
-                        onTap: saving ? null : () => select(option),
+                    if (tab == 0 && widget.transactionRepository != null)
+                      FutureBuilder<TransactionQueryResult>(
+                        future: overview,
+                        builder: (context, snapshot) => CalendarOverview(
+                          selectedDate: selectedDate,
+                          result: snapshot.data,
+                          onDateChanged: (date) =>
+                              setState(() => selectedDate = date),
+                        ),
+                      ),
+                    if (widget.transactionRepository == null)
+                      const Card(
                         child: Padding(
-                          padding: const EdgeInsets.all(20),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      option.name,
-                                      style: const TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ),
-                                  if (option == palette)
-                                    const Icon(
-                                      Icons.check_circle,
-                                      semanticLabel: '선택됨',
-                                    ),
-                                ],
+                          padding: EdgeInsets.all(24),
+                          child: Text('화면 미리보기\n아직 가계부 데이터가 연결되지 않았어요.'),
+                        ),
+                      )
+                    else
+                      FutureBuilder<TransactionQueryResult>(
+                        future: overview,
+                        builder: (context, snapshot) {
+                          if (snapshot.hasError) {
+                            return const Card(
+                              child: Padding(
+                                padding: EdgeInsets.all(24),
+                                child: Text('내역을 불러오지 못했어요. 다시 시도해 주세요.'),
                               ),
-                              const SizedBox(height: 12),
-                              Wrap(
-                                spacing: 8,
-                                children:
-                                    [
-                                          option.primary,
-                                          option.secondary,
-                                          option.background,
-                                        ]
+                            );
+                          }
+                          if (!snapshot.hasData) {
+                            return const Center(
+                              child: Padding(
+                                padding: EdgeInsets.all(24),
+                                child: CircularProgressIndicator(),
+                              ),
+                            );
+                          }
+                          final result = snapshot.data!;
+                          return Card(
+                            child: Padding(
+                              padding: const EdgeInsets.all(24),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text('이번 달 수입 ${result.totalIncome}원'),
+                                  Text('이번 달 지출 ${result.totalExpense}원'),
+                                  const SizedBox(height: 12),
+                                  if (result.items.isEmpty)
+                                    const Text('거래가 없는 기간이에요.')
+                                  else
+                                    ...result.items
+                                        .take(10)
                                         .map(
-                                          (color) => Container(
-                                            width: 44,
-                                            height: 28,
-                                            decoration: BoxDecoration(
-                                              color: color,
-                                              borderRadius:
-                                                  BorderRadius.circular(8),
-                                              border: Border.all(
-                                                color: Colors.black12,
-                                              ),
+                                          (item) => ListTile(
+                                            contentPadding: EdgeInsets.zero,
+                                            title: Text(
+                                              item['merchant'] as String,
+                                            ),
+                                            subtitle: Text(
+                                              item['occurred_on'] as String,
+                                            ),
+                                            trailing: Text(
+                                              '${item['amount_won']}원',
                                             ),
                                           ),
-                                        )
-                                        .toList(),
+                                        ),
+                                ],
                               ),
-                            ],
+                            ),
+                          );
+                        },
+                      ),
+                  ] else ...[
+                    const Text(
+                      '앱 테마',
+                      style: TextStyle(
+                        fontSize: 26,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text('우리 가계부를 나만의 색으로\n선택한 테마는 이 기기에만 적용돼요.'),
+                    const SizedBox(height: 24),
+                    ...palettes.map(
+                      (option) => Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: Semantics(
+                          selected: option == palette,
+                          child: Card(
+                            clipBehavior: Clip.antiAlias,
+                            child: InkWell(
+                              onTap: saving ? null : () => select(option),
+                              child: Padding(
+                                padding: const EdgeInsets.all(20),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            option.name,
+                                            style: const TextStyle(
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ),
+                                        if (option == palette)
+                                          const Icon(
+                                            Icons.check_circle,
+                                            semanticLabel: '선택됨',
+                                          ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 12),
+                                    Wrap(
+                                      spacing: 8,
+                                      children:
+                                          [
+                                                option.primary,
+                                                option.secondary,
+                                                option.background,
+                                              ]
+                                              .map(
+                                                (color) => Container(
+                                                  width: 44,
+                                                  height: 28,
+                                                  decoration: BoxDecoration(
+                                                    color: color,
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          8,
+                                                        ),
+                                                    border: Border.all(
+                                                      color: Colors.black12,
+                                                    ),
+                                                  ),
+                                                ),
+                                              )
+                                              .toList(),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
                           ),
                         ),
                       ),
                     ),
-                  ),
-                ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      '계정 · 공동 가계부',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text('카카오 로그인과 배우자 초대는 다음 단계에서 연결할 예정이에요.'),
+                  ],
+                ],
               ),
-              const SizedBox(height: 16),
-              const Text(
-                '계정 · 공동 가계부',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: 8),
-              const Text('카카오 로그인과 배우자 초대는 다음 단계에서 연결할 예정이에요.'),
-            ],
-          ],
-        ),
       ),
     ),
   );

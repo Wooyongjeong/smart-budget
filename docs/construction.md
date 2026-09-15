@@ -1,5 +1,13 @@
 # Construction 진행
 
+## T12 — 상품권·초기 잔액·환불
+
+구현 브랜치: `feat/t12-vouchers-refunds`.
+
+`voucher_movements`와 거래의 상품권 연결 필드를 추가하고, `record_voucher_event` RPC로 상품권 충전·사용·환불 이벤트를 원자적으로 기록한다. 상품권 행 잠금 후 잔액 부족을 검사하며, 클라이언트의 직접 잔액 변경은 차단한다. 초기 잔액은 충전 이벤트로 기록할 수 있다.
+
+검증: `supabase/tests/t12_vouchers_refunds.sql`에 테이블·RPC·권한 회귀를 추가했다. Supabase CLI/pgTAP 실행은 커밋 전 확인한다.
+
 ## T11 — 결제 수단 등록·관리 UI
 
 구현 브랜치: `feat/t11-payment-method-ui`.
