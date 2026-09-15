@@ -1,9 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:smart_budget/auth/auth_config.dart';
 import 'package:smart_budget/auth/auth_screen.dart';
 import 'package:smart_budget/auth/auth_service.dart';
+import 'localized_test_app.dart';
 
 class FakeAuthService implements AuthService {
   FakeAuthService(this.result);
@@ -50,7 +50,7 @@ void main() {
     tester,
   ) async {
     await tester.pumpWidget(
-      MaterialApp(
+      localizedTestApp(
         home: AuthScreen(service: FakeAuthService(const AuthCancelled())),
       ),
     );
@@ -59,7 +59,7 @@ void main() {
     expect(find.text('로그인을 취소했어요.'), findsOneWidget);
 
     await tester.pumpWidget(
-      MaterialApp(
+      localizedTestApp(
         home: AuthScreen(service: FakeAuthService(const AuthFailed('설정 오류'))),
       ),
     );

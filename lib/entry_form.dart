@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'features/transactions/transaction_draft.dart';
 import 'features/transactions/transaction_repository.dart';
 import 'money_input.dart';
+import 'l10n/generated/app_localizations.dart';
 
 class EntryForm extends StatefulWidget {
   const EntryForm({
@@ -88,16 +89,16 @@ class _EntryFormState extends State<EntryForm> {
         await showDialog<bool>(
               context: context,
               builder: (context) => AlertDialog(
-                title: const Text('입력을 그만할까요?'),
-                content: const Text('작성 중인 내용은 저장되지 않아요.'),
+                title: Text(AppLocalizations.of(context)!.stopEntryTitle),
+                content: Text(AppLocalizations.of(context)!.stopEntryBody),
                 actions: [
                   TextButton(
                     onPressed: () => Navigator.pop(context, false),
-                    child: const Text('계속 작성'),
+                    child: Text(AppLocalizations.of(context)!.continueEditing),
                   ),
                   TextButton(
                     onPressed: () => Navigator.pop(context, true),
-                    child: const Text('버리기'),
+                    child: Text(AppLocalizations.of(context)!.discard),
                   ),
                 ],
               ),
@@ -119,7 +120,7 @@ class _EntryFormState extends State<EntryForm> {
             number > 0 &&
             number <= 999999999
         ? null
-        : '1~999,999,999원의 정수를 입력해 주세요.';
+        : AppLocalizations.of(context)!.amountValidation;
   }
 
   Future<void> pickDate() async {
@@ -158,23 +159,23 @@ class _EntryFormState extends State<EntryForm> {
       final confirmed = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
-          title: const Text('입력 내용 확인'),
+          title: Text(AppLocalizations.of(context)!.reviewEntry),
           content: SingleChildScrollView(
             child: Text(
-              '${income ? '수입' : '지출'} · ${formatWon(parseWon(amount.text)!)}원\n'
+              '${income ? AppLocalizations.of(context)!.income : AppLocalizations.of(context)!.expense} · ${AppLocalizations.of(context)!.formattedAmount(formatWon(parseWon(amount.text)!))}\n'
               '${date.text.trim()}\n${merchant.text.trim()}\n$category · ${_paymentName()} · ${_memberName()}\n'
-              '${memo.text.trim()}\n\n${widget.onConfirm == null ? '미리보기이며 실제 가계부에는 저장되지 않아요.' : '확인 후 저장할 수 있어요.'}',
+              '${memo.text.trim()}\n\n${widget.onConfirm == null ? AppLocalizations.of(context)!.previewOnly : AppLocalizations.of(context)!.confirmToSave}',
             ),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('돌아가서 수정'),
+              child: Text(AppLocalizations.of(context)!.backToEdit),
             ),
             if (widget.onConfirm != null)
               FilledButton(
                 onPressed: () => Navigator.pop(context, true),
-                child: const Text('확정'),
+                child: Text(AppLocalizations.of(context)!.finalize),
               ),
           ],
         ),
@@ -188,173 +189,199 @@ class _EntryFormState extends State<EntryForm> {
   }
 
   @override
-  Widget build(BuildContext context) => PopScope(
-    canPop: leaving || !dirty,
-    onPopInvokedWithResult: (didPop, result) {
-      if (!didPop) close();
-    },
-    child: Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          onPressed: close,
-          tooltip: '닫기',
-          icon: const Icon(Icons.close),
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final categoryLabels = {
+      '급여': l10n.salary,
+      '용돈': l10n.allowance,
+      '식비': l10n.food,
+      '생활': l10n.living,
+      '교통': l10n.transportation,
+      '주거': l10n.housing,
+      '쇼핑': l10n.shopping,
+      '기타': l10n.other,
+    };
+    return PopScope(
+      canPop: leaving || !dirty,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) close();
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          leading: IconButton(
+            onPressed: close,
+            tooltip: l10n.close,
+            icon: const Icon(Icons.close),
+          ),
+          title: Text(l10n.directEntry),
         ),
-        title: const Text('직접 입력'),
-      ),
-      body: SafeArea(
-        child: Form(
-          key: form,
-          onChanged: () {
-            if (!dirty) setState(() => dirty = true);
-          },
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const Text('입력 내용 확인 후 가계부에 저장해요.'),
-                const SizedBox(height: 20),
-                SegmentedButton<bool>(
-                  segments: const [
-                    ButtonSegment(value: false, label: Text('지출')),
-                    ButtonSegment(value: true, label: Text('수입')),
-                  ],
-                  selected: {income},
-                  onSelectionChanged: (values) => setState(() {
-                    income = values.first;
-                    category = income ? '급여' : '식비';
-                    dirty = true;
-                  }),
-                ),
-                const SizedBox(height: 20),
-                TextFormField(
-                  key: const Key('amount'),
-                  controller: amount,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: const [WonInputFormatter()],
-                  decoration: const InputDecoration(
-                    labelText: '금액',
-                    suffixText: '원',
+        body: SafeArea(
+          child: Form(
+            key: form,
+            onChanged: () {
+              if (!dirty) setState(() => dirty = true);
+            },
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(l10n.entryGuide),
+                  const SizedBox(height: 20),
+                  SegmentedButton<bool>(
+                    segments: [
+                      ButtonSegment(value: false, label: Text(l10n.expense)),
+                      ButtonSegment(value: true, label: Text(l10n.income)),
+                    ],
+                    selected: {income},
+                    onSelectionChanged: (values) => setState(() {
+                      income = values.first;
+                      category = income ? '급여' : '식비';
+                      dirty = true;
+                    }),
                   ),
-                  validator: validateAmount,
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  key: const Key('date'),
-                  controller: date,
-                  readOnly: true,
-                  decoration: InputDecoration(
-                    labelText: '날짜',
-                    suffixIcon: IconButton(
-                      onPressed: pickDate,
-                      tooltip: '날짜 선택',
-                      icon: const Icon(Icons.calendar_month_outlined),
+                  const SizedBox(height: 20),
+                  TextFormField(
+                    key: const Key('amount'),
+                    controller: amount,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: const [WonInputFormatter()],
+                    decoration: InputDecoration(
+                      labelText: l10n.amount,
+                      suffixText: l10n.won,
                     ),
+                    validator: validateAmount,
                   ),
-                  onTap: pickDate,
-                  validator: (value) {
-                    final raw = value?.trim() ?? '';
-                    if (!RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(raw)) {
-                      return 'YYYY-MM-DD 형식으로 입력해 주세요.';
-                    }
-                    try {
-                      final parsed = DateFormat('yyyy-MM-dd').parseStrict(raw);
-                      if (parsed.year >= 2000 && parsed.year <= 2100) {
-                        return null;
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    key: const Key('date'),
+                    controller: date,
+                    readOnly: true,
+                    decoration: InputDecoration(
+                      labelText: l10n.date,
+                      suffixIcon: IconButton(
+                        onPressed: pickDate,
+                        tooltip: l10n.chooseDate,
+                        icon: const Icon(Icons.calendar_month_outlined),
+                      ),
+                    ),
+                    onTap: pickDate,
+                    validator: (value) {
+                      final raw = value?.trim() ?? '';
+                      if (!RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(raw)) {
+                        return l10n.dateValidation;
                       }
-                    } catch (_) {
-                      /* Show field validation below. */
-                    }
-                    return '2000~2100년 사이의 실제 날짜를 입력해 주세요.';
-                  },
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  key: const Key('merchant'),
-                  controller: merchant,
-                  maxLength: 100,
-                  decoration: InputDecoration(
-                    labelText: income ? '수입 내용' : '사용처',
+                      try {
+                        final parsed = DateFormat(
+                          'yyyy-MM-dd',
+                        ).parseStrict(raw);
+                        if (parsed.year >= 2000 && parsed.year <= 2100) {
+                          return null;
+                        }
+                      } catch (_) {
+                        /* Show field validation below. */
+                      }
+                      return l10n.dateValidation;
+                    },
                   ),
-                  validator: (value) => value == null || value.trim().isEmpty
-                      ? '내용을 입력해 주세요.'
-                      : null,
-                ),
-                DropdownButtonFormField<String>(
-                  key: ValueKey('category-$income'),
-                  initialValue: category,
-                  decoration: const InputDecoration(labelText: '카테고리'),
-                  items:
-                      (income
-                              ? ['급여', '용돈', '기타']
-                              : ['식비', '생활', '교통', '주거', '쇼핑', '기타'])
-                          .map(
-                            (v) => DropdownMenuItem(value: v, child: Text(v)),
-                          )
-                          .toList(),
-                  onChanged: (v) => setState(() => category = v!),
-                ),
-                const SizedBox(height: 16),
-                DropdownButtonFormField<String>(
-                  initialValue: payment,
-                  decoration: InputDecoration(
-                    labelText: income ? '입금 수단' : '결제 수단',
-                  ),
-                  items: widget.paymentMethods
-                      .map(
-                        (v) =>
-                            DropdownMenuItem(value: v.id, child: Text(v.name)),
-                      )
-                      .toList(),
-                  validator: (v) => v == null ? '등록된 수단을 선택해 주세요.' : null,
-                  onChanged: (v) => setState(() => payment = v),
-                ),
-                if (widget.paymentMethods.isEmpty &&
-                    widget.onManagePaymentMethods != null) ...[
-                  const SizedBox(height: 8),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: TextButton.icon(
-                      onPressed: widget.onManagePaymentMethods,
-                      icon: const Icon(Icons.add),
-                      label: const Text('결제 수단 등록하기'),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    key: const Key('merchant'),
+                    controller: merchant,
+                    maxLength: 100,
+                    decoration: InputDecoration(
+                      labelText: income
+                          ? l10n.incomeDescription
+                          : l10n.merchant,
                     ),
+                    validator: (value) => value == null || value.trim().isEmpty
+                        ? l10n.contentRequired
+                        : null,
+                  ),
+                  DropdownButtonFormField<String>(
+                    key: ValueKey('category-$income'),
+                    initialValue: category,
+                    decoration: InputDecoration(labelText: l10n.category),
+                    items:
+                        (income
+                                ? ['급여', '용돈', '기타']
+                                : ['식비', '생활', '교통', '주거', '쇼핑', '기타'])
+                            .map(
+                              (v) => DropdownMenuItem(
+                                value: v,
+                                child: Text(categoryLabels[v]!),
+                              ),
+                            )
+                            .toList(),
+                    onChanged: (v) => setState(() => category = v!),
+                  ),
+                  const SizedBox(height: 16),
+                  DropdownButtonFormField<String>(
+                    initialValue: payment,
+                    decoration: InputDecoration(
+                      labelText: income
+                          ? l10n.depositMethod
+                          : l10n.paymentMethod,
+                    ),
+                    items: widget.paymentMethods
+                        .map(
+                          (v) => DropdownMenuItem(
+                            value: v.id,
+                            child: Text(v.name),
+                          ),
+                        )
+                        .toList(),
+                    validator: (v) => v == null ? l10n.methodRequired : null,
+                    onChanged: (v) => setState(() => payment = v),
+                  ),
+                  if (widget.paymentMethods.isEmpty &&
+                      widget.onManagePaymentMethods != null) ...[
+                    const SizedBox(height: 8),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: TextButton.icon(
+                        onPressed: widget.onManagePaymentMethods,
+                        icon: const Icon(Icons.add),
+                        label: Text(l10n.addPaymentMethod),
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 16),
+                  DropdownButtonFormField<String>(
+                    initialValue: person,
+                    decoration: InputDecoration(labelText: l10n.actualUser),
+                    items: widget.members
+                        .map(
+                          (v) => DropdownMenuItem(
+                            value: v.id,
+                            child: Text(v.name),
+                          ),
+                        )
+                        .toList(),
+                    validator: (v) => v == null ? l10n.memberRequired : null,
+                    onChanged: (v) => setState(() => person = v),
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: memo,
+                    maxLength: 500,
+                    minLines: 2,
+                    maxLines: 4,
+                    decoration: InputDecoration(labelText: l10n.memoOptional),
+                  ),
+                  const SizedBox(height: 24),
+                  FilledButton(
+                    onPressed: submitting ? null : preview,
+                    child: Text(l10n.reviewEntry),
                   ),
                 ],
-                const SizedBox(height: 16),
-                DropdownButtonFormField<String>(
-                  initialValue: person,
-                  decoration: const InputDecoration(labelText: '실제 사용자'),
-                  items: widget.members
-                      .map(
-                        (v) =>
-                            DropdownMenuItem(value: v.id, child: Text(v.name)),
-                      )
-                      .toList(),
-                  validator: (v) => v == null ? '구성원을 선택해 주세요.' : null,
-                  onChanged: (v) => setState(() => person = v),
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: memo,
-                  maxLength: 500,
-                  minLines: 2,
-                  maxLines: 4,
-                  decoration: const InputDecoration(labelText: '메모 (선택)'),
-                ),
-                const SizedBox(height: 24),
-                FilledButton(
-                  onPressed: submitting ? null : preview,
-                  child: const Text('입력 내용 확인'),
-                ),
-              ],
+              ),
             ),
           ),
         ),
       ),
-    ),
-  );
+    );
+  }
 }
 
 class _DatePickerWithToday extends StatefulWidget {
@@ -374,31 +401,38 @@ class _DatePickerWithTodayState extends State<_DatePickerWithToday> {
   }
 
   @override
-  Widget build(BuildContext context) => AlertDialog(
-    title: const Text('날짜 선택'),
-    contentPadding: const EdgeInsets.only(top: 8),
-    content: SizedBox(
-      width: 330,
-      height: 330,
-      child: CalendarDatePicker(
-        key: ValueKey(selectedDate),
-        initialDate: selectedDate,
-        currentDate: DateTime.now(),
-        firstDate: DateTime(2000),
-        lastDate: DateTime(2100),
-        onDateChanged: (value) => setState(() => selectedDate = value),
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return AlertDialog(
+      title: Text(l10n.chooseDate),
+      contentPadding: const EdgeInsets.only(top: 8),
+      content: SizedBox(
+        width: 330,
+        height: 330,
+        child: CalendarDatePicker(
+          key: ValueKey(selectedDate),
+          initialDate: selectedDate,
+          currentDate: DateTime.now(),
+          firstDate: DateTime(2000),
+          lastDate: DateTime(2100),
+          onDateChanged: (value) => setState(() => selectedDate = value),
+        ),
       ),
-    ),
-    actions: [
-      TextButton(
-        onPressed: () => Navigator.pop(context),
-        child: const Text('취소'),
-      ),
-      TextButton(onPressed: moveToToday, child: const Text('오늘')),
-      FilledButton(
-        onPressed: () => Navigator.pop(context, selectedDate),
-        child: const Text('선택'),
-      ),
-    ],
-  );
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text(l10n.cancel),
+        ),
+        FilledButton.tonalIcon(
+          onPressed: moveToToday,
+          icon: const Icon(Icons.today_outlined),
+          label: Text(l10n.today),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(context, selectedDate),
+          child: Text(l10n.choose),
+        ),
+      ],
+    );
+  }
 }

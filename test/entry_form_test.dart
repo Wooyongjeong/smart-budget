@@ -5,6 +5,7 @@ import 'package:smart_budget/main.dart';
 import 'package:smart_budget/entry_form.dart';
 import 'package:smart_budget/features/transactions/transaction_draft.dart';
 import 'package:smart_budget/features/transactions/transaction_repository.dart';
+import 'localized_test_app.dart';
 
 class _Repository implements TransactionRepository {
   @override
@@ -86,6 +87,23 @@ Future<void> preview(WidgetTester tester) async {
 }
 
 void main() {
+  testWidgets('English locale translates entry fields and date picker', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      localizedTestApp(
+        locale: const Locale('en'),
+        home: EntryForm(initialDate: DateTime(2026, 9, 15)),
+      ),
+    );
+    expect(find.text('Manual entry'), findsOneWidget);
+    expect(find.text('Expense'), findsOneWidget);
+    await tester.tap(find.byTooltip('Choose date'));
+    await tester.pumpAndSettle();
+    expect(find.text('Today'), findsOneWidget);
+    expect(find.text('Select'), findsOneWidget);
+  });
+
   testWidgets('calendar selection becomes the direct-entry date', (
     tester,
   ) async {
@@ -115,7 +133,7 @@ void main() {
     tester,
   ) async {
     await tester.pumpWidget(
-      MaterialApp(
+      localizedTestApp(
         home: EntryForm(
           initialDate: DateTime(2026, 9, 15),
           paymentMethods: const [
@@ -141,10 +159,15 @@ void main() {
 
   testWidgets('today button moves the date picker to today', (tester) async {
     await tester.pumpWidget(
-      MaterialApp(home: EntryForm(initialDate: DateTime(2020, 1, 1))),
+      localizedTestApp(home: EntryForm(initialDate: DateTime(2020, 1, 1))),
     );
     await tester.tap(find.byTooltip('날짜 선택'));
     await tester.pumpAndSettle();
+    expect(
+      find.ancestor(of: find.text('오늘'), matching: find.byType(FilledButton)),
+      findsOneWidget,
+    );
+    expect(find.byIcon(Icons.today_outlined), findsOneWidget);
     await tester.tap(find.text('오늘'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('선택'));

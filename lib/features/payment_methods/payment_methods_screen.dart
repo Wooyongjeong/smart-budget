@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../transactions/transaction_repository.dart';
 import '../../money_input.dart';
+import '../../l10n/generated/app_localizations.dart';
 
 class PaymentMethodsScreen extends StatefulWidget {
   const PaymentMethodsScreen({
@@ -37,13 +38,17 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
     });
   }
 
-  static const kinds = <String, String>{
-    'cash': '현금',
-    'bank': '계좌',
-    'debit_card': '체크카드',
-    'credit_card': '신용카드',
-    'voucher': '상품권',
-  };
+  String kindLabel(BuildContext context, String kind) {
+    final l10n = AppLocalizations.of(context)!;
+    return switch (kind) {
+      'cash' => l10n.cash,
+      'bank' => l10n.bank,
+      'debit_card' => l10n.debitCard,
+      'credit_card' => l10n.creditCard,
+      'voucher' => l10n.voucher,
+      _ => kind,
+    };
+  }
 
   Future<void> add({String initialKind = 'cash'}) async {
     final result = await showDialog<_PaymentMethodDraft>(
@@ -83,13 +88,15 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
       }
       if (!mounted) return;
       setState(() => methods.add(method));
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('결제 수단을 등록했어요.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.of(context)!.paymentAdded)),
+      );
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('결제 수단을 등록하지 못했어요. 다시 시도해 주세요.')),
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.paymentAddFailed),
+          ),
         );
       }
     } finally {
@@ -101,16 +108,18 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('결제 수단을 보관할까요?'),
-        content: Text('${method.name}은(는) 새 거래 입력에서 숨겨져요.'),
+        title: Text(AppLocalizations.of(context)!.archivePaymentTitle),
+        content: Text(
+          AppLocalizations.of(context)!.archivePaymentBody(method.name),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('취소'),
+            child: Text(AppLocalizations.of(context)!.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('보관'),
+            child: Text(AppLocalizations.of(context)!.archive),
           ),
         ],
       ),
@@ -127,7 +136,9 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('결제 수단을 보관하지 못했어요. 다시 시도해 주세요.')),
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.archivePaymentFailed),
+          ),
         );
       }
     }
@@ -139,7 +150,11 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
     final amounts = await showDialog<List<int>>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(kind == 'voucher_use' ? '상품권 사용' : '상품권 초기 잔액·충전'),
+        title: Text(
+          kind == 'voucher_use'
+              ? AppLocalizations.of(context)!.voucherUse
+              : AppLocalizations.of(context)!.voucherTopUp,
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -148,8 +163,10 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
               keyboardType: TextInputType.number,
               inputFormatters: const [WonInputFormatter()],
               decoration: InputDecoration(
-                labelText: kind == 'voucher_topup' ? '실제 결제 금액' : '사용 금액',
-                suffixText: '원',
+                labelText: kind == 'voucher_topup'
+                    ? AppLocalizations.of(context)!.actualPaidAmount
+                    : AppLocalizations.of(context)!.useAmount,
+                suffixText: AppLocalizations.of(context)!.won,
               ),
             ),
             if (kind == 'voucher_topup')
@@ -157,9 +174,9 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                 controller: voucherController,
                 keyboardType: TextInputType.number,
                 inputFormatters: const [WonInputFormatter()],
-                decoration: const InputDecoration(
-                  labelText: '상품권 충전액',
-                  suffixText: '원',
+                decoration: InputDecoration(
+                  labelText: AppLocalizations.of(context)!.voucherTopUpAmount,
+                  suffixText: AppLocalizations.of(context)!.won,
                 ),
               ),
           ],
@@ -167,7 +184,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('취소'),
+            child: Text(AppLocalizations.of(context)!.cancel),
           ),
           FilledButton(
             onPressed: () {
@@ -180,7 +197,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                 Navigator.pop(context, [paid, voucher ?? paid]);
               }
             },
-            child: const Text('확인'),
+            child: Text(AppLocalizations.of(context)!.confirm),
           ),
         ],
       ),
@@ -200,15 +217,19 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
       );
       if (mounted) {
         setState(() {});
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('상품권 내역을 기록했어요.')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.voucherRecorded),
+          ),
+        );
       }
     } catch (_) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('상품권 내역을 저장하지 못했어요.')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.voucherSaveFailed),
+          ),
+        );
       }
     }
   }
@@ -218,21 +239,24 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
     final value = await showDialog<int>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('${method.name} 실적 목표 수정'),
+        title: Text(AppLocalizations.of(context)!.editTargetTitle(method.name)),
         content: TextField(
           controller: controller,
           keyboardType: TextInputType.number,
           inputFormatters: const [WonInputFormatter()],
-          decoration: const InputDecoration(labelText: '월 목표', suffixText: '원'),
+          decoration: InputDecoration(
+            labelText: AppLocalizations.of(context)!.monthlyTarget,
+            suffixText: AppLocalizations.of(context)!.won,
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('취소'),
+            child: Text(AppLocalizations.of(context)!.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, parseWon(controller.text)),
-            child: const Text('저장'),
+            child: Text(AppLocalizations.of(context)!.save),
           ),
         ],
       ),
@@ -249,24 +273,27 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
       if (mounted) refreshCardSummary();
     } catch (_) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('실적 목표를 수정하지 못했어요.')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.targetSaveFailed),
+          ),
+        );
       }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final content = ListView(
       padding: const EdgeInsets.all(24),
       children: [
-        const Text(
-          '결제 수단',
-          style: TextStyle(fontSize: 26, fontWeight: FontWeight.w700),
+        Text(
+          l10n.paymentMethods,
+          style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w700),
         ),
         const SizedBox(height: 8),
-        const Text('카드 실적과 거래 입력에 사용할 수단을 등록해요.'),
+        Text(l10n.paymentMethodsDescription),
         const SizedBox(height: 20),
         Align(
           alignment: Alignment.centerRight,
@@ -276,12 +303,12 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
               OutlinedButton.icon(
                 onPressed: saving ? null : () => add(initialKind: 'voucher'),
                 icon: const Icon(Icons.confirmation_number_outlined),
-                label: const Text('상품권 등록'),
+                label: Text(l10n.registerVoucher),
               ),
               FilledButton.icon(
                 onPressed: saving ? null : add,
                 icon: const Icon(Icons.add),
-                label: const Text('결제 수단 등록'),
+                label: Text(l10n.registerPaymentMethod),
               ),
             ],
           ),
@@ -293,12 +320,12 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
               padding: const EdgeInsets.all(24),
               child: Column(
                 children: [
-                  const Text('등록된 결제 수단이 없어요.'),
+                  Text(l10n.noPaymentMethods),
                   const SizedBox(height: 12),
                   OutlinedButton.icon(
                     onPressed: saving ? null : add,
                     icon: const Icon(Icons.add),
-                    label: const Text('첫 수단 등록'),
+                    label: Text(l10n.registerFirstMethod),
                   ),
                 ],
               ),
@@ -317,7 +344,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                         builder: (context, snapshot) {
                           if (snapshot.hasError) {
                             return Text(
-                              '${kinds[method.kind]}${_ownerLabel(method)}\n실적을 불러오지 못했어요.',
+                              '${kindLabel(context, method.kind)}${_ownerLabel(context, method)}\n${l10n.performanceLoadFailed}',
                             );
                           }
                           final row = snapshot.data?.firstWhere(
@@ -325,7 +352,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                             orElse: () => <String, dynamic>{},
                           );
                           return Text(
-                            '${kinds[method.kind]}${_ownerLabel(method)}\n이번 달 ${row?['actual_amount_won'] ?? 0}원 / 목표 ${row?['target_amount_won'] ?? 0}원',
+                            '${kindLabel(context, method.kind)}${_ownerLabel(context, method)}\n${l10n.cardProgress(formatWon((row?['actual_amount_won'] as num?)?.toInt() ?? 0), formatWon((row?['target_amount_won'] as num?)?.toInt() ?? 0))}',
                           );
                         },
                       )
@@ -336,33 +363,33 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                           method.id,
                         ),
                         builder: (context, snapshot) => Text(
-                          '${kinds[method.kind]}${_ownerLabel(method)}\n잔액 ${snapshot.data ?? 0}원',
+                          '${kindLabel(context, method.kind)}${_ownerLabel(context, method)}\n${l10n.balance(formatWon(snapshot.data ?? 0))}',
                         ),
                       )
                     : Text(
-                        '${kinds[method.kind] ?? method.kind}${_ownerLabel(method)}',
+                        '${kindLabel(context, method.kind)}${_ownerLabel(context, method)}',
                       ),
                 trailing: method.kind == 'voucher'
                     ? Wrap(
                         children: [
                           IconButton(
-                            tooltip: '초기 잔액·충전',
+                            tooltip: l10n.initialBalanceTopUp,
                             onPressed: () =>
                                 voucherEvent(method, 'voucher_topup'),
                             icon: const Icon(Icons.add_circle_outline),
                           ),
                           IconButton(
-                            tooltip: '사용',
+                            tooltip: l10n.use,
                             onPressed: () =>
                                 voucherEvent(method, 'voucher_use'),
                             icon: const Icon(Icons.remove_circle_outline),
                           ),
                           PopupMenuButton<String>(
                             onSelected: (_) => archive(method),
-                            itemBuilder: (context) => const [
+                            itemBuilder: (context) => [
                               PopupMenuItem(
                                 value: 'archive',
-                                child: Text('보관'),
+                                child: Text(l10n.archive),
                               ),
                             ],
                           ),
@@ -373,16 +400,16 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                           if (method.kind == 'debit_card' ||
                               method.kind == 'credit_card')
                             IconButton(
-                              tooltip: '실적 목표 수정',
+                              tooltip: l10n.editTarget,
                               onPressed: () => editTarget(method),
                               icon: const Icon(Icons.edit_outlined),
                             ),
                           PopupMenuButton<String>(
                             onSelected: (_) => archive(method),
-                            itemBuilder: (context) => const [
+                            itemBuilder: (context) => [
                               PopupMenuItem(
                                 value: 'archive',
-                                child: Text('보관'),
+                                child: Text(l10n.archive),
                               ),
                             ],
                           ),
@@ -396,28 +423,30 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
           OutlinedButton.icon(
             onPressed: widget.onReturnToEntry,
             icon: const Icon(Icons.edit_outlined),
-            label: const Text('거래 입력으로 돌아가기'),
+            label: Text(l10n.backToEntry),
           ),
         ],
       ],
     );
     if (widget.embedded) return content;
     return Scaffold(
-      appBar: AppBar(title: const Text('결제 수단 관리')),
+      appBar: AppBar(title: Text(l10n.paymentMethodManagement)),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: saving ? null : add,
         icon: const Icon(Icons.add),
-        label: const Text('등록'),
+        label: Text(l10n.register),
       ),
       body: content,
     );
   }
 
-  String _ownerLabel(PaymentMethodOption method) {
+  String _ownerLabel(BuildContext context, PaymentMethodOption method) {
     final id = method.ownerMemberId;
     if (id == null) return '';
     final member = widget.contextData.members.where((item) => item.id == id);
-    return member.isEmpty ? '' : ' · ${member.first.name} 사용';
+    return member.isEmpty
+        ? ''
+        : AppLocalizations.of(context)!.usedBy(member.first.name);
   }
 
   IconData _iconFor(String kind) => switch (kind) {
@@ -475,111 +504,125 @@ class _PaymentMethodDialogState extends State<_PaymentMethodDialog> {
   }
 
   @override
-  Widget build(BuildContext context) => AlertDialog(
-    title: const Text('결제 수단 등록'),
-    content: Form(
-      key: form,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          DropdownButtonFormField<String>(
-            initialValue: kind,
-            decoration: const InputDecoration(labelText: '종류'),
-            items: _PaymentMethodsScreenState.kinds.entries
-                .map(
-                  (entry) => DropdownMenuItem(
-                    value: entry.key,
-                    child: Text(entry.value),
-                  ),
-                )
-                .toList(),
-            onChanged: (value) => setState(() => kind = value!),
-          ),
-          TextFormField(
-            controller: name,
-            autofocus: true,
-            maxLength: 100,
-            decoration: const InputDecoration(labelText: '이름 (예: 국민 체크카드)'),
-            validator: (value) =>
-                value == null || value.trim().isEmpty ? '이름을 입력해 주세요.' : null,
-          ),
-          if (kind == 'voucher') ...[
-            TextFormField(
-              controller: paidAmount,
-              keyboardType: TextInputType.number,
-              inputFormatters: const [WonInputFormatter()],
-              decoration: const InputDecoration(
-                labelText: '실제 결제 금액',
-                suffixText: '원',
-              ),
-              validator: (value) =>
-                  (parseWon(value ?? '') ?? 0) <= 0 ? '결제 금액을 입력해 주세요.' : null,
-            ),
-            TextFormField(
-              controller: voucherAmount,
-              keyboardType: TextInputType.number,
-              inputFormatters: const [WonInputFormatter()],
-              decoration: const InputDecoration(
-                labelText: '상품권 충전액',
-                suffixText: '원',
-              ),
-              validator: (value) =>
-                  (parseWon(value ?? '') ?? 0) <= 0 ? '충전액을 입력해 주세요.' : null,
-            ),
-          ],
-          if (kind == 'debit_card' || kind == 'credit_card')
-            TextFormField(
-              controller: targetAmount,
-              keyboardType: TextInputType.number,
-              inputFormatters: const [WonInputFormatter()],
-              decoration: const InputDecoration(
-                labelText: '월 실적 목표',
-                suffixText: '원',
-              ),
-              validator: (value) =>
-                  (parseWon(value ?? '') ?? 0) <= 0 ? '목표 금액을 입력해 주세요.' : null,
-            ),
-          if (widget.members.isNotEmpty)
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final kinds = <String, String>{
+      'cash': l10n.cash,
+      'bank': l10n.bank,
+      'debit_card': l10n.debitCard,
+      'credit_card': l10n.creditCard,
+      'voucher': l10n.voucher,
+    };
+    return AlertDialog(
+      title: Text(l10n.registerPaymentMethod),
+      content: Form(
+        key: form,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
             DropdownButtonFormField<String>(
-              initialValue: owner,
-              decoration: const InputDecoration(labelText: '소유자 (선택)'),
-              items: [
-                const DropdownMenuItem(value: null, child: Text('선택 안 함')),
-                ...widget.members.map(
-                  (member) => DropdownMenuItem(
-                    value: member.id,
-                    child: Text(member.name),
-                  ),
-                ),
-              ],
-              onChanged: (value) => setState(() => owner = value),
+              initialValue: kind,
+              decoration: InputDecoration(labelText: l10n.kind),
+              items: kinds.entries
+                  .map(
+                    (entry) => DropdownMenuItem(
+                      value: entry.key,
+                      child: Text(entry.value),
+                    ),
+                  )
+                  .toList(),
+              onChanged: (value) => setState(() => kind = value!),
             ),
-        ],
-      ),
-    ),
-    actions: [
-      TextButton(
-        onPressed: () => Navigator.pop(context),
-        child: const Text('취소'),
-      ),
-      FilledButton(
-        onPressed: () {
-          if (form.currentState!.validate()) {
-            Navigator.pop(
-              context,
-              _PaymentMethodDraft(
-                kind,
-                name.text.trim(),
-                owner,
-                paidAmountWon: parseWon(paidAmount.text),
-                voucherAmountWon: parseWon(voucherAmount.text),
-                targetAmountWon: parseWon(targetAmount.text),
+            TextFormField(
+              controller: name,
+              autofocus: true,
+              maxLength: 100,
+              decoration: InputDecoration(labelText: l10n.nameExample),
+              validator: (value) => value == null || value.trim().isEmpty
+                  ? l10n.nameRequired
+                  : null,
+            ),
+            if (kind == 'voucher') ...[
+              TextFormField(
+                controller: paidAmount,
+                keyboardType: TextInputType.number,
+                inputFormatters: const [WonInputFormatter()],
+                decoration: InputDecoration(
+                  labelText: l10n.actualPaidAmount,
+                  suffixText: l10n.won,
+                ),
+                validator: (value) => (parseWon(value ?? '') ?? 0) <= 0
+                    ? l10n.paidAmountRequired
+                    : null,
               ),
-            );
-          }
-        },
-        child: const Text('등록'),
+              TextFormField(
+                controller: voucherAmount,
+                keyboardType: TextInputType.number,
+                inputFormatters: const [WonInputFormatter()],
+                decoration: InputDecoration(
+                  labelText: l10n.voucherTopUpAmount,
+                  suffixText: l10n.won,
+                ),
+                validator: (value) => (parseWon(value ?? '') ?? 0) <= 0
+                    ? l10n.topUpAmountRequired
+                    : null,
+              ),
+            ],
+            if (kind == 'debit_card' || kind == 'credit_card')
+              TextFormField(
+                controller: targetAmount,
+                keyboardType: TextInputType.number,
+                inputFormatters: const [WonInputFormatter()],
+                decoration: InputDecoration(
+                  labelText: l10n.monthlyPerformanceTarget,
+                  suffixText: l10n.won,
+                ),
+                validator: (value) => (parseWon(value ?? '') ?? 0) <= 0
+                    ? l10n.targetAmountRequired
+                    : null,
+              ),
+            if (widget.members.isNotEmpty)
+              DropdownButtonFormField<String>(
+                initialValue: owner,
+                decoration: InputDecoration(labelText: l10n.ownerOptional),
+                items: [
+                  DropdownMenuItem(value: null, child: Text(l10n.none)),
+                  ...widget.members.map(
+                    (member) => DropdownMenuItem(
+                      value: member.id,
+                      child: Text(member.name),
+                    ),
+                  ),
+                ],
+                onChanged: (value) => setState(() => owner = value),
+              ),
+          ],
+        ),
       ),
-    ],
-  );
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text(l10n.cancel),
+        ),
+        FilledButton(
+          onPressed: () {
+            if (form.currentState!.validate()) {
+              Navigator.pop(
+                context,
+                _PaymentMethodDraft(
+                  kind,
+                  name.text.trim(),
+                  owner,
+                  paidAmountWon: parseWon(paidAmount.text),
+                  voucherAmountWon: parseWon(voucherAmount.text),
+                  targetAmountWon: parseWon(targetAmount.text),
+                ),
+              );
+            }
+          },
+          child: Text(l10n.register),
+        ),
+      ],
+    );
+  }
 }

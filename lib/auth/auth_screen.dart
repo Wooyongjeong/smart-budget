@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'auth_service.dart';
+import '../l10n/generated/app_localizations.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key, required this.service});
@@ -26,48 +27,61 @@ class _AuthScreenState extends State<AuthScreen> {
       loading = false;
       error = switch (result) {
         AuthStarted() => null,
-        AuthCancelled() => '로그인을 취소했어요.',
-        AuthFailed(:final message) => message,
+        AuthCancelled() => AppLocalizations.of(context)!.loginCancelled,
+        AuthFailed(:final message) =>
+          Localizations.localeOf(context).languageCode == 'ko'
+              ? message
+              : AppLocalizations.of(context)!.loginFailed,
       };
     });
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    body: Center(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(32),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 420),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.account_balance_wallet_outlined, size: 56),
-              const SizedBox(height: 20),
-              const Text(
-                '우리 가계부',
-                style: TextStyle(fontSize: 30, fontWeight: FontWeight.w700),
-              ),
-              const SizedBox(height: 10),
-              const Text('둘이 함께 기록하는 생활비', textAlign: TextAlign.center),
-              const SizedBox(height: 36),
-              if (error != null) ...[
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return Scaffold(
+      body: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(32),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 420),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.account_balance_wallet_outlined, size: 56),
+                const SizedBox(height: 20),
                 Text(
-                  error!,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+                  l10n.appTitle,
+                  style: const TextStyle(
+                    fontSize: 30,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 10),
+                Text(l10n.loginTagline, textAlign: TextAlign.center),
+                const SizedBox(height: 36),
+                if (error != null) ...[
+                  Text(
+                    error!,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+                FilledButton.icon(
+                  onPressed: loading ? null : login,
+                  icon: const Icon(Icons.chat_bubble_outline),
+                  label: Text(
+                    loading ? l10n.loginLoading : l10n.loginWithKakao,
+                  ),
+                ),
               ],
-              FilledButton.icon(
-                onPressed: loading ? null : login,
-                icon: const Icon(Icons.chat_bubble_outline),
-                label: Text(loading ? '카카오 로그인 준비 중…' : '카카오로 시작하기'),
-              ),
-            ],
+            ),
           ),
         ),
       ),
-    ),
-  );
+    );
+  }
 }
