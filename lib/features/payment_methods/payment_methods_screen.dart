@@ -51,6 +51,15 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
         result.name,
         result.ownerMemberId,
       );
+      if (result.kind == 'voucher' && result.paidAmountWon != null) {
+        await widget.repository.recordVoucherEvent(
+          widget.contextData.householdId,
+          'voucher_topup',
+          method.id,
+          result.paidAmountWon!,
+          result.voucherAmountWon!,
+        );
+      }
       if (!mounted) return;
       setState(() => methods.add(method));
       ScaffoldMessenger.of(
@@ -308,10 +317,18 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
 }
 
 class _PaymentMethodDraft {
-  const _PaymentMethodDraft(this.kind, this.name, this.ownerMemberId);
+  const _PaymentMethodDraft(
+    this.kind,
+    this.name,
+    this.ownerMemberId, {
+    this.paidAmountWon,
+    this.voucherAmountWon,
+  });
   final String kind;
   final String name;
   final String? ownerMemberId;
+  final int? paidAmountWon;
+  final int? voucherAmountWon;
 }
 
 class _PaymentMethodDialog extends StatefulWidget {
@@ -328,12 +345,16 @@ class _PaymentMethodDialog extends StatefulWidget {
 class _PaymentMethodDialogState extends State<_PaymentMethodDialog> {
   final form = GlobalKey<FormState>();
   final name = TextEditingController();
+  final paidAmount = TextEditingController();
+  final voucherAmount = TextEditingController();
   late String kind = widget.initialKind;
   String? owner;
 
   @override
   void dispose() {
     name.dispose();
+    paidAmount.dispose();
+    voucherAmount.dispose();
     super.dispose();
   }
 
@@ -366,6 +387,30 @@ class _PaymentMethodDialogState extends State<_PaymentMethodDialog> {
             validator: (value) =>
                 value == null || value.trim().isEmpty ? '이름을 입력해 주세요.' : null,
           ),
+          if (kind == 'voucher') ...[
+            TextFormField(
+              controller: paidAmount,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                labelText: '실제 결제 금액',
+                suffixText: '원',
+              ),
+              validator: (value) => int.tryParse(value?.trim() ?? '') == null
+                  ? '결제 금액을 입력해 주세요.'
+                  : null,
+            ),
+            TextFormField(
+              controller: voucherAmount,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                labelText: '상품권 충전액',
+                suffixText: '원',
+              ),
+              validator: (value) => int.tryParse(value?.trim() ?? '') == null
+                  ? '충전액을 입력해 주세요.'
+                  : null,
+            ),
+          ],
           if (widget.members.isNotEmpty)
             DropdownButtonFormField<String>(
               initialValue: owner,
@@ -394,7 +439,13 @@ class _PaymentMethodDialogState extends State<_PaymentMethodDialog> {
           if (form.currentState!.validate()) {
             Navigator.pop(
               context,
-              _PaymentMethodDraft(kind, name.text.trim(), owner),
+              _PaymentMethodDraft(
+                kind,
+                name.text.trim(),
+                owner,
+                paidAmountWon: int.tryParse(paidAmount.text.trim()),
+                voucherAmountWon: int.tryParse(voucherAmount.text.trim()),
+              ),
             );
           }
         },
