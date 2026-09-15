@@ -105,14 +105,32 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
 
   Future<void> voucherEvent(PaymentMethodOption method, String kind) async {
     final controller = TextEditingController();
-    final amount = await showDialog<int>(
+    final voucherController = TextEditingController();
+    final amounts = await showDialog<List<int>>(
       context: context,
       builder: (context) => AlertDialog(
         title: Text(kind == 'voucher_use' ? '상품권 사용' : '상품권 초기 잔액·충전'),
-        content: TextField(
-          controller: controller,
-          keyboardType: TextInputType.number,
-          decoration: const InputDecoration(labelText: '금액', suffixText: '원'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: controller,
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(
+                labelText: kind == 'voucher_topup' ? '실제 결제 금액' : '사용 금액',
+                suffixText: '원',
+              ),
+            ),
+            if (kind == 'voucher_topup')
+              TextField(
+                controller: voucherController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: '상품권 충전액',
+                  suffixText: '원',
+                ),
+              ),
+          ],
         ),
         actions: [
           TextButton(
@@ -120,21 +138,31 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
             child: const Text('취소'),
           ),
           FilledButton(
-            onPressed: () =>
-                Navigator.pop(context, int.tryParse(controller.text.trim())),
+            onPressed: () {
+              final paid = int.tryParse(controller.text.trim());
+              final voucher = int.tryParse(voucherController.text.trim());
+              if (paid != null &&
+                  paid > 0 &&
+                  (kind != 'voucher_topup' ||
+                      (voucher != null && voucher > 0))) {
+                Navigator.pop(context, [paid, voucher ?? paid]);
+              }
+            },
             child: const Text('확인'),
           ),
         ],
       ),
     );
     controller.dispose();
-    if (amount == null || amount <= 0 || !mounted) return;
+    voucherController.dispose();
+    if (amounts == null || !mounted) return;
     try {
       await widget.repository.recordVoucherEvent(
         widget.contextData.householdId,
         kind,
         method.id,
-        amount,
+        amounts[0],
+        amounts[1],
       );
       if (mounted) {
         ScaffoldMessenger.of(
