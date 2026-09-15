@@ -129,11 +129,9 @@ class _EntryFormState extends State<EntryForm> {
     } catch (_) {
       initialDate = DateTime.now();
     }
-    final selected = await showDatePicker(
+    final selected = await showDialog<DateTime>(
       context: context,
-      initialDate: initialDate,
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2100),
+      builder: (context) => _DatePickerWithToday(initialDate: initialDate),
     );
     if (selected == null || !mounted) return;
     setState(() {
@@ -356,5 +354,51 @@ class _EntryFormState extends State<EntryForm> {
         ),
       ),
     ),
+  );
+}
+
+class _DatePickerWithToday extends StatefulWidget {
+  const _DatePickerWithToday({required this.initialDate});
+
+  final DateTime initialDate;
+
+  @override
+  State<_DatePickerWithToday> createState() => _DatePickerWithTodayState();
+}
+
+class _DatePickerWithTodayState extends State<_DatePickerWithToday> {
+  late DateTime selectedDate = DateUtils.dateOnly(widget.initialDate);
+
+  void moveToToday() {
+    setState(() => selectedDate = DateUtils.dateOnly(DateTime.now()));
+  }
+
+  @override
+  Widget build(BuildContext context) => AlertDialog(
+    title: const Text('날짜 선택'),
+    contentPadding: const EdgeInsets.only(top: 8),
+    content: SizedBox(
+      width: 330,
+      height: 330,
+      child: CalendarDatePicker(
+        key: ValueKey(selectedDate),
+        initialDate: selectedDate,
+        currentDate: DateTime.now(),
+        firstDate: DateTime(2000),
+        lastDate: DateTime(2100),
+        onDateChanged: (value) => setState(() => selectedDate = value),
+      ),
+    ),
+    actions: [
+      TextButton(
+        onPressed: () => Navigator.pop(context),
+        child: const Text('취소'),
+      ),
+      TextButton(onPressed: moveToToday, child: const Text('오늘')),
+      FilledButton(
+        onPressed: () => Navigator.pop(context, selectedDate),
+        child: const Text('선택'),
+      ),
+    ],
   );
 }

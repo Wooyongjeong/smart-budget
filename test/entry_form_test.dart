@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:intl/intl.dart';
 import 'package:smart_budget/main.dart';
 import 'package:smart_budget/entry_form.dart';
 import 'package:smart_budget/features/transactions/transaction_draft.dart';
@@ -126,7 +127,8 @@ void main() {
     await tester.tap(find.byTooltip('날짜 선택'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('20').last);
-    await tester.tap(find.text('OK'));
+    expect(find.text('오늘'), findsOneWidget);
+    await tester.tap(find.text('선택'));
     await tester.pumpAndSettle();
     expect(
       tester
@@ -134,6 +136,25 @@ void main() {
           .controller!
           .text,
       '2026-09-20',
+    );
+  });
+
+  testWidgets('today button moves the date picker to today', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(home: EntryForm(initialDate: DateTime(2020, 1, 1))),
+    );
+    await tester.tap(find.byTooltip('날짜 선택'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('오늘'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('선택'));
+    await tester.pumpAndSettle();
+    expect(
+      tester
+          .widget<TextFormField>(find.byKey(const Key('date')))
+          .controller!
+          .text,
+      DateFormat('yyyy-MM-dd').format(DateTime.now()),
     );
   });
 
