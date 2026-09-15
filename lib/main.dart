@@ -196,7 +196,7 @@ class _BudgetAppState extends State<BudgetApp> {
     }
   }
 
-  Future<void> openEntry(BuildContext context) async {
+  Future<void> openEntry(BuildContext context, {DateTime? initialDate}) async {
     if (openingEntry) return;
     setState(() => openingEntry = true);
     try {
@@ -212,13 +212,16 @@ class _BudgetAppState extends State<BudgetApp> {
       await Navigator.of(context).push(
         MaterialPageRoute<void>(
           builder: (_) => EntryForm(
+            initialDate: initialDate,
             paymentMethods: data.paymentMethods,
             members: data.members,
             onManagePaymentMethods: data.paymentMethods.isEmpty
                 ? () async {
                     Navigator.of(context).pop();
                     await openPaymentMethods(context);
-                    if (context.mounted) await openEntry(context);
+                    if (context.mounted) {
+                      await openEntry(context, initialDate: initialDate);
+                    }
                   }
                 : null,
             onConfirm: repository == null
@@ -325,7 +328,10 @@ class _BudgetAppState extends State<BudgetApp> {
                           subtitle: const Text('수입과 지출을 가계부에 저장'),
                           onTap: () {
                             Navigator.pop(sheetContext);
-                            openEntry(context);
+                            openEntry(
+                              context,
+                              initialDate: tab == 0 ? selectedDate : null,
+                            );
                           },
                         ),
                         ListTile(

@@ -8,12 +8,14 @@ class EntryForm extends StatefulWidget {
   const EntryForm({
     super.key,
     this.initialDraft,
+    this.initialDate,
     this.paymentMethods = const [],
     this.members = const [],
     this.onConfirm,
     this.onManagePaymentMethods,
   });
   final TransactionDraft? initialDraft;
+  final DateTime? initialDate;
   final List<PaymentMethodOption> paymentMethods;
   final List<MemberOption> members;
   final Future<void> Function(TransactionDraft draft)? onConfirm;
@@ -29,9 +31,9 @@ class _EntryFormState extends State<EntryForm> {
   final merchant = TextEditingController();
   final memo = TextEditingController();
   late final date = TextEditingController(
-    text: DateFormat(
-      'yyyy-MM-dd',
-    ).format(widget.initialDraft?.occurredOn ?? DateTime.now()),
+    text: DateFormat('yyyy-MM-dd').format(
+      widget.initialDraft?.occurredOn ?? widget.initialDate ?? DateTime.now(),
+    ),
   );
   late bool income = widget.initialDraft?.kind == TransactionKind.income;
   bool dirty = false;
@@ -118,6 +120,26 @@ class _EntryFormState extends State<EntryForm> {
             number <= 999999999
         ? null
         : '1~999,999,999원의 정수를 입력해 주세요.';
+  }
+
+  Future<void> pickDate() async {
+    DateTime initialDate;
+    try {
+      initialDate = DateFormat('yyyy-MM-dd').parseStrict(date.text.trim());
+    } catch (_) {
+      initialDate = DateTime.now();
+    }
+    final selected = await showDatePicker(
+      context: context,
+      initialDate: initialDate,
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
+    );
+    if (selected == null || !mounted) return;
+    setState(() {
+      date.text = DateFormat('yyyy-MM-dd').format(selected);
+      dirty = true;
+    });
   }
 
   Future<void> preview() async {
@@ -223,10 +245,16 @@ class _EntryFormState extends State<EntryForm> {
                 TextFormField(
                   key: const Key('date'),
                   controller: date,
-                  decoration: const InputDecoration(
+                  readOnly: true,
+                  decoration: InputDecoration(
                     labelText: '날짜',
-                    hintText: 'YYYY-MM-DD',
+                    suffixIcon: IconButton(
+                      onPressed: pickDate,
+                      tooltip: '날짜 선택',
+                      icon: const Icon(Icons.calendar_month_outlined),
+                    ),
                   ),
+                  onTap: pickDate,
                   validator: (value) {
                     final raw = value?.trim() ?? '';
                     if (!RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(raw)) {
