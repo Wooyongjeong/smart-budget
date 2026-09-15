@@ -238,15 +238,10 @@ class _BudgetAppState extends State<BudgetApp> {
                           content: Text('거래를 저장하지 못했어요. (${error.code})'),
                         ),
                       );
-                    } catch (error, stackTrace) {
-                      debugPrint('transaction save failed: $error');
-                      debugPrintStack(stackTrace: stackTrace);
+                    } catch (_) {
                       messenger.currentState?.showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            '거래를 저장하지 못했어요. '
-                            '${error is TransactionSaveException ? error.code : error}',
-                          ),
+                        const SnackBar(
+                          content: Text('거래를 저장하지 못했어요. 다시 시도해 주세요.'),
                         ),
                       );
                     }
@@ -277,6 +272,7 @@ class _BudgetAppState extends State<BudgetApp> {
               AiReviewScreen(repository: repository, contextData: data),
         ),
       );
+      if (mounted) refreshOverview();
     } catch (_) {
       if (mounted) {
         messenger.currentState?.showSnackBar(
@@ -379,6 +375,14 @@ class _BudgetAppState extends State<BudgetApp> {
             ? FutureBuilder<HouseholdContext>(
                 future: widget.transactionRepository!.loadContext(),
                 builder: (context, snapshot) {
+                  if (snapshot.hasError) {
+                    return Center(
+                      child: TextButton(
+                        onPressed: () => setState(() {}),
+                        child: const Text('지갑을 불러오지 못했어요. 다시 시도'),
+                      ),
+                    );
+                  }
                   if (!snapshot.hasData) {
                     return const Center(child: CircularProgressIndicator());
                   }

@@ -286,7 +286,16 @@ class SupabaseTransactionRepository implements TransactionRepository {
         },
       );
     } on PostgrestException catch (error) {
-      throw TransactionSaveException(error.message);
+      const expected = {
+        'validation_failed',
+        'forbidden',
+        'version_conflict',
+        'idempotency_conflict',
+        'insufficient_balance',
+      };
+      throw TransactionSaveException(
+        expected.contains(error.message) ? error.message : 'unexpected',
+      );
     }
   }
 

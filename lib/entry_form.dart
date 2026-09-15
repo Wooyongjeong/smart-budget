@@ -36,6 +36,7 @@ class _EntryFormState extends State<EntryForm> {
   bool dirty = false;
   bool leaving = false;
   bool asking = false;
+  bool submitting = false;
   late String category =
       widget.initialDraft?.category ?? (income ? '급여' : '식비');
   late String? payment =
@@ -119,43 +120,49 @@ class _EntryFormState extends State<EntryForm> {
   }
 
   Future<void> preview() async {
+    if (submitting) return;
     if (!form.currentState!.validate()) return;
-    final draft = TransactionDraft(
-      kind: income ? TransactionKind.income : TransactionKind.expense,
-      occurredOn: DateFormat('yyyy-MM-dd').parseStrict(date.text.trim()),
-      amountWon: int.parse(amount.text.trim()),
-      merchant: merchant.text.trim(),
-      category: category,
-      paymentMethodId: payment,
-      memberId: person,
-      memo: memo.text.trim(),
-    );
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('입력 내용 확인'),
-        content: SingleChildScrollView(
-          child: Text(
-            '${income ? '수입' : '지출'} · ${NumberFormat.decimalPattern('ko').format(int.parse(amount.text.trim()))}원\n'
-            '${date.text.trim()}\n${merchant.text.trim()}\n$category · ${_paymentName()} · ${_memberName()}\n'
-            '${memo.text.trim()}\n\n${widget.onConfirm == null ? '미리보기이며 실제 가계부에는 저장되지 않아요.' : '확인 후 저장할 수 있어요.'}',
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('돌아가서 수정'),
-          ),
-          if (widget.onConfirm != null)
-            FilledButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('확정'),
+    setState(() => submitting = true);
+    try {
+      final draft = TransactionDraft(
+        kind: income ? TransactionKind.income : TransactionKind.expense,
+        occurredOn: DateFormat('yyyy-MM-dd').parseStrict(date.text.trim()),
+        amountWon: int.parse(amount.text.trim()),
+        merchant: merchant.text.trim(),
+        category: category,
+        paymentMethodId: payment,
+        memberId: person,
+        memo: memo.text.trim(),
+      );
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('입력 내용 확인'),
+          content: SingleChildScrollView(
+            child: Text(
+              '${income ? '수입' : '지출'} · ${NumberFormat.decimalPattern('ko').format(int.parse(amount.text.trim()))}원\n'
+              '${date.text.trim()}\n${merchant.text.trim()}\n$category · ${_paymentName()} · ${_memberName()}\n'
+              '${memo.text.trim()}\n\n${widget.onConfirm == null ? '미리보기이며 실제 가계부에는 저장되지 않아요.' : '확인 후 저장할 수 있어요.'}',
             ),
-        ],
-      ),
-    );
-    if (confirmed == true && widget.onConfirm != null && mounted) {
-      await widget.onConfirm!(draft);
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('돌아가서 수정'),
+            ),
+            if (widget.onConfirm != null)
+              FilledButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('확정'),
+              ),
+          ],
+        ),
+      );
+      if (confirmed == true && widget.onConfirm != null && mounted) {
+        await widget.onConfirm!(draft);
+      }
+    } finally {
+      if (mounted) setState(() => submitting = false);
     }
   }
 
@@ -309,7 +316,10 @@ class _EntryFormState extends State<EntryForm> {
                   decoration: const InputDecoration(labelText: '메모 (선택)'),
                 ),
                 const SizedBox(height: 24),
-                FilledButton(onPressed: preview, child: const Text('입력 내용 확인')),
+                FilledButton(
+                  onPressed: submitting ? null : preview,
+                  child: const Text('입력 내용 확인'),
+                ),
               ],
             ),
           ),

@@ -1,5 +1,13 @@
 # Construction 진행
 
+## 문서 계약 재검토
+
+브랜치: fix/document-contract-review. 상세 발견 사항과 미완료 항목은 [code-review.md](code-review.md).
+card_performance 중첩 집계 SQL 오류와 상품권 충전 지출 누락을 새 migration으로 수정했다.
+authenticated 역할의 실제 카드 목표/충전/사용 RPC 테스트를 추가해 93,000원 지출, 80,000원 잔액, 93,000원 카드 인정액을 확인했다.
+직접 입력 중복 제출 차단, AI 저장 후 갱신, 지갑 조회 실패 재시도, 내부 오류 원문 노출도 수정했다.
+검증: flutter analyze 통과, Flutter 13개, SQL 46개 통과. 로컬 DB는 reset 없이 migration up으로 적용했다. 원격 DB는 아직 미적용이다.
+
 ## T12 — 상품권·초기 잔액·환불
 
 구현 브랜치: `feat/t12-vouchers-refunds`.
