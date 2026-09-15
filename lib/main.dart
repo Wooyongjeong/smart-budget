@@ -38,6 +38,59 @@ Future<void> main() async {
   );
 }
 
+class CalendarOverview extends StatelessWidget {
+  const CalendarOverview({
+    super.key,
+    required this.selectedDate,
+    required this.result,
+    required this.onDateChanged,
+  });
+  final DateTime selectedDate;
+  final TransactionQueryResult? result;
+  final ValueChanged<DateTime> onDateChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final items =
+        result?.items
+            .where((item) => item['occurred_on'] == _date(selectedDate))
+            .toList() ??
+        [];
+    return Card(
+      child: Column(
+        children: [
+          CalendarDatePicker(
+            initialDate: selectedDate,
+            firstDate: DateTime(2000),
+            lastDate: DateTime(2100),
+            onDateChanged: onDateChanged,
+          ),
+          if (result == null)
+            const Padding(
+              padding: EdgeInsets.all(16),
+              child: CircularProgressIndicator(),
+            )
+          else if (items.isEmpty)
+            const Padding(
+              padding: EdgeInsets.all(16),
+              child: Text('선택한 날짜에 거래가 없어요.'),
+            )
+          else
+            ...items.map(
+              (item) => ListTile(
+                title: Text(item['merchant'] as String),
+                trailing: Text('${item['amount_won']}원'),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  String _date(DateTime value) =>
+      '${value.year.toString().padLeft(4, '0')}-${value.month.toString().padLeft(2, '0')}-${value.day.toString().padLeft(2, '0')}';
+}
+
 class AuthRoot extends StatelessWidget {
   const AuthRoot({
     super.key,
@@ -98,7 +151,8 @@ class _BudgetAppState extends State<BudgetApp> {
   int tab = 0;
   bool saving = false;
   bool openingEntry = false;
-  late final Future<TransactionQueryResult>? overview = _loadOverview();
+  late Future<TransactionQueryResult>? overview = _loadOverview();
+  DateTime selectedDate = DateTime.now();
   final messenger = GlobalKey<ScaffoldMessengerState>();
 
   Future<TransactionQueryResult>? _loadOverview() {
@@ -113,6 +167,10 @@ class _BudgetAppState extends State<BudgetApp> {
         DateTime(now.year, now.month + 1),
       );
     }();
+  }
+
+  void refreshOverview() {
+    setState(() => overview = _loadOverview());
   }
 
   Future<void> select(BudgetPalette next) async {
@@ -159,6 +217,7 @@ class _BudgetAppState extends State<BudgetApp> {
                     try {
                       await repository.save(data.householdId, draft);
                       if (!context.mounted) return;
+                      refreshOverview();
                       Navigator.of(context).pop();
                       messenger.currentState?.showSnackBar(
                         const SnackBar(content: Text('거래를 저장했어요.')),
@@ -298,6 +357,16 @@ class _BudgetAppState extends State<BudgetApp> {
                 ][tab],
               ),
               const SizedBox(height: 32),
+              if (tab == 0 && widget.transactionRepository != null)
+                FutureBuilder<TransactionQueryResult>(
+                  future: overview,
+                  builder: (context, snapshot) => CalendarOverview(
+                    selectedDate: selectedDate,
+                    result: snapshot.data,
+                    onDateChanged: (date) =>
+                        setState(() => selectedDate = date),
+                  ),
+                ),
               if (widget.transactionRepository == null)
                 const Card(
                   child: Padding(
