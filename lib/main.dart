@@ -579,76 +579,57 @@ class _BudgetAppState extends State<BudgetApp> {
                       ),
                       const SizedBox(height: 8),
                       Text(l10n.themeDescription),
-                      const SizedBox(height: 24),
-                      ...palettes.map(
-                        (option) => Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: Semantics(
-                            selected: option == palette,
-                            child: Card(
-                              clipBehavior: Clip.antiAlias,
-                              child: InkWell(
-                                onTap: saving ? null : () => select(option),
-                                child: Padding(
-                                  padding: const EdgeInsets.all(20),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+                      const SizedBox(height: 14),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: palettes
+                            .map(
+                              (option) => Semantics(
+                                selected: option == palette,
+                                child: ChoiceChip(
+                                  key: ValueKey('theme-${option.id}'),
+                                  selected: option == palette,
+                                  onSelected: saving
+                                      ? null
+                                      : (_) => select(option),
+                                  visualDensity: VisualDensity.compact,
+                                  labelPadding: const EdgeInsets.symmetric(
+                                    horizontal: 4,
+                                  ),
+                                  label: Row(
+                                    mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      Row(
-                                        children: [
-                                          Expanded(
-                                            child: Text(
-                                              _paletteName(l10n, option.id),
-                                              style: const TextStyle(
-                                                fontSize: 18,
-                                                fontWeight: FontWeight.w600,
-                                              ),
+                                      ...[
+                                        option.primary,
+                                        option.secondary,
+                                        option.background,
+                                      ].map(
+                                        (color) => Container(
+                                          width: 10,
+                                          height: 10,
+                                          margin: const EdgeInsets.only(
+                                            right: 2,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: color,
+                                            shape: BoxShape.circle,
+                                            border: Border.all(
+                                              color: Colors.black12,
                                             ),
                                           ),
-                                          if (option == palette)
-                                            Icon(
-                                              Icons.check_circle,
-                                              semanticLabel: l10n.selected,
-                                            ),
-                                        ],
+                                        ),
                                       ),
-                                      const SizedBox(height: 12),
-                                      Wrap(
-                                        spacing: 8,
-                                        children:
-                                            [
-                                                  option.primary,
-                                                  option.secondary,
-                                                  option.background,
-                                                ]
-                                                .map(
-                                                  (color) => Container(
-                                                    width: 44,
-                                                    height: 28,
-                                                    decoration: BoxDecoration(
-                                                      color: color,
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                            8,
-                                                          ),
-                                                      border: Border.all(
-                                                        color: Colors.black12,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                )
-                                                .toList(),
-                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(_paletteName(l10n, option.id)),
                                     ],
                                   ),
                                 ),
                               ),
-                            ),
-                          ),
-                        ),
+                            )
+                            .toList(),
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 24),
                       Text(
                         l10n.languageTitle,
                         style: const TextStyle(

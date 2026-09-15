@@ -41,6 +41,7 @@ void main() {
     );
     await tester.tap(find.text('설정'));
     await tester.pumpAndSettle();
+    expect(find.byType(ChoiceChip), findsNWidgets(palettes.length));
     await tester.tap(find.text('바다와 모래'));
     await tester.pumpAndSettle();
     expect(saved, 'ocean');
