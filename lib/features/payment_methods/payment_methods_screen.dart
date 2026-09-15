@@ -8,11 +8,13 @@ class PaymentMethodsScreen extends StatefulWidget {
     required this.repository,
     required this.contextData,
     this.onReturnToEntry,
+    this.embedded = false,
   });
 
   final TransactionRepository repository;
   final HouseholdContext contextData;
   final VoidCallback? onReturnToEntry;
+  final bool embedded;
 
   @override
   State<PaymentMethodsScreen> createState() => _PaymentMethodsScreenState();
@@ -29,6 +31,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
     'bank': '계좌',
     'debit_card': '체크카드',
     'credit_card': '신용카드',
+    'voucher': '상품권',
   };
 
   Future<void> add() async {
@@ -99,14 +102,8 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('결제 수단 관리')),
-    floatingActionButton: FloatingActionButton.extended(
-      onPressed: saving ? null : add,
-      icon: const Icon(Icons.add),
-      label: const Text('등록'),
-    ),
-    body: ListView(
+  Widget build(BuildContext context) {
+    final content = ListView(
       padding: const EdgeInsets.all(24),
       children: [
         const Text(
@@ -160,8 +157,18 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
           ),
         ],
       ],
-    ),
-  );
+    );
+    if (widget.embedded) return content;
+    return Scaffold(
+      appBar: AppBar(title: const Text('결제 수단 관리')),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: saving ? null : add,
+        icon: const Icon(Icons.add),
+        label: const Text('등록'),
+      ),
+      body: content,
+    );
+  }
 
   String _ownerLabel(PaymentMethodOption method) {
     final id = method.ownerMemberId;

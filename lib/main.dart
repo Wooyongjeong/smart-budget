@@ -352,7 +352,12 @@ class _BudgetAppState extends State<BudgetApp> {
           : null,
       bottomNavigationBar: NavigationBar(
         selectedIndex: tab,
-        onDestinationSelected: (value) => setState(() => tab = value),
+        onDestinationSelected: (value) {
+          setState(() => tab = value);
+          if (value == 2 && widget.transactionRepository != null) {
+            openPaymentMethods(context);
+          }
+        },
         destinations: const [
           NavigationDestination(
             icon: Icon(Icons.calendar_month_outlined),
