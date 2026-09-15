@@ -240,15 +240,11 @@ class SupabaseTransactionRepository implements TransactionRepository {
 
   @override
   Future<int> voucherBalance(String householdId, String voucherId) async {
-    final rows = await client
-        .from('voucher_movements')
-        .select('delta_won')
-        .eq('household_id', householdId)
-        .eq('voucher_id', voucherId);
-    return rows.fold<int>(
-      0,
-      (sum, row) => sum + (row['delta_won'] as num).toInt(),
-    );
+    final result = await client.rpc('voucher_balance', params: {
+      'p_household_id': householdId,
+      'p_voucher_id': voucherId,
+    });
+    return (result as num).toInt();
   }
 
   @override
