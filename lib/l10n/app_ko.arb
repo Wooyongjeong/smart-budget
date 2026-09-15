@@ -125,6 +125,8 @@
   "monthlyTarget": "월 목표",
   "targetSaveFailed": "실적 목표를 수정하지 못했어요.",
   "performanceLoadFailed": "실적을 불러오지 못했어요.",
+  "balanceLoadFailed": "잔액을 불러오지 못했어요.",
+  "balanceLoading": "잔액을 불러오는 중…",
   "kind": "종류",
   "nameExample": "이름 (예: 국민 체크카드)",
   "nameRequired": "이름을 입력해 주세요.",

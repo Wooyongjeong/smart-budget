@@ -405,6 +405,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get performanceLoadFailed => 'Couldn\'t load spending progress.';
 
   @override
+  String get balanceLoadFailed => 'Couldn\'t load the balance.';
+
+  @override
+  String get balanceLoading => 'Loading balance…';
+
+  @override
   String get kind => 'Type';
 
   @override

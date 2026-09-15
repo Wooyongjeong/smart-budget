@@ -183,28 +183,37 @@ class _BudgetAppState extends State<BudgetApp> {
   int tab = 0;
   bool saving = false;
   bool openingEntry = false;
-  late Future<TransactionQueryResult>? overview = _loadOverview();
   DateTime selectedDate = DateTime.now();
+  late Future<TransactionQueryResult>? overview = _loadOverview(selectedDate);
   final messenger = GlobalKey<ScaffoldMessengerState>();
   AppLocalizations get _l10n => lookupAppLocalizations(locale);
 
-  Future<TransactionQueryResult>? _loadOverview() {
+  Future<TransactionQueryResult>? _loadOverview([DateTime? anchor]) {
     final repository = widget.transactionRepository;
     if (repository == null) return null;
     return () async {
-      final now = DateTime.now();
+      final month = anchor ?? selectedDate;
       final context = await repository.loadContext();
       return repository.query(
         context.householdId,
-        DateTime(now.year, now.month),
-        DateTime(now.year, now.month + 1),
+        DateTime(month.year, month.month),
+        DateTime(month.year, month.month + 1),
       );
     }();
   }
 
   void refreshOverview() {
     setState(() {
-      overview = _loadOverview();
+      overview = _loadOverview(selectedDate);
+    });
+  }
+
+  void selectCalendarDate(DateTime date) {
+    final monthChanged =
+        selectedDate.year != date.year || selectedDate.month != date.month;
+    setState(() {
+      selectedDate = date;
+      if (monthChanged) overview = _loadOverview(date);
     });
   }
 
@@ -490,8 +499,7 @@ class _BudgetAppState extends State<BudgetApp> {
                           builder: (context, snapshot) => CalendarOverview(
                             selectedDate: selectedDate,
                             result: snapshot.data,
-                            onDateChanged: (date) =>
-                                setState(() => selectedDate = date),
+                            onDateChanged: selectCalendarDate,
                           ),
                         ),
                       if (widget.transactionRepository == null)
@@ -590,6 +598,7 @@ class _BudgetAppState extends State<BudgetApp> {
                                 child: ChoiceChip(
                                   key: ValueKey('theme-${option.id}'),
                                   selected: option == palette,
+                                  showCheckmark: false,
                                   onSelected: saving
                                       ? null
                                       : (_) => select(option),

@@ -117,6 +117,8 @@
   "monthlyTarget": "Monthly goal",
   "targetSaveFailed": "Couldn't update the spending goal.",
   "performanceLoadFailed": "Couldn't load spending progress.",
+  "balanceLoadFailed": "Couldn't load the balance.",
+  "balanceLoading": "Loading balance…",
   "kind": "Type",
   "nameExample": "Name (e.g. Everyday debit card)",
   "nameRequired": "Enter a name.",

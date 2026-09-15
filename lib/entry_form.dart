@@ -43,29 +43,41 @@ class _EntryFormState extends State<EntryForm> {
   bool submitting = false;
   late String category =
       widget.initialDraft?.category ?? (income ? '급여' : '식비');
-  late String? payment =
-      widget.initialDraft?.paymentMethodId ??
-      (widget.paymentMethods.isEmpty ? null : widget.paymentMethods.first.id);
+  late String? payment;
   late String? person =
       widget.initialDraft?.memberId ??
       (widget.members.isEmpty ? null : widget.members.first.id);
 
-  String _paymentName() {
+  List<PaymentMethodOption> _paymentMethodsFor(bool isIncome) => widget
+      .paymentMethods
+      .where(
+        (option) => isIncome
+            ? option.kind == 'cash' || option.kind == 'bank'
+            : option.kind != 'voucher',
+      )
+      .toList(growable: false);
+
+  String _paymentName(AppLocalizations l10n) {
     final matches = widget.paymentMethods.where(
       (option) => option.id == payment,
     );
-    return matches.isEmpty ? '선택 안 됨' : matches.first.name;
+    return matches.isEmpty ? l10n.none : matches.first.name;
   }
 
-  String _memberName() {
+  String _memberName(AppLocalizations l10n) {
     final matches = widget.members.where((option) => option.id == person);
-    return matches.isEmpty ? '선택 안 됨' : matches.first.name;
+    return matches.isEmpty ? l10n.none : matches.first.name;
   }
 
   @override
   void initState() {
     super.initState();
     final draft = widget.initialDraft;
+    final eligibleMethods = _paymentMethodsFor(income);
+    final initialPayment = draft?.paymentMethodId;
+    payment = eligibleMethods.any((method) => method.id == initialPayment)
+        ? initialPayment
+        : eligibleMethods.firstOrNull?.id;
     if (draft != null) {
       amount.text = draft.amountWon == null ? '' : formatWon(draft.amountWon!);
       merchant.text = draft.merchant;
@@ -163,7 +175,7 @@ class _EntryFormState extends State<EntryForm> {
           content: SingleChildScrollView(
             child: Text(
               '${income ? AppLocalizations.of(context)!.income : AppLocalizations.of(context)!.expense} · ${AppLocalizations.of(context)!.formattedAmount(formatWon(parseWon(amount.text)!))}\n'
-              '${date.text.trim()}\n${merchant.text.trim()}\n$category · ${_paymentName()} · ${_memberName()}\n'
+              '${date.text.trim()}\n${merchant.text.trim()}\n${_categoryLabel(AppLocalizations.of(context)!, category)} · ${_paymentName(AppLocalizations.of(context)!)} · ${_memberName(AppLocalizations.of(context)!)}\n'
               '${memo.text.trim()}\n\n${widget.onConfirm == null ? AppLocalizations.of(context)!.previewOnly : AppLocalizations.of(context)!.confirmToSave}',
             ),
           ),
@@ -191,6 +203,7 @@ class _EntryFormState extends State<EntryForm> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final eligibleMethods = _paymentMethodsFor(income);
     final categoryLabels = {
       '급여': l10n.salary,
       '용돈': l10n.allowance,
@@ -235,8 +248,13 @@ class _EntryFormState extends State<EntryForm> {
                     ],
                     selected: {income},
                     onSelectionChanged: (values) => setState(() {
-                      income = values.first;
+                      final nextIncome = values.first;
+                      final nextMethods = _paymentMethodsFor(nextIncome);
+                      income = nextIncome;
                       category = income ? '급여' : '식비';
+                      if (!nextMethods.any((method) => method.id == payment)) {
+                        payment = nextMethods.firstOrNull?.id;
+                      }
                       dirty = true;
                     }),
                   ),
@@ -317,13 +335,14 @@ class _EntryFormState extends State<EntryForm> {
                   ),
                   const SizedBox(height: 16),
                   DropdownButtonFormField<String>(
+                    key: ValueKey('payment-$income'),
                     initialValue: payment,
                     decoration: InputDecoration(
                       labelText: income
                           ? l10n.depositMethod
                           : l10n.paymentMethod,
                     ),
-                    items: widget.paymentMethods
+                    items: eligibleMethods
                         .map(
                           (v) => DropdownMenuItem(
                             value: v.id,
@@ -334,7 +353,7 @@ class _EntryFormState extends State<EntryForm> {
                     validator: (v) => v == null ? l10n.methodRequired : null,
                     onChanged: (v) => setState(() => payment = v),
                   ),
-                  if (widget.paymentMethods.isEmpty &&
+                  if (eligibleMethods.isEmpty &&
                       widget.onManagePaymentMethods != null) ...[
                     const SizedBox(height: 8),
                     Align(
@@ -382,6 +401,18 @@ class _EntryFormState extends State<EntryForm> {
       ),
     );
   }
+
+  String _categoryLabel(AppLocalizations l10n, String value) => switch (value) {
+    '급여' => l10n.salary,
+    '용돈' => l10n.allowance,
+    '식비' => l10n.food,
+    '생활' => l10n.living,
+    '교통' => l10n.transportation,
+    '주거' => l10n.housing,
+    '쇼핑' => l10n.shopping,
+    '기타' => l10n.other,
+    _ => value,
+  };
 }
 
 class _DatePickerWithToday extends StatefulWidget {

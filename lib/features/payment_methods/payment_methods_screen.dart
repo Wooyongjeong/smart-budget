@@ -362,9 +362,19 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                           widget.contextData.householdId,
                           method.id,
                         ),
-                        builder: (context, snapshot) => Text(
-                          '${kindLabel(context, method.kind)}${_ownerLabel(context, method)}\n${l10n.balance(formatWon(snapshot.data ?? 0))}',
-                        ),
+                        builder: (context, snapshot) {
+                          final prefix =
+                              '${kindLabel(context, method.kind)}${_ownerLabel(context, method)}\n';
+                          if (snapshot.hasError) {
+                            return Text('$prefix${l10n.balanceLoadFailed}');
+                          }
+                          if (!snapshot.hasData) {
+                            return Text('$prefix${l10n.balanceLoading}');
+                          }
+                          return Text(
+                            '$prefix${l10n.balance(formatWon(snapshot.data!))}',
+                          );
+                        },
                       )
                     : Text(
                         '${kindLabel(context, method.kind)}${_ownerLabel(context, method)}',

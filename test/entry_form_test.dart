@@ -8,6 +8,8 @@ import 'package:smart_budget/features/transactions/transaction_repository.dart';
 import 'localized_test_app.dart';
 
 class _Repository implements TransactionRepository {
+  DateTime? lastQueryStart;
+
   @override
   Future<HouseholdContext> loadContext() async => const HouseholdContext(
     householdId: 'household',
@@ -16,12 +18,15 @@ class _Repository implements TransactionRepository {
   );
 
   @override
-  Future<TransactionQueryResult> query(
-    String h,
-    DateTime s,
-    DateTime e,
-  ) async =>
-      const TransactionQueryResult(items: [], totalIncome: 0, totalExpense: 0);
+  Future<TransactionQueryResult> query(String h, DateTime s, DateTime e) async {
+    lastQueryStart = s;
+    return const TransactionQueryResult(
+      items: [],
+      totalIncome: 0,
+      totalExpense: 0,
+    );
+  }
+
   @override
   Future<void> save(String h, TransactionDraft d) async {}
   @override
@@ -87,6 +92,48 @@ Future<void> preview(WidgetTester tester) async {
 }
 
 void main() {
+  testWidgets('income accepts only cash and bank payment methods', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      localizedTestApp(
+        home: EntryForm(
+          paymentMethods: const [
+            PaymentMethodOption(id: 'card', name: '카드', kind: 'credit_card'),
+            PaymentMethodOption(id: 'voucher', name: '상품권', kind: 'voucher'),
+            PaymentMethodOption(id: 'cash', name: '현금', kind: 'cash'),
+            PaymentMethodOption(id: 'bank', name: '계좌', kind: 'bank'),
+          ],
+        ),
+      ),
+    );
+    final expenseDropdown = tester.widget<DropdownButton<String>>(
+      find.descendant(
+        of: find.byKey(const ValueKey('payment-false')),
+        matching: find.byType(DropdownButton<String>),
+      ),
+    );
+    expect(expenseDropdown.items!.map((item) => item.value), [
+      'card',
+      'cash',
+      'bank',
+    ]);
+
+    await tester.tap(find.text('수입'));
+    await tester.pumpAndSettle();
+    final incomeDropdown = tester.widget<DropdownButton<String>>(
+      find.descendant(
+        of: find.byKey(const ValueKey('payment-true')),
+        matching: find.byType(DropdownButton<String>),
+      ),
+    );
+    expect(incomeDropdown.items!.map((item) => item.value), ['cash', 'bank']);
+    final incomeField = tester.widget<DropdownButtonFormField<String>>(
+      find.byKey(const ValueKey('payment-true')),
+    );
+    expect(incomeField.initialValue, 'cash');
+  });
+
   testWidgets('English locale translates entry fields and date picker', (
     tester,
   ) async {
@@ -107,11 +154,12 @@ void main() {
   testWidgets('calendar selection becomes the direct-entry date', (
     tester,
   ) async {
+    final repository = _Repository();
     await tester.pumpWidget(
-      BudgetApp(saveTheme: (_) async {}, transactionRepository: _Repository()),
+      BudgetApp(saveTheme: (_) async {}, transactionRepository: repository),
     );
     await tester.pumpAndSettle();
-    final selected = DateTime(2026, 9, 7);
+    final selected = DateTime(2025, 2, 7);
     tester
         .widget<CalendarDatePicker>(find.byType(CalendarDatePicker))
         .onDateChanged(selected);
@@ -125,8 +173,9 @@ void main() {
           .widget<TextFormField>(find.byKey(const Key('date')))
           .controller!
           .text,
-      '2026-09-07',
+      '2025-02-07',
     );
+    expect(repository.lastQueryStart, DateTime(2025, 2));
   });
 
   testWidgets('date calendar button updates the direct-entry date', (

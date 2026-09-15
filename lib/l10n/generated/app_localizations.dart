@@ -842,6 +842,18 @@ abstract class AppLocalizations {
   /// **'실적을 불러오지 못했어요.'**
   String get performanceLoadFailed;
 
+  /// No description provided for @balanceLoadFailed.
+  ///
+  /// In ko, this message translates to:
+  /// **'잔액을 불러오지 못했어요.'**
+  String get balanceLoadFailed;
+
+  /// No description provided for @balanceLoading.
+  ///
+  /// In ko, this message translates to:
+  /// **'잔액을 불러오는 중…'**
+  String get balanceLoading;
+
   /// No description provided for @kind.
   ///
   /// In ko, this message translates to:

@@ -398,6 +398,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get performanceLoadFailed => '실적을 불러오지 못했어요.';
 
   @override
+  String get balanceLoadFailed => '잔액을 불러오지 못했어요.';
+
+  @override
+  String get balanceLoading => '잔액을 불러오는 중…';
+
+  @override
   String get kind => '종류';
 
   @override
