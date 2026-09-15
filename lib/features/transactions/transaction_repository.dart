@@ -9,10 +9,12 @@ class PaymentMethodOption {
     required this.id,
     required this.name,
     required this.kind,
+    this.ownerMemberId,
   });
   final String id;
   final String name;
   final String kind;
+  final String? ownerMemberId;
 }
 
 class MemberOption {
@@ -47,6 +49,13 @@ abstract interface class TransactionRepository {
   Future<HouseholdContext> loadContext();
   Future<void> save(String householdId, TransactionDraft draft);
   Future<void> saveMany(String householdId, List<TransactionDraft> drafts);
+  Future<PaymentMethodOption> addPaymentMethod(
+    String householdId,
+    String kind,
+    String name,
+    String? ownerMemberId,
+  );
+  Future<void> archivePaymentMethod(String householdId, String paymentMethodId);
   Future<TransactionQueryResult> query(
     String householdId,
     DateTime start,
@@ -85,7 +94,7 @@ class SupabaseTransactionRepository implements TransactionRepository {
     }
     final methods = await client
         .from('payment_methods')
-        .select('id,name,kind')
+        .select('id,name,kind,owner_member_id')
         .eq('household_id', householdId)
         .isFilter('archived_at', null)
         .order('created_at');
@@ -103,6 +112,7 @@ class SupabaseTransactionRepository implements TransactionRepository {
               id: row['id'] as String,
               name: row['name'] as String,
               kind: row['kind'] as String,
+              ownerMemberId: row['owner_member_id'] as String?,
             ),
           )
           .toList(growable: false),
@@ -111,6 +121,47 @@ class SupabaseTransactionRepository implements TransactionRepository {
             return MemberOption(id: row['id'] as String, name: '구성원');
           })
           .toList(growable: false),
+    );
+  }
+
+  @override
+  Future<PaymentMethodOption> addPaymentMethod(
+    String householdId,
+    String kind,
+    String name,
+    String? ownerMemberId,
+  ) async {
+    final function = kind == 'debit_card' || kind == 'credit_card'
+        ? 'add_card_payment_method'
+        : 'add_payment_method';
+    final id = await client.rpc(
+      function,
+      params: {
+        'p_household_id': householdId,
+        'p_kind': kind,
+        'p_name': name,
+        'p_owner_member_id': ownerMemberId,
+      },
+    );
+    return PaymentMethodOption(
+      id: id as String,
+      name: name.trim(),
+      kind: kind,
+      ownerMemberId: ownerMemberId,
+    );
+  }
+
+  @override
+  Future<void> archivePaymentMethod(
+    String householdId,
+    String paymentMethodId,
+  ) async {
+    await client.rpc(
+      'archive_payment_method',
+      params: {
+        'p_household_id': householdId,
+        'p_payment_method_id': paymentMethodId,
+      },
     );
   }
 

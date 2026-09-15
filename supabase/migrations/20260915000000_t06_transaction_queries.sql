@@ -59,4 +59,5 @@ end;
 $$;
 
 revoke all on function public.query_transactions(uuid, date, date, uuid, uuid, text, date, timestamptz, uuid, integer) from public;
+revoke execute on function public.query_transactions(uuid, date, date, uuid, uuid, text, date, timestamptz, uuid, integer) from anon;
 grant execute on function public.query_transactions(uuid, date, date, uuid, uuid, text, date, timestamptz, uuid, integer) to authenticated;

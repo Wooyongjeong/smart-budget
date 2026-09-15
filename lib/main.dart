@@ -10,6 +10,7 @@ import 'auth/auth_service.dart';
 import 'auth/config_missing_screen.dart';
 import 'features/transactions/transaction_repository.dart';
 import 'features/transactions/ai_review_screen.dart';
+import 'features/payment_methods/payment_methods_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -170,7 +171,9 @@ class _BudgetAppState extends State<BudgetApp> {
   }
 
   void refreshOverview() {
-    setState(() => overview = _loadOverview());
+    setState(() {
+      overview = _loadOverview();
+    });
   }
 
   Future<void> select(BudgetPalette next) async {
@@ -211,6 +214,13 @@ class _BudgetAppState extends State<BudgetApp> {
           builder: (_) => EntryForm(
             paymentMethods: data.paymentMethods,
             members: data.members,
+            onManagePaymentMethods: data.paymentMethods.isEmpty
+                ? () async {
+                    Navigator.of(context).pop();
+                    await openPaymentMethods(context);
+                    if (context.mounted) await openEntry(context);
+                  }
+                : null,
             onConfirm: repository == null
                 ? null
                 : (draft) async {
@@ -228,10 +238,15 @@ class _BudgetAppState extends State<BudgetApp> {
                           content: Text('거래를 저장하지 못했어요. (${error.code})'),
                         ),
                       );
-                    } catch (_) {
+                    } catch (error, stackTrace) {
+                      debugPrint('transaction save failed: $error');
+                      debugPrintStack(stackTrace: stackTrace);
                       messenger.currentState?.showSnackBar(
-                        const SnackBar(
-                          content: Text('거래를 저장하지 못했어요. 다시 시도해 주세요.'),
+                        SnackBar(
+                          content: Text(
+                            '거래를 저장하지 못했어요. '
+                            '${error is TransactionSaveException ? error.code : error}',
+                          ),
                         ),
                       );
                     }
@@ -266,6 +281,27 @@ class _BudgetAppState extends State<BudgetApp> {
       if (mounted) {
         messenger.currentState?.showSnackBar(
           const SnackBar(content: Text('가계부 정보를 불러오지 못했어요. 다시 시도해 주세요.')),
+        );
+      }
+    }
+  }
+
+  Future<void> openPaymentMethods(BuildContext context) async {
+    final repository = widget.transactionRepository;
+    if (repository == null) return;
+    try {
+      final data = await repository.loadContext();
+      if (!context.mounted) return;
+      await Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) =>
+              PaymentMethodsScreen(repository: repository, contextData: data),
+        ),
+      );
+    } catch (_) {
+      if (mounted) {
+        messenger.currentState?.showSnackBar(
+          const SnackBar(content: Text('결제 수단을 불러오지 못했어요. 다시 시도해 주세요.')),
         );
       }
     }
@@ -357,6 +393,15 @@ class _BudgetAppState extends State<BudgetApp> {
                 ][tab],
               ),
               const SizedBox(height: 32),
+              if (tab == 2 && widget.transactionRepository != null)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: FilledButton.icon(
+                    onPressed: () => openPaymentMethods(context),
+                    icon: const Icon(Icons.manage_accounts_outlined),
+                    label: const Text('결제 수단 등록·관리'),
+                  ),
+                ),
               if (tab == 0 && widget.transactionRepository != null)
                 FutureBuilder<TransactionQueryResult>(
                   future: overview,

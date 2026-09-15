@@ -1,10 +1,20 @@
 # Construction 진행
 
+## T11 — 결제 수단 등록·관리 UI
+
+구현 브랜치: `feat/t11-payment-method-ui`.
+
+지갑 탭에서 결제 수단 관리 화면으로 이동해 현금·계좌·체크카드·신용카드를 등록할 수 있다. 카드 포함 모든 수단은 구성원 소유자를 선택할 수 있고, 등록된 수단은 보관 처리해 거래 입력 목록에서 숨긴다. T03의 일반 등록 RPC와 T10의 카드 등록 RPC를 종류에 따라 호출하며, 보관은 `archive_payment_method` RPC로 처리한다. 직접 입력 화면에 등록된 수단이 없으면 등록 화면으로 이동하는 링크를 제공하고, 등록 뒤 거래 입력으로 돌아갈 수 있다.
+
+가계부 생성 시 공유 현금 수단을 자동 생성하고, 기존 가계부에는 `현금` 수단이 없을 때만 보정한다. 따라서 공동 가계부 구성원 모두가 기본 현금을 함께 사용할 수 있다.
+
+검증: `flutter analyze` 문제 없음, `flutter test` 전체 통과(11개). `supabase/tests/t11_payment_methods.sql`에 등록·보관 함수 실행 권한과 직접 insert 차단 회귀를 추가했다. Supabase CLI/psql이 없어 실제 migration 적용과 원격 RPC 호출은 미실행이다.
+
 ## T10 — 카드 등록과 월별 실적 목표
 
 구현 브랜치: `feat/t10-card-performance`.
 
-`card_targets`와 거래의 `performance_included` 플래그를 추가하고 카드 등록, 월별 목표 upsert, 거래별 실적 포함/제외, 카드별 월 실적 조회 RPC를 구현했다. 카드+월을 기본 키로 중복 목표를 막고, 활성 구성원만 호출할 수 있게 했다. 상품권과 환불에 따른 실적 조정은 T11 범위로 남긴다.
+`card_targets`와 거래의 `performance_included` 플래그를 추가하고 카드 등록, 월별 목표 upsert, 거래별 실적 포함/제외, 카드별 월 실적 조회 RPC를 구현했다. 카드+월을 기본 키로 중복 목표를 막고, 활성 구성원만 호출할 수 있게 했다. 상품권과 환불에 따른 실적 조정은 T12 범위로 남긴다.
 
 검증: `supabase/tests/t10_card_targets.sql`에 함수·권한·카드+월 유일성 회귀를 추가했다. Supabase CLI/psql이 없어 실제 migration과 카드 실적 데이터 시나리오는 미실행이다.
 
