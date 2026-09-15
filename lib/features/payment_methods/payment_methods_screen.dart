@@ -60,6 +60,15 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
           result.voucherAmountWon!,
         );
       }
+      if ((result.kind == 'debit_card' || result.kind == 'credit_card') &&
+          result.targetAmountWon != null) {
+        await widget.repository.setCardTarget(
+          widget.contextData.householdId,
+          method.id,
+          DateTime.now(),
+          result.targetAmountWon!,
+        );
+      }
       if (!mounted) return;
       setState(() => methods.add(method));
       ScaffoldMessenger.of(
@@ -241,9 +250,26 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
               child: ListTile(
                 leading: Icon(_iconFor(method.kind)),
                 title: Text(method.name),
-                subtitle: Text(
-                  '${kinds[method.kind] ?? method.kind}${_ownerLabel(method)}',
-                ),
+                subtitle:
+                    method.kind == 'debit_card' || method.kind == 'credit_card'
+                    ? FutureBuilder<List<Map<String, dynamic>>>(
+                        future: widget.repository.cardPerformance(
+                          widget.contextData.householdId,
+                          DateTime.now(),
+                        ),
+                        builder: (context, snapshot) {
+                          final row = snapshot.data?.firstWhere(
+                            (item) => item['payment_method_id'] == method.id,
+                            orElse: () => <String, dynamic>{},
+                          );
+                          return Text(
+                            '${kinds[method.kind]}${_ownerLabel(method)}\n이번 달 ${row?['actual_amount_won'] ?? 0}원 / 목표 ${row?['target_amount_won'] ?? 0}원',
+                          );
+                        },
+                      )
+                    : Text(
+                        '${kinds[method.kind] ?? method.kind}${_ownerLabel(method)}',
+                      ),
                 trailing: method.kind == 'voucher'
                     ? Wrap(
                         children: [
@@ -323,12 +349,14 @@ class _PaymentMethodDraft {
     this.ownerMemberId, {
     this.paidAmountWon,
     this.voucherAmountWon,
+    this.targetAmountWon,
   });
   final String kind;
   final String name;
   final String? ownerMemberId;
   final int? paidAmountWon;
   final int? voucherAmountWon;
+  final int? targetAmountWon;
 }
 
 class _PaymentMethodDialog extends StatefulWidget {
@@ -347,6 +375,7 @@ class _PaymentMethodDialogState extends State<_PaymentMethodDialog> {
   final name = TextEditingController();
   final paidAmount = TextEditingController();
   final voucherAmount = TextEditingController();
+  final targetAmount = TextEditingController();
   late String kind = widget.initialKind;
   String? owner;
 
@@ -355,6 +384,7 @@ class _PaymentMethodDialogState extends State<_PaymentMethodDialog> {
     name.dispose();
     paidAmount.dispose();
     voucherAmount.dispose();
+    targetAmount.dispose();
     super.dispose();
   }
 
@@ -411,6 +441,18 @@ class _PaymentMethodDialogState extends State<_PaymentMethodDialog> {
                   : null,
             ),
           ],
+          if (kind == 'debit_card' || kind == 'credit_card')
+            TextFormField(
+              controller: targetAmount,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                labelText: '월 실적 목표',
+                suffixText: '원',
+              ),
+              validator: (value) => int.tryParse(value?.trim() ?? '') == null
+                  ? '목표 금액을 입력해 주세요.'
+                  : null,
+            ),
           if (widget.members.isNotEmpty)
             DropdownButtonFormField<String>(
               initialValue: owner,
@@ -445,6 +487,7 @@ class _PaymentMethodDialogState extends State<_PaymentMethodDialog> {
                 owner,
                 paidAmountWon: int.tryParse(paidAmount.text.trim()),
                 voucherAmountWon: int.tryParse(voucherAmount.text.trim()),
+                targetAmountWon: int.tryParse(targetAmount.text.trim()),
               ),
             );
           }

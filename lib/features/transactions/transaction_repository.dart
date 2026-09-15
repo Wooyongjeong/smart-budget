@@ -60,7 +60,18 @@ abstract interface class TransactionRepository {
     String householdId,
     String kind,
     String voucherId,
-    int amountWon,
+    int paidAmountWon,
+    int voucherAmountWon,
+  );
+  Future<List<Map<String, dynamic>>> cardPerformance(
+    String householdId,
+    DateTime month,
+  );
+  Future<void> setCardTarget(
+    String householdId,
+    String paymentMethodId,
+    DateTime month,
+    int targetAmountWon,
   );
   Future<TransactionQueryResult> query(
     String householdId,
@@ -176,7 +187,8 @@ class SupabaseTransactionRepository implements TransactionRepository {
     String householdId,
     String kind,
     String voucherId,
-    int amountWon,
+    int paidAmountWon,
+    int voucherAmountWon,
   ) async {
     await client.rpc(
       'record_voucher_event',
@@ -184,9 +196,43 @@ class SupabaseTransactionRepository implements TransactionRepository {
         'p_household_id': householdId,
         'p_kind': kind,
         'p_voucher_id': voucherId,
-        'p_amount_won': amountWon,
+        'p_paid_amount_won': paidAmountWon,
+        'p_voucher_amount_won': voucherAmountWon,
         'p_occurred_on': _dateOnly(DateTime.now()),
         'p_merchant': kind == 'voucher_topup' ? '상품권 충전' : '상품권 사용',
+      },
+    );
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> cardPerformance(
+    String householdId,
+    DateTime month,
+  ) async {
+    final result = await client.rpc(
+      'card_performance',
+      params: {
+        'p_household_id': householdId,
+        'p_target_month': _dateOnly(DateTime(month.year, month.month, 1)),
+      },
+    );
+    return (result as List<dynamic>).cast<Map<String, dynamic>>();
+  }
+
+  @override
+  Future<void> setCardTarget(
+    String householdId,
+    String paymentMethodId,
+    DateTime month,
+    int targetAmountWon,
+  ) async {
+    await client.rpc(
+      'set_card_target',
+      params: {
+        'p_household_id': householdId,
+        'p_payment_method_id': paymentMethodId,
+        'p_target_month': _dateOnly(DateTime(month.year, month.month, 1)),
+        'p_target_amount_won': targetAmountWon,
       },
     );
   }
