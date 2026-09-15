@@ -196,6 +196,49 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
     }
   }
 
+  Future<void> editTarget(PaymentMethodOption method) async {
+    final controller = TextEditingController();
+    final value = await showDialog<int>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('${method.name} 실적 목표 수정'),
+        content: TextField(
+          controller: controller,
+          keyboardType: TextInputType.number,
+          decoration: const InputDecoration(labelText: '월 목표', suffixText: '원'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('취소'),
+          ),
+          FilledButton(
+            onPressed: () =>
+                Navigator.pop(context, int.tryParse(controller.text.trim())),
+            child: const Text('저장'),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+    if (value == null || value <= 0 || !mounted) return;
+    try {
+      await widget.repository.setCardTarget(
+        widget.contextData.householdId,
+        method.id,
+        DateTime.now(),
+        value,
+      );
+      if (mounted) setState(() {});
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('실적 목표를 수정하지 못했어요.')));
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final content = ListView(
@@ -296,10 +339,24 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                           ),
                         ],
                       )
-                    : PopupMenuButton<String>(
-                        onSelected: (_) => archive(method),
-                        itemBuilder: (context) => const [
-                          PopupMenuItem(value: 'archive', child: Text('보관')),
+                    : Wrap(
+                        children: [
+                          if (method.kind == 'debit_card' ||
+                              method.kind == 'credit_card')
+                            IconButton(
+                              tooltip: '실적 목표 수정',
+                              onPressed: () => editTarget(method),
+                              icon: const Icon(Icons.edit_outlined),
+                            ),
+                          PopupMenuButton<String>(
+                            onSelected: (_) => archive(method),
+                            itemBuilder: (context) => const [
+                              PopupMenuItem(
+                                value: 'archive',
+                                child: Text('보관'),
+                              ),
+                            ],
+                          ),
                         ],
                       ),
               ),
