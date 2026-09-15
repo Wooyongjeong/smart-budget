@@ -35,7 +35,22 @@ class _Repository implements TransactionRepository {
   Future<void> archivePaymentMethod(String h, String id) async =>
       methods.removeWhere((method) => method.id == id);
   @override
-  Future<void> recordVoucherEvent(String h, String k, String v, int a) async {}
+  Future<void> recordVoucherEvent(
+    String h,
+    String k,
+    String v,
+    int p,
+    int a,
+  ) async {}
+  @override
+  Future<List<Map<String, dynamic>>> cardPerformance(
+    String h,
+    DateTime m,
+  ) async => [];
+  @override
+  Future<void> setCardTarget(String h, String p, DateTime m, int a) async {}
+  @override
+  Future<int> voucherBalance(String h, String v) async => 0;
   @override
   Future<void> save(String h, TransactionDraft d) async {}
   @override

@@ -73,6 +73,7 @@ abstract interface class TransactionRepository {
     DateTime month,
     int targetAmountWon,
   );
+  Future<int> voucherBalance(String householdId, String voucherId);
   Future<TransactionQueryResult> query(
     String householdId,
     DateTime start,
@@ -234,6 +235,19 @@ class SupabaseTransactionRepository implements TransactionRepository {
         'p_target_month': _dateOnly(DateTime(month.year, month.month, 1)),
         'p_target_amount_won': targetAmountWon,
       },
+    );
+  }
+
+  @override
+  Future<int> voucherBalance(String householdId, String voucherId) async {
+    final rows = await client
+        .from('voucher_movements')
+        .select('delta_won')
+        .eq('household_id', householdId)
+        .eq('voucher_id', voucherId);
+    return rows.fold<int>(
+      0,
+      (sum, row) => sum + (row['delta_won'] as num).toInt(),
     );
   }
 

@@ -310,6 +310,16 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                           );
                         },
                       )
+                    : method.kind == 'voucher'
+                    ? FutureBuilder<int>(
+                        future: widget.repository.voucherBalance(
+                          widget.contextData.householdId,
+                          method.id,
+                        ),
+                        builder: (context, snapshot) => Text(
+                          '${kinds[method.kind]}${_ownerLabel(method)}\n잔액 ${snapshot.data ?? 0}원',
+                        ),
+                      )
                     : Text(
                         '${kinds[method.kind] ?? method.kind}${_ownerLabel(method)}',
                       ),
