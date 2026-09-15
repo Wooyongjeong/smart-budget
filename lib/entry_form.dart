@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'features/transactions/transaction_draft.dart';
 import 'features/transactions/transaction_repository.dart';
+import 'money_input.dart';
 
 class EntryForm extends StatefulWidget {
   const EntryForm({
@@ -63,7 +64,7 @@ class _EntryFormState extends State<EntryForm> {
     super.initState();
     final draft = widget.initialDraft;
     if (draft != null) {
-      amount.text = draft.amountWon?.toString() ?? '';
+      amount.text = draft.amountWon == null ? '' : formatWon(draft.amountWon!);
       merchant.text = draft.merchant;
       memo.text = draft.memo;
     }
@@ -110,8 +111,8 @@ class _EntryFormState extends State<EntryForm> {
 
   String? validateAmount(String? value) {
     final raw = value?.trim() ?? '';
-    final number = int.tryParse(raw);
-    return RegExp(r'^\d+$').hasMatch(raw) &&
+    final number = parseWon(raw);
+    return RegExp(r'^\d{1,3}(,\d{3})*$').hasMatch(raw) &&
             number != null &&
             number > 0 &&
             number <= 999999999
@@ -127,7 +128,7 @@ class _EntryFormState extends State<EntryForm> {
       final draft = TransactionDraft(
         kind: income ? TransactionKind.income : TransactionKind.expense,
         occurredOn: DateFormat('yyyy-MM-dd').parseStrict(date.text.trim()),
-        amountWon: int.parse(amount.text.trim()),
+        amountWon: parseWon(amount.text)!,
         merchant: merchant.text.trim(),
         category: category,
         paymentMethodId: payment,
@@ -140,7 +141,7 @@ class _EntryFormState extends State<EntryForm> {
           title: const Text('입력 내용 확인'),
           content: SingleChildScrollView(
             child: Text(
-              '${income ? '수입' : '지출'} · ${NumberFormat.decimalPattern('ko').format(int.parse(amount.text.trim()))}원\n'
+              '${income ? '수입' : '지출'} · ${formatWon(parseWon(amount.text)!)}원\n'
               '${date.text.trim()}\n${merchant.text.trim()}\n$category · ${_paymentName()} · ${_memberName()}\n'
               '${memo.text.trim()}\n\n${widget.onConfirm == null ? '미리보기이며 실제 가계부에는 저장되지 않아요.' : '확인 후 저장할 수 있어요.'}',
             ),
@@ -211,6 +212,7 @@ class _EntryFormState extends State<EntryForm> {
                   key: const Key('amount'),
                   controller: amount,
                   keyboardType: TextInputType.number,
+                  inputFormatters: const [WonInputFormatter()],
                   decoration: const InputDecoration(
                     labelText: '금액',
                     suffixText: '원',

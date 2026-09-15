@@ -88,6 +88,13 @@ void main() {
       await tester.tap(find.text('수입'));
       await tester.pumpAndSettle();
       await tester.enterText(find.byKey(const Key('amount')), '3000000');
+      expect(
+        tester
+            .widget<TextFormField>(find.byKey(const Key('amount')))
+            .controller!
+            .text,
+        '3,000,000',
+      );
       await tester.enterText(find.byKey(const Key('merchant')), '월급');
       await preview(tester);
       expect(find.textContaining('수입 · 3,000,000원'), findsOneWidget);

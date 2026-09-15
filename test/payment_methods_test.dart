@@ -125,6 +125,10 @@ void main() {
     await tester.tap(find.byTooltip('실적 목표 수정'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), '300000');
+    expect(
+      tester.widget<TextField>(find.byType(TextField)).controller!.text,
+      '300,000',
+    );
     await tester.tap(find.text('저장'));
     await tester.pumpAndSettle();
     expect(find.textContaining('목표 300000원'), findsOneWidget);

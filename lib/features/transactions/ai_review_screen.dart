@@ -3,11 +3,14 @@ import 'package:intl/intl.dart';
 
 import 'transaction_draft.dart';
 import 'transaction_repository.dart';
+import '../../money_input.dart';
 
 class ReceiptFixtureItem {
   ReceiptFixtureItem({required this.draft, required this.reason})
     : selected = true,
-      amount = TextEditingController(text: draft.amountWon?.toString() ?? ''),
+      amount = TextEditingController(
+        text: draft.amountWon == null ? '' : formatWon(draft.amountWon!),
+      ),
       merchant = TextEditingController(text: draft.merchant),
       date = TextEditingController(
         text: DateFormat('yyyy-MM-dd').format(draft.occurredOn),
@@ -22,7 +25,7 @@ class ReceiptFixtureItem {
   TransactionDraft toDraft() => TransactionDraft(
     kind: draft.kind,
     occurredOn: DateFormat('yyyy-MM-dd').parseStrict(date.text.trim()),
-    amountWon: int.tryParse(amount.text.trim()),
+    amountWon: parseWon(amount.text),
     merchant: merchant.text.trim(),
     category: draft.category,
     paymentMethodId: draft.paymentMethodId,
@@ -170,6 +173,7 @@ class _AiReviewScreenState extends State<AiReviewScreen> {
                   TextField(
                     controller: item.amount,
                     keyboardType: TextInputType.number,
+                    inputFormatters: const [WonInputFormatter()],
                     decoration: const InputDecoration(
                       labelText: '금액',
                       suffixText: '원',

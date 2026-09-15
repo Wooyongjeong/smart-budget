@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../transactions/transaction_repository.dart';
+import '../../money_input.dart';
 
 class PaymentMethodsScreen extends StatefulWidget {
   const PaymentMethodsScreen({
@@ -145,6 +146,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
             TextField(
               controller: controller,
               keyboardType: TextInputType.number,
+              inputFormatters: const [WonInputFormatter()],
               decoration: InputDecoration(
                 labelText: kind == 'voucher_topup' ? '실제 결제 금액' : '사용 금액',
                 suffixText: '원',
@@ -154,6 +156,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
               TextField(
                 controller: voucherController,
                 keyboardType: TextInputType.number,
+                inputFormatters: const [WonInputFormatter()],
                 decoration: const InputDecoration(
                   labelText: '상품권 충전액',
                   suffixText: '원',
@@ -168,8 +171,8 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
           ),
           FilledButton(
             onPressed: () {
-              final paid = int.tryParse(controller.text.trim());
-              final voucher = int.tryParse(voucherController.text.trim());
+              final paid = parseWon(controller.text);
+              final voucher = parseWon(voucherController.text);
               if (paid != null &&
                   paid > 0 &&
                   (kind != 'voucher_topup' ||
@@ -219,6 +222,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
         content: TextField(
           controller: controller,
           keyboardType: TextInputType.number,
+          inputFormatters: const [WonInputFormatter()],
           decoration: const InputDecoration(labelText: '월 목표', suffixText: '원'),
         ),
         actions: [
@@ -227,8 +231,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
             child: const Text('취소'),
           ),
           FilledButton(
-            onPressed: () =>
-                Navigator.pop(context, int.tryParse(controller.text.trim())),
+            onPressed: () => Navigator.pop(context, parseWon(controller.text)),
             child: const Text('저장'),
           ),
         ],
@@ -504,40 +507,37 @@ class _PaymentMethodDialogState extends State<_PaymentMethodDialog> {
             TextFormField(
               controller: paidAmount,
               keyboardType: TextInputType.number,
+              inputFormatters: const [WonInputFormatter()],
               decoration: const InputDecoration(
                 labelText: '실제 결제 금액',
                 suffixText: '원',
               ),
               validator: (value) =>
-                  (int.tryParse(value?.trim() ?? '') ?? 0) <= 0
-                  ? '결제 금액을 입력해 주세요.'
-                  : null,
+                  (parseWon(value ?? '') ?? 0) <= 0 ? '결제 금액을 입력해 주세요.' : null,
             ),
             TextFormField(
               controller: voucherAmount,
               keyboardType: TextInputType.number,
+              inputFormatters: const [WonInputFormatter()],
               decoration: const InputDecoration(
                 labelText: '상품권 충전액',
                 suffixText: '원',
               ),
               validator: (value) =>
-                  (int.tryParse(value?.trim() ?? '') ?? 0) <= 0
-                  ? '충전액을 입력해 주세요.'
-                  : null,
+                  (parseWon(value ?? '') ?? 0) <= 0 ? '충전액을 입력해 주세요.' : null,
             ),
           ],
           if (kind == 'debit_card' || kind == 'credit_card')
             TextFormField(
               controller: targetAmount,
               keyboardType: TextInputType.number,
+              inputFormatters: const [WonInputFormatter()],
               decoration: const InputDecoration(
                 labelText: '월 실적 목표',
                 suffixText: '원',
               ),
               validator: (value) =>
-                  (int.tryParse(value?.trim() ?? '') ?? 0) <= 0
-                  ? '목표 금액을 입력해 주세요.'
-                  : null,
+                  (parseWon(value ?? '') ?? 0) <= 0 ? '목표 금액을 입력해 주세요.' : null,
             ),
           if (widget.members.isNotEmpty)
             DropdownButtonFormField<String>(
@@ -571,9 +571,9 @@ class _PaymentMethodDialogState extends State<_PaymentMethodDialog> {
                 kind,
                 name.text.trim(),
                 owner,
-                paidAmountWon: int.tryParse(paidAmount.text.trim()),
-                voucherAmountWon: int.tryParse(voucherAmount.text.trim()),
-                targetAmountWon: int.tryParse(targetAmount.text.trim()),
+                paidAmountWon: parseWon(paidAmount.text),
+                voucherAmountWon: parseWon(voucherAmount.text),
+                targetAmountWon: parseWon(targetAmount.text),
               ),
             );
           }
