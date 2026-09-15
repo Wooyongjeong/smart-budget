@@ -6,6 +6,7 @@ import 'package:smart_budget/features/transactions/transaction_repository.dart';
 
 class _Repository implements TransactionRepository {
   final methods = <PaymentMethodOption>[];
+  int target = 0;
 
   @override
   Future<HouseholdContext> loadContext() async => HouseholdContext(
@@ -46,9 +47,23 @@ class _Repository implements TransactionRepository {
   Future<List<Map<String, dynamic>>> cardPerformance(
     String h,
     DateTime m,
-  ) async => [];
+  ) async => methods
+      .where(
+        (method) => method.kind == 'credit_card' || method.kind == 'debit_card',
+      )
+      .map(
+        (method) => <String, dynamic>{
+          'payment_method_id': method.id,
+          'actual_amount_won': 120000,
+          'target_amount_won': target,
+        },
+      )
+      .toList();
   @override
-  Future<void> setCardTarget(String h, String p, DateTime m, int a) async {}
+  Future<void> setCardTarget(String h, String p, DateTime m, int a) async {
+    target = a;
+  }
+
   @override
   Future<int> voucherBalance(String h, String v) async => 0;
   @override
@@ -84,5 +99,30 @@ void main() {
     await tester.tap(find.text('등록').last);
     await tester.pumpAndSettle();
     expect(find.text('생활비 현금'), findsOneWidget);
+  });
+
+  testWidgets('updates a card target and refreshes the summary', (
+    tester,
+  ) async {
+    final repository = _Repository();
+    repository.methods.add(
+      const PaymentMethodOption(id: 'card', name: '생활 카드', kind: 'credit_card'),
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        home: PaymentMethodsScreen(
+          repository: repository,
+          contextData: await repository.loadContext(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.textContaining('목표 0원'), findsOneWidget);
+    await tester.tap(find.byTooltip('실적 목표 수정'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), '300000');
+    await tester.tap(find.text('저장'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('목표 300000원'), findsOneWidget);
   });
 }
