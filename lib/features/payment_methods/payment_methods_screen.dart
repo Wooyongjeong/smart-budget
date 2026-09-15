@@ -34,11 +34,13 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
     'voucher': '상품권',
   };
 
-  Future<void> add() async {
+  Future<void> add({String initialKind = 'cash'}) async {
     final result = await showDialog<_PaymentMethodDraft>(
       context: context,
-      builder: (context) =>
-          _PaymentMethodDialog(members: widget.contextData.members),
+      builder: (context) => _PaymentMethodDialog(
+        members: widget.contextData.members,
+        initialKind: initialKind,
+      ),
     );
     if (result == null || !mounted) return;
     setState(() => saving = true);
@@ -162,10 +164,20 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
         const SizedBox(height: 20),
         Align(
           alignment: Alignment.centerRight,
-          child: FilledButton.icon(
-            onPressed: saving ? null : add,
-            icon: const Icon(Icons.add),
-            label: const Text('결제 수단 등록'),
+          child: Wrap(
+            spacing: 8,
+            children: [
+              OutlinedButton.icon(
+                onPressed: saving ? null : () => add(initialKind: 'voucher'),
+                icon: const Icon(Icons.confirmation_number_outlined),
+                label: const Text('상품권 등록'),
+              ),
+              FilledButton.icon(
+                onPressed: saving ? null : add,
+                icon: const Icon(Icons.add),
+                label: const Text('결제 수단 등록'),
+              ),
+            ],
           ),
         ),
         const SizedBox(height: 8),
@@ -275,8 +287,12 @@ class _PaymentMethodDraft {
 }
 
 class _PaymentMethodDialog extends StatefulWidget {
-  const _PaymentMethodDialog({required this.members});
+  const _PaymentMethodDialog({
+    required this.members,
+    this.initialKind = 'cash',
+  });
   final List<MemberOption> members;
+  final String initialKind;
   @override
   State<_PaymentMethodDialog> createState() => _PaymentMethodDialogState();
 }
@@ -284,7 +300,7 @@ class _PaymentMethodDialog extends StatefulWidget {
 class _PaymentMethodDialogState extends State<_PaymentMethodDialog> {
   final form = GlobalKey<FormState>();
   final name = TextEditingController();
-  String kind = 'cash';
+  late String kind = widget.initialKind;
   String? owner;
 
   @override
