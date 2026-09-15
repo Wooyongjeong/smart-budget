@@ -4,6 +4,44 @@ import 'package:smart_budget/main.dart';
 import 'package:smart_budget/themes.dart';
 
 void main() {
+  testWidgets('new theme choices can be selected and saved', (tester) async {
+    String? saved;
+    await tester.pumpWidget(BudgetApp(saveTheme: (id) async => saved = id));
+    await tester.tap(find.text('설정'));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(find.text('자두와 살구'), 250);
+    await tester.tap(find.text('자두와 살구'));
+    await tester.pumpAndSettle();
+    expect(saved, 'plum');
+    expect(find.text('맑은 하늘'), findsOneWidget);
+  });
+
+  testWidgets('language selection switches labels and persists', (
+    tester,
+  ) async {
+    String? savedLocale;
+    await tester.pumpWidget(
+      BudgetApp(
+        saveTheme: (_) async {},
+        saveLocale: (code) async => savedLocale = code,
+      ),
+    );
+    await tester.tap(find.text('설정'));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(find.text('영어'), 300);
+    await tester.tap(find.text('영어'));
+    await tester.pumpAndSettle();
+    expect(savedLocale, 'en');
+    expect(find.text('Settings'), findsOneWidget);
+    expect(find.text('Language'), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox());
+    await tester.pumpWidget(
+      BudgetApp(initialLocale: savedLocale, saveTheme: (_) async {}),
+    );
+    expect(find.text('Calendar'), findsOneWidget);
+  });
+
   testWidgets('theme selection persists and updates all tabs', (tester) async {
     String? saved;
     await tester.pumpWidget(
@@ -15,6 +53,13 @@ void main() {
     );
     await tester.tap(find.text('설정'));
     await tester.pumpAndSettle();
+    expect(find.byType(ChoiceChip), findsNWidgets(palettes.length));
+    expect(
+      tester
+          .widgetList<ChoiceChip>(find.byType(ChoiceChip))
+          .every((chip) => chip.showCheckmark == false),
+      isTrue,
+    );
     await tester.tap(find.text('바다와 모래'));
     await tester.pumpAndSettle();
     expect(saved, 'ocean');

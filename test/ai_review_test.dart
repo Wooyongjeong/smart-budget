@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:smart_budget/features/transactions/ai_review_screen.dart';
 import 'package:smart_budget/features/transactions/transaction_repository.dart';
 import 'package:smart_budget/features/transactions/transaction_draft.dart';
+import 'localized_test_app.dart';
 
 class FakeRepository implements TransactionRepository {
   int savedCount = 0;
@@ -75,7 +76,7 @@ void main() {
   ) async {
     final repository = FakeRepository();
     await tester.pumpWidget(
-      MaterialApp(
+      localizedTestApp(
         home: AiReviewScreen(
           repository: repository,
           contextData: await repository.loadContext(),

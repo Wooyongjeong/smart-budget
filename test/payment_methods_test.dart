@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:smart_budget/features/payment_methods/payment_methods_screen.dart';
 import 'package:smart_budget/features/transactions/transaction_draft.dart';
 import 'package:smart_budget/features/transactions/transaction_repository.dart';
+import 'localized_test_app.dart';
 
 class _Repository implements TransactionRepository {
   final methods = <PaymentMethodOption>[];
@@ -84,12 +85,30 @@ class _Repository implements TransactionRepository {
 }
 
 void main() {
+  testWidgets('English locale translates the wallet management screen', (
+    tester,
+  ) async {
+    final repository = _Repository();
+    await tester.pumpWidget(
+      localizedTestApp(
+        locale: const Locale('en'),
+        home: PaymentMethodsScreen(
+          repository: repository,
+          contextData: await repository.loadContext(),
+        ),
+      ),
+    );
+    expect(find.text('Payment methods'), findsOneWidget);
+    expect(find.text('Add voucher'), findsOneWidget);
+    expect(find.text('No payment methods yet.'), findsOneWidget);
+  });
+
   testWidgets('registers a payment method from the management screen', (
     tester,
   ) async {
     final repository = _Repository();
     await tester.pumpWidget(
-      MaterialApp(
+      localizedTestApp(
         home: PaymentMethodsScreen(
           repository: repository,
           contextData: await repository.loadContext(),
@@ -113,7 +132,7 @@ void main() {
       const PaymentMethodOption(id: 'card', name: '생활 카드', kind: 'credit_card'),
     );
     await tester.pumpWidget(
-      MaterialApp(
+      localizedTestApp(
         home: PaymentMethodsScreen(
           repository: repository,
           contextData: await repository.loadContext(),
@@ -125,9 +144,13 @@ void main() {
     await tester.tap(find.byTooltip('실적 목표 수정'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), '300000');
+    expect(
+      tester.widget<TextField>(find.byType(TextField)).controller!.text,
+      '300,000',
+    );
     await tester.tap(find.text('저장'));
     await tester.pumpAndSettle();
-    expect(find.textContaining('목표 300000원'), findsOneWidget);
+    expect(find.textContaining('목표 300,000원'), findsOneWidget);
   });
 
   testWidgets('refreshes a voucher balance after use', (tester) async {
@@ -136,7 +159,7 @@ void main() {
       const PaymentMethodOption(id: 'voucher', name: '온누리', kind: 'voucher'),
     );
     await tester.pumpWidget(
-      MaterialApp(
+      localizedTestApp(
         home: PaymentMethodsScreen(
           repository: repository,
           contextData: await repository.loadContext(),
@@ -144,12 +167,12 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    expect(find.textContaining('잔액 100000원'), findsOneWidget);
+    expect(find.textContaining('잔액 100,000원'), findsOneWidget);
     await tester.tap(find.byTooltip('사용'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), '20000');
     await tester.tap(find.text('확인'));
     await tester.pumpAndSettle();
-    expect(find.textContaining('잔액 80000원'), findsOneWidget);
+    expect(find.textContaining('잔액 80,000원'), findsOneWidget);
   });
 }

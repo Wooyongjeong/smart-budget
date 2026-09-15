@@ -1,5 +1,21 @@
 # Construction 진행
 
+## 최종 병합 전 리뷰와 README
+
+브랜치: `fix/document-contract-review`.
+
+선택한 캘린더 월에 맞춰 거래 조회 범위를 갱신하고, 수입/일반 지출의 결제 수단 종류를 DB 계약과 일치시켰다. 상품권 잔액 로딩·오류 표시를 분리하고 테마 선택 체크 아이콘을 제거했다. README는 현재 구현 범위, Supabase/Kakao 설정, 실행·테스트 절차, 금액 규칙과 미완료 기능을 기준으로 다시 작성했다.
+
+검증: `dart fix --dry-run` 수정 없음, `flutter analyze`, 전체 Flutter 테스트, macOS debug build, pgTAP 53개 통과. 로컬·원격 migration 이력 일치 확인.
+
+## 문서 계약 재검토
+
+브랜치: fix/document-contract-review. 상세 발견 사항과 미완료 항목은 [code-review.md](code-review.md).
+card_performance 중첩 집계 SQL 오류와 상품권 충전 지출 누락을 새 migration으로 수정했다.
+authenticated 역할의 실제 카드 목표/충전/사용 RPC 테스트를 추가해 93,000원 지출, 80,000원 잔액, 93,000원 카드 인정액을 확인했다.
+직접 입력 중복 제출 차단, AI 저장 후 갱신, 지갑 조회 실패 재시도, 내부 오류 원문 노출도 수정했다.
+검증: flutter analyze 통과, Flutter 13개, SQL 46개 통과. 로컬 DB는 reset 없이 migration up으로 적용했다. 원격 DB는 아직 미적용이다.
+
 ## T12 — 상품권·초기 잔액·환불
 
 구현 브랜치: `feat/t12-vouchers-refunds`.
