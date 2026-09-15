@@ -497,4 +497,10 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get themeIndigo => '인디고 구름';
+
+  @override
+  String get themePlum => '자두와 살구';
+
+  @override
+  String get themeSky => '맑은 하늘';
 }

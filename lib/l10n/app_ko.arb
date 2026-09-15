@@ -149,5 +149,6 @@
   "configRequiredBody": "Supabase와 카카오 로그인 설정 후 실행할 수 있어요.\n\nSUPABASE_URL\nSUPABASE_PUBLISHABLE_KEY\nAUTH_REDIRECT_URL\n\n세 값은 --dart-define으로 전달해 주세요.",
   "themeForest": "숲과 크림", "themeOcean": "바다와 모래", "themeLavender": "라벤더 밀크",
   "themeRose": "로즈 티", "themeOlive": "모노 올리브", "themeTerracotta": "살구빛 테라코타",
-  "themeLemon": "레몬 가든", "themeMint": "민트 소다", "themeCocoa": "코코아 라떼", "themeIndigo": "인디고 구름"
+  "themeLemon": "레몬 가든", "themeMint": "민트 소다", "themeCocoa": "코코아 라떼", "themeIndigo": "인디고 구름",
+  "themePlum": "자두와 살구", "themeSky": "맑은 하늘"
 }

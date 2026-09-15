@@ -506,4 +506,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get themeIndigo => 'Indigo Cloud';
+
+  @override
+  String get themePlum => 'Plum & Apricot';
+
+  @override
+  String get themeSky => 'Clear Sky';
 }

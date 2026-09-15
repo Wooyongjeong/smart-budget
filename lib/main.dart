@@ -678,6 +678,8 @@ class _BudgetAppState extends State<BudgetApp> {
     'mint' => l10n.themeMint,
     'cocoa' => l10n.themeCocoa,
     'indigo' => l10n.themeIndigo,
+    'plum' => l10n.themePlum,
+    'sky' => l10n.themeSky,
     _ => id,
   };
 }

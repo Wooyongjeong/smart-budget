@@ -4,6 +4,18 @@ import 'package:smart_budget/main.dart';
 import 'package:smart_budget/themes.dart';
 
 void main() {
+  testWidgets('new theme choices can be selected and saved', (tester) async {
+    String? saved;
+    await tester.pumpWidget(BudgetApp(saveTheme: (id) async => saved = id));
+    await tester.tap(find.text('설정'));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(find.text('자두와 살구'), 250);
+    await tester.tap(find.text('자두와 살구'));
+    await tester.pumpAndSettle();
+    expect(saved, 'plum');
+    expect(find.text('맑은 하늘'), findsOneWidget);
+  });
+
   testWidgets('language selection switches labels and persists', (
     tester,
   ) async {

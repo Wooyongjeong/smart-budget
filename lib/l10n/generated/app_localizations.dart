@@ -1033,6 +1033,18 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'인디고 구름'**
   String get themeIndigo;
+
+  /// No description provided for @themePlum.
+  ///
+  /// In ko, this message translates to:
+  /// **'자두와 살구'**
+  String get themePlum;
+
+  /// No description provided for @themeSky.
+  ///
+  /// In ko, this message translates to:
+  /// **'맑은 하늘'**
+  String get themeSky;
 }
 
 class _AppLocalizationsDelegate

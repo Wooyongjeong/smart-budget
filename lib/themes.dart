@@ -105,4 +105,18 @@ const palettes = [
     Color(0xffbfcbee),
     Color(0xfff5f6fd),
   ),
+  BudgetPalette(
+    'plum',
+    '자두와 살구',
+    Color(0xff7a416f),
+    Color(0xfff0a36b),
+    Color(0xfffff8f4),
+  ),
+  BudgetPalette(
+    'sky',
+    '맑은 하늘',
+    Color(0xff236a8d),
+    Color(0xff9bd9e8),
+    Color(0xfff4fcff),
+  ),
 ];

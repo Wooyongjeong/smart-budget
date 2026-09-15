@@ -139,5 +139,6 @@
   "configRequiredBody": "Configure Supabase and Kakao Login before running the app.\n\nSUPABASE_URL\nSUPABASE_PUBLISHABLE_KEY\nAUTH_REDIRECT_URL\n\nPass all three values with --dart-define.",
   "themeForest": "Forest Cream", "themeOcean": "Ocean Sand", "themeLavender": "Lavender Milk",
   "themeRose": "Rose Tea", "themeOlive": "Mono Olive", "themeTerracotta": "Apricot Terracotta",
-  "themeLemon": "Lemon Garden", "themeMint": "Mint Soda", "themeCocoa": "Cocoa Latte", "themeIndigo": "Indigo Cloud"
+  "themeLemon": "Lemon Garden", "themeMint": "Mint Soda", "themeCocoa": "Cocoa Latte", "themeIndigo": "Indigo Cloud",
+  "themePlum": "Plum & Apricot", "themeSky": "Clear Sky"
 }
