@@ -160,6 +160,15 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
         const SizedBox(height: 8),
         const Text('카드 실적과 거래 입력에 사용할 수단을 등록해요.'),
         const SizedBox(height: 20),
+        Align(
+          alignment: Alignment.centerRight,
+          child: FilledButton.icon(
+            onPressed: saving ? null : add,
+            icon: const Icon(Icons.add),
+            label: const Text('결제 수단 등록'),
+          ),
+        ),
+        const SizedBox(height: 8),
         if (methods.isEmpty)
           Card(
             child: Padding(
