@@ -24,7 +24,17 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
   late final List<PaymentMethodOption> methods = [
     ...widget.contextData.paymentMethods,
   ];
+  late Future<List<Map<String, dynamic>>> cardSummary = _loadCardSummary();
   bool saving = false;
+
+  Future<List<Map<String, dynamic>>> _loadCardSummary() => widget.repository
+      .cardPerformance(widget.contextData.householdId, DateTime.now());
+
+  void refreshCardSummary() {
+    setState(() {
+      cardSummary = _loadCardSummary();
+    });
+  }
 
   static const kinds = <String, String>{
     'cash': '현금',
@@ -68,6 +78,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
           DateTime.now(),
           result.targetAmountWon!,
         );
+        cardSummary = _loadCardSummary();
       }
       if (!mounted) return;
       setState(() => methods.add(method));
@@ -171,8 +182,10 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
         ],
       ),
     );
-    controller.dispose();
-    voucherController.dispose();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      controller.dispose();
+      voucherController.dispose();
+    });
     if (amounts == null || !mounted) return;
     try {
       await widget.repository.recordVoucherEvent(
@@ -220,7 +233,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
         ],
       ),
     );
-    controller.dispose();
+    WidgetsBinding.instance.addPostFrameCallback((_) => controller.dispose());
     if (value == null || value <= 0 || !mounted) return;
     try {
       await widget.repository.setCardTarget(
@@ -229,7 +242,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
         DateTime.now(),
         value,
       );
-      if (mounted) setState(() {});
+      if (mounted) refreshCardSummary();
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(
@@ -296,11 +309,13 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                 subtitle:
                     method.kind == 'debit_card' || method.kind == 'credit_card'
                     ? FutureBuilder<List<Map<String, dynamic>>>(
-                        future: widget.repository.cardPerformance(
-                          widget.contextData.householdId,
-                          DateTime.now(),
-                        ),
+                        future: cardSummary,
                         builder: (context, snapshot) {
+                          if (snapshot.hasError) {
+                            return Text(
+                              '${kinds[method.kind]}${_ownerLabel(method)}\n실적을 불러오지 못했어요.',
+                            );
+                          }
                           final row = snapshot.data?.firstWhere(
                             (item) => item['payment_method_id'] == method.id,
                             orElse: () => <String, dynamic>{},
