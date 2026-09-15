@@ -196,6 +196,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
         amounts[1],
       );
       if (mounted) {
+        setState(() {});
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(const SnackBar(content: Text('상품권 내역을 기록했어요.')));
@@ -507,7 +508,8 @@ class _PaymentMethodDialogState extends State<_PaymentMethodDialog> {
                 labelText: '실제 결제 금액',
                 suffixText: '원',
               ),
-              validator: (value) => int.tryParse(value?.trim() ?? '') == null
+              validator: (value) =>
+                  (int.tryParse(value?.trim() ?? '') ?? 0) <= 0
                   ? '결제 금액을 입력해 주세요.'
                   : null,
             ),
@@ -518,7 +520,8 @@ class _PaymentMethodDialogState extends State<_PaymentMethodDialog> {
                 labelText: '상품권 충전액',
                 suffixText: '원',
               ),
-              validator: (value) => int.tryParse(value?.trim() ?? '') == null
+              validator: (value) =>
+                  (int.tryParse(value?.trim() ?? '') ?? 0) <= 0
                   ? '충전액을 입력해 주세요.'
                   : null,
             ),
@@ -531,7 +534,8 @@ class _PaymentMethodDialogState extends State<_PaymentMethodDialog> {
                 labelText: '월 실적 목표',
                 suffixText: '원',
               ),
-              validator: (value) => int.tryParse(value?.trim() ?? '') == null
+              validator: (value) =>
+                  (int.tryParse(value?.trim() ?? '') ?? 0) <= 0
                   ? '목표 금액을 입력해 주세요.'
                   : null,
             ),

@@ -7,6 +7,7 @@ import 'package:smart_budget/features/transactions/transaction_repository.dart';
 class _Repository implements TransactionRepository {
   final methods = <PaymentMethodOption>[];
   int target = 0;
+  int voucherAmount = 0;
 
   @override
   Future<HouseholdContext> loadContext() async => HouseholdContext(
@@ -42,7 +43,10 @@ class _Repository implements TransactionRepository {
     String v,
     int p,
     int a,
-  ) async {}
+  ) async {
+    voucherAmount += k == 'voucher_use' ? -a : a;
+  }
+
   @override
   Future<List<Map<String, dynamic>>> cardPerformance(
     String h,
@@ -65,7 +69,7 @@ class _Repository implements TransactionRepository {
   }
 
   @override
-  Future<int> voucherBalance(String h, String v) async => 0;
+  Future<int> voucherBalance(String h, String v) async => voucherAmount;
   @override
   Future<void> save(String h, TransactionDraft d) async {}
   @override
@@ -124,5 +128,28 @@ void main() {
     await tester.tap(find.text('저장'));
     await tester.pumpAndSettle();
     expect(find.textContaining('목표 300000원'), findsOneWidget);
+  });
+
+  testWidgets('refreshes a voucher balance after use', (tester) async {
+    final repository = _Repository()..voucherAmount = 100000;
+    repository.methods.add(
+      const PaymentMethodOption(id: 'voucher', name: '온누리', kind: 'voucher'),
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        home: PaymentMethodsScreen(
+          repository: repository,
+          contextData: await repository.loadContext(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.textContaining('잔액 100000원'), findsOneWidget);
+    await tester.tap(find.byTooltip('사용'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), '20000');
+    await tester.tap(find.text('확인'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('잔액 80000원'), findsOneWidget);
   });
 }
