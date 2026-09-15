@@ -56,6 +56,12 @@ abstract interface class TransactionRepository {
     String? ownerMemberId,
   );
   Future<void> archivePaymentMethod(String householdId, String paymentMethodId);
+  Future<void> recordVoucherEvent(
+    String householdId,
+    String kind,
+    String voucherId,
+    int amountWon,
+  );
   Future<TransactionQueryResult> query(
     String householdId,
     DateTime start,
@@ -161,6 +167,26 @@ class SupabaseTransactionRepository implements TransactionRepository {
       params: {
         'p_household_id': householdId,
         'p_payment_method_id': paymentMethodId,
+      },
+    );
+  }
+
+  @override
+  Future<void> recordVoucherEvent(
+    String householdId,
+    String kind,
+    String voucherId,
+    int amountWon,
+  ) async {
+    await client.rpc(
+      'record_voucher_event',
+      params: {
+        'p_household_id': householdId,
+        'p_kind': kind,
+        'p_voucher_id': voucherId,
+        'p_amount_won': amountWon,
+        'p_occurred_on': _dateOnly(DateTime.now()),
+        'p_merchant': kind == 'voucher_topup' ? '상품권 충전' : '상품권 사용',
       },
     );
   }

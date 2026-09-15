@@ -42,6 +42,8 @@ class FakeRepository implements TransactionRepository {
     String householdId,
     String paymentMethodId,
   ) async {}
+  @override
+  Future<void> recordVoucherEvent(String h, String k, String v, int a) async {}
 
   @override
   Future<TransactionQueryResult> query(
