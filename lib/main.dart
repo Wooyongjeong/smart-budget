@@ -12,6 +12,7 @@ import 'auth/auth_service.dart';
 import 'auth/config_missing_screen.dart';
 import 'features/transactions/transaction_repository.dart';
 import 'features/transactions/ai_review_screen.dart';
+import 'features/transactions/receipt_analysis.dart';
 import 'features/payment_methods/payment_methods_screen.dart';
 
 Future<void> main() async {
@@ -327,8 +328,11 @@ class _BudgetAppState extends State<BudgetApp> {
       if (!context.mounted) return;
       await Navigator.of(context).push(
         MaterialPageRoute<void>(
-          builder: (_) =>
-              AiReviewScreen(repository: repository, contextData: data),
+          builder: (_) => AiReviewScreen(
+            repository: repository,
+            contextData: data,
+            analysisClient: SupabaseReceiptAnalysisClient(),
+          ),
         ),
       );
       if (mounted) refreshOverview();

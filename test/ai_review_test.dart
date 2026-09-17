@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:smart_budget/features/transactions/ai_review_screen.dart';
 import 'package:smart_budget/features/transactions/transaction_repository.dart';
 import 'package:smart_budget/features/transactions/transaction_draft.dart';
+import 'package:smart_budget/features/transactions/receipt_analysis.dart';
 import 'localized_test_app.dart';
 
 class FakeRepository implements TransactionRepository {
@@ -71,6 +72,26 @@ class FakeRepository implements TransactionRepository {
 }
 
 void main() {
+  test('maps nullable dates and payment hints from analysis JSON', () {
+    final result = ReceiptAnalysisResult.fromJson({
+      'draft_id': 'draft',
+      'items': [
+        {
+          'date': null,
+          'merchant': '스몰토커피',
+          'amount': 9000,
+          'suggested_type': 'expense',
+          'payment_hint': 'MG+ S 하나카드',
+          'category_hint': '식비',
+          'review_reasons': [],
+        },
+      ],
+    });
+    expect(result.items.single.date, isNull);
+    expect(result.items.single.paymentHint, 'MG+ S 하나카드');
+    expect(result.items.single.amount, 9000);
+  });
+
   testWidgets('fixture items can be deselected and saved in one batch', (
     tester,
   ) async {

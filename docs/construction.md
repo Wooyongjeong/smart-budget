@@ -1,5 +1,15 @@
 # Construction 진행
 
+## T13 — OpenRouter 카드 이용내역 이미지 분석
+
+브랜치: `feat/t13-openrouter-receipt-analysis`.
+
+Flutter에 `file_picker`를 연결해 macOS/iOS에서 JPEG·PNG를 선택하고, 인증된 Supabase Edge Function으로 이미지 바이트를 전송하도록 했다. 함수는 활성 가계부 구성원을 확인한 뒤 OpenRouter 무료 멀티모달 모델에 이미지와 추출 지시를 보내고, 응답 JSON의 날짜·금액·사용처·결제 수단 힌트·분류를 검증한다. reasoning을 제외하고 30초 timeout, 10MB·50건 상한, 429와 공급자 오류 매핑을 적용한다. 검토 화면에서는 항목 선택·날짜·사용처·금액·결제 수단을 수정한 뒤 일반 지출만 기존 일괄 저장 RPC로 저장한다. 환불·불명확 항목은 선택할 수 없고, 연도 누락 날짜는 사용자가 보완해야 한다.
+
+합성 테스트 이미지 2장으로 OpenRouter 호출을 확인했다. 토스 캡처에서 7건, 신한카드 캡처에서 8건을 읽었고 카드 힌트와 결제 취소 분류를 확인했다. 호출 비용은 0으로 반환됐다. 무료 모델의 구조화 출력 옵션이 지원되지 않아 함수가 JSON 텍스트를 직접 파싱·검증한다.
+
+검증: `flutter analyze --fatal-infos`, `flutter test`, `supabase functions serve analyze-receipt --no-verify-jwt` 기동 확인 통과. 실제 인증 세션을 통한 배포 함수 호출과 iOS 실기기 파일 선택은 아직 미실행이다. 함수 배포 전 Supabase Secret `OPENROUTER_API_KEY`와 선택적 `OPENROUTER_MODEL` 설정이 필요하다.
+
 ## 최종 병합 전 리뷰와 README
 
 브랜치: `fix/document-contract-review`.
