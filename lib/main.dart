@@ -71,43 +71,174 @@ class CalendarOverview extends StatelessWidget {
             .where((item) => item['occurred_on'] == _date(selectedDate))
             .toList() ??
         [];
-    return Card(
-      child: Column(
-        children: [
-          CalendarDatePicker(
-            initialDate: selectedDate,
-            firstDate: DateTime(2000),
-            lastDate: DateTime(2100),
-            onDateChanged: onDateChanged,
-          ),
-          if (result == null)
-            const Padding(
-              padding: EdgeInsets.all(16),
-              child: CircularProgressIndicator(),
-            )
-          else if (items.isEmpty)
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Text(l10n.noTransactionsForDate),
-            )
-          else
-            ...items.map(
-              (item) => ListTile(
-                title: Text(item['merchant'] as String),
-                trailing: Text(
-                  l10n.formattedAmount(
-                    formatWon((item['amount_won'] as num).toInt()),
-                  ),
-                ),
-              ),
+    return Column(
+      children: [
+        CalendarDatePicker(
+          initialDate: selectedDate,
+          firstDate: DateTime(2000),
+          lastDate: DateTime(2100),
+          onDateChanged: onDateChanged,
+        ),
+        const SizedBox(height: 8),
+        if (result == null)
+          const Padding(
+            padding: EdgeInsets.all(16),
+            child: CircularProgressIndicator(),
+          )
+        else if (items.isEmpty)
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Text(l10n.noTransactionsForDate),
+          )
+        else
+          Card(
+            child: Column(
+              children: items
+                  .map(
+                    (item) => ListTile(
+                      leading: CircleAvatar(
+                        backgroundColor: Theme.of(
+                          context,
+                        ).colorScheme.primary.withValues(alpha: 0.1),
+                        child: Icon(
+                          Icons.receipt_long_rounded,
+                          color: Theme.of(context).colorScheme.primary,
+                          size: 19,
+                        ),
+                      ),
+                      title: Text(
+                        item['merchant'] as String,
+                        style: const TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                      trailing: Text(
+                        l10n.formattedAmount(
+                          formatWon((item['amount_won'] as num).toInt()),
+                        ),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontFeatures: [FontFeature.tabularFigures()],
+                        ),
+                      ),
+                    ),
+                  )
+                  .toList(),
             ),
-        ],
-      ),
+          ),
+      ],
     );
   }
 
   String _date(DateTime value) =>
       '${value.year.toString().padLeft(4, '0')}-${value.month.toString().padLeft(2, '0')}-${value.day.toString().padLeft(2, '0')}';
+}
+
+class _TopHeader extends StatelessWidget {
+  const _TopHeader({required this.eyebrow, required this.title});
+  final String eyebrow;
+  final String title;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.fromLTRB(4, 8, 4, 4),
+    child: Row(
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                eyebrow,
+                style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.primary,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 5),
+              Text(title, style: Theme.of(context).textTheme.headlineMedium),
+            ],
+          ),
+        ),
+        CircleAvatar(
+          radius: 24,
+          backgroundColor: Theme.of(
+            context,
+          ).colorScheme.primary.withValues(alpha: 0.11),
+          child: Text(
+            '우',
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.primary,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+class _MonthlySummaryCard extends StatelessWidget {
+  const _MonthlySummaryCard({required this.result});
+  final TransactionQueryResult? result;
+
+  @override
+  Widget build(BuildContext context) {
+    final primary = Theme.of(context).colorScheme.primary;
+    final expense = result?.totalExpense ?? 0;
+    final income = result?.totalIncome ?? 0;
+    final balance = income - expense;
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(30),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [primary, Color.lerp(primary, Colors.black, 0.34)!],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: primary.withValues(alpha: 0.18),
+            blurRadius: 30,
+            offset: const Offset(0, 16),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '이번 달 남은 금액',
+            style: Theme.of(
+              context,
+            ).textTheme.labelLarge?.copyWith(color: Colors.white70),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            '${formatWon(balance)}원',
+            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+              color: Colors.white,
+              fontFeatures: const [FontFeature.tabularFigures()],
+            ),
+          ),
+          const SizedBox(height: 20),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  '수입 +${formatWon(income)}원',
+                  style: const TextStyle(color: Colors.white70),
+                ),
+              ),
+              Text(
+                '지출 −${formatWon(expense)}원',
+                style: const TextStyle(color: Colors.white70),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class AuthRoot extends StatelessWidget {
@@ -378,68 +509,141 @@ class _BudgetAppState extends State<BudgetApp> {
       scaffoldMessengerKey: messenger,
       theme: palette.theme,
       home: Scaffold(
-        appBar: AppBar(title: Text(l10n.appTitle)),
+        extendBody: true,
         floatingActionButton: tab < 2
             ? Builder(
                 builder: (context) => FloatingActionButton.extended(
+                  backgroundColor: palette.primary,
+                  foregroundColor: Colors.white,
                   onPressed: () => showModalBottomSheet<void>(
                     context: context,
                     builder: (sheetContext) => SafeArea(
-                      child: Wrap(
+                      minimum: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+                      child: ListView(
+                        shrinkWrap: true,
                         children: [
-                          ListTile(
-                            leading: const Icon(Icons.edit_outlined),
-                            title: Text(l10n.directEntry),
-                            subtitle: Text(l10n.directEntrySubtitle),
-                            onTap: () {
-                              Navigator.pop(sheetContext);
-                              openEntry(
-                                context,
-                                initialDate: tab == 0 ? selectedDate : null,
-                              );
-                            },
+                          Text(
+                            l10n.record,
+                            style: Theme.of(
+                              sheetContext,
+                            ).textTheme.headlineMedium,
                           ),
-                          ListTile(
-                            onTap: () {
-                              Navigator.pop(sheetContext);
-                              openAiReview(context);
-                            },
-                            leading: Icon(Icons.image_outlined),
-                            title: Text(l10n.captureStatement),
-                            subtitle: Text(l10n.captureStatementSubtitle),
+                          const SizedBox(height: 8),
+                          Text(
+                            '어떻게 기록할까요?',
+                            style: Theme.of(sheetContext).textTheme.bodyLarge
+                                ?.copyWith(color: const Color(0xff697570)),
+                          ),
+                          const SizedBox(height: 20),
+                          Card(
+                            child: ListTile(
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 22,
+                                vertical: 12,
+                              ),
+                              leading: CircleAvatar(
+                                backgroundColor: palette.primary.withValues(
+                                  alpha: 0.1,
+                                ),
+                                foregroundColor: palette.primary,
+                                child: const Icon(Icons.add_rounded),
+                              ),
+                              title: Text(
+                                l10n.directEntry,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              subtitle: Text(l10n.directEntrySubtitle),
+                              trailing: const Icon(Icons.chevron_right_rounded),
+                              onTap: () {
+                                Navigator.pop(sheetContext);
+                                openEntry(
+                                  context,
+                                  initialDate: tab == 0 ? selectedDate : null,
+                                );
+                              },
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Card(
+                            color: palette.primary,
+                            child: ListTile(
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 22,
+                                vertical: 16,
+                              ),
+                              onTap: () {
+                                Navigator.pop(sheetContext);
+                                openAiReview(context);
+                              },
+                              leading: const CircleAvatar(
+                                backgroundColor: Color(0x24ffffff),
+                                foregroundColor: Colors.white,
+                                child: Icon(Icons.auto_awesome_rounded),
+                              ),
+                              title: Text(
+                                l10n.captureStatement,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              subtitle: Text(
+                                l10n.captureStatementSubtitle,
+                                style: const TextStyle(color: Colors.white70),
+                              ),
+                              trailing: const Icon(
+                                Icons.chevron_right_rounded,
+                                color: Colors.white,
+                              ),
+                            ),
                           ),
                         ],
                       ),
                     ),
                   ),
-                  icon: const Icon(Icons.add),
+                  icon: const Icon(Icons.add_rounded, size: 24),
                   label: Text(l10n.record),
                 ),
               )
             : null,
-        bottomNavigationBar: NavigationBar(
-          selectedIndex: tab,
-          onDestinationSelected: (value) {
-            setState(() => tab = value);
-          },
-          destinations: [
-            NavigationDestination(
-              icon: Icon(Icons.calendar_month_outlined),
-              label: l10n.calendar,
+        floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+        bottomNavigationBar: SafeArea(
+          minimum: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(30),
+            child: NavigationBar(
+              selectedIndex: tab,
+              onDestinationSelected: (value) {
+                setState(() => tab = value);
+              },
+              destinations: [
+                NavigationDestination(
+                  icon: const Icon(Icons.calendar_today_outlined),
+                  selectedIcon: const Icon(Icons.calendar_today_rounded),
+                  label: l10n.calendar,
+                ),
+                NavigationDestination(
+                  icon: const Icon(Icons.receipt_long_outlined),
+                  selectedIcon: const Icon(Icons.receipt_long_rounded),
+                  label: l10n.history,
+                ),
+                NavigationDestination(
+                  icon: const Icon(Icons.account_balance_wallet_outlined),
+                  selectedIcon: const Icon(
+                    Icons.account_balance_wallet_rounded,
+                  ),
+                  label: l10n.wallet,
+                ),
+                NavigationDestination(
+                  icon: const Icon(Icons.settings_outlined),
+                  selectedIcon: const Icon(Icons.settings_rounded),
+                  label: l10n.settings,
+                ),
+              ],
             ),
-            NavigationDestination(
-              icon: Icon(Icons.receipt_long_outlined),
-              label: l10n.history,
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.account_balance_wallet_outlined),
-              label: l10n.wallet,
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.settings_outlined),
-              label: l10n.settings,
-            ),
-          ],
+          ),
         ),
         body: SafeArea(
           child: tab == 2 && widget.transactionRepository != null
@@ -465,19 +669,15 @@ class _BudgetAppState extends State<BudgetApp> {
                   },
                 )
               : ListView(
-                  padding: const EdgeInsets.all(24),
+                  padding: const EdgeInsets.fromLTRB(20, 18, 20, 124),
                   children: [
                     if (tab != 3) ...[
-                      Text(
-                        [
-                          l10n.calendarHeading,
-                          l10n.historyHeading,
-                          l10n.walletHeading,
-                        ][tab],
-                        style: const TextStyle(
-                          fontSize: 26,
-                          fontWeight: FontWeight.w700,
-                        ),
+                      _TopHeader(
+                        eyebrow: tab == 0 ? '우리 가계부' : l10n.appTitle,
+                        title: tab == 0
+                            ? l10n.calendarHeading
+                            : [l10n.historyHeading, l10n.walletHeading][tab -
+                                  1],
                       ),
                       const SizedBox(height: 16),
                       Text(
@@ -487,7 +687,14 @@ class _BudgetAppState extends State<BudgetApp> {
                           l10n.walletDescription,
                         ][tab],
                       ),
-                      const SizedBox(height: 32),
+                      const SizedBox(height: 22),
+                      if (tab < 2)
+                        FutureBuilder<TransactionQueryResult>(
+                          future: overview,
+                          builder: (context, snapshot) =>
+                              _MonthlySummaryCard(result: snapshot.data),
+                        ),
+                      if (tab < 2) const SizedBox(height: 24),
                       if (tab == 2 && widget.transactionRepository != null)
                         Padding(
                           padding: const EdgeInsets.only(bottom: 16),
@@ -510,7 +717,22 @@ class _BudgetAppState extends State<BudgetApp> {
                         Card(
                           child: Padding(
                             padding: const EdgeInsets.all(24),
-                            child: Text(l10n.previewUnavailable),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Icon(
+                                  Icons.insights_rounded,
+                                  color: palette.primary,
+                                ),
+                                const SizedBox(height: 14),
+                                Text(
+                                  l10n.previewUnavailable,
+                                  style: Theme.of(
+                                    context,
+                                  ).textTheme.titleMedium,
+                                ),
+                              ],
+                            ),
                           ),
                         )
                       else
@@ -534,6 +756,7 @@ class _BudgetAppState extends State<BudgetApp> {
                               );
                             }
                             final result = snapshot.data!;
+                            if (tab == 0) return const SizedBox.shrink();
                             return Card(
                               child: Padding(
                                 padding: const EdgeInsets.all(24),
@@ -559,8 +782,21 @@ class _BudgetAppState extends State<BudgetApp> {
                                           .map(
                                             (item) => ListTile(
                                               contentPadding: EdgeInsets.zero,
+                                              leading: CircleAvatar(
+                                                backgroundColor: palette.primary
+                                                    .withValues(alpha: 0.09),
+                                                foregroundColor:
+                                                    palette.primary,
+                                                child: const Icon(
+                                                  Icons.receipt_long_rounded,
+                                                  size: 19,
+                                                ),
+                                              ),
                                               title: Text(
                                                 item['merchant'] as String,
+                                                style: const TextStyle(
+                                                  fontWeight: FontWeight.w700,
+                                                ),
                                               ),
                                               subtitle: Text(
                                                 item['occurred_on'] as String,
@@ -582,16 +818,13 @@ class _BudgetAppState extends State<BudgetApp> {
                           },
                         ),
                     ] else ...[
-                      Text(
-                        l10n.themeTitle,
-                        style: const TextStyle(
-                          fontSize: 26,
-                          fontWeight: FontWeight.w700,
-                        ),
+                      _TopHeader(
+                        eyebrow: l10n.settings,
+                        title: l10n.themeTitle,
                       ),
                       const SizedBox(height: 8),
                       Text(l10n.themeDescription),
-                      const SizedBox(height: 14),
+                      const SizedBox(height: 20),
                       Wrap(
                         spacing: 8,
                         runSpacing: 8,

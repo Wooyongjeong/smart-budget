@@ -320,16 +320,70 @@ class _AiReviewScreenState extends State<AiReviewScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.receiptReview)),
+      appBar: AppBar(
+        title: Text(l10n.receiptReview),
+        actions: [
+          if (items.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(right: 20),
+              child: Center(
+                child: Text(
+                  '${items.length}개 찾음',
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.primary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 120),
         children: [
+          if (items.isNotEmpty)
+            Container(
+              height: 152,
+              margin: const EdgeInsets.only(bottom: 16),
+              decoration: BoxDecoration(
+                color: const Color(0xff232928),
+                borderRadius: BorderRadius.circular(28),
+              ),
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.document_scanner_rounded,
+                      color: Colors.white,
+                      size: 34,
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      fileName ?? '분석한 이용내역',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      '탭하여 원본 확대',
+                      style: TextStyle(color: Colors.white60, fontSize: 13),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           if (widget.analysisClient != null)
-            FilledButton.icon(
-              onPressed: analyzing || saving ? null : pickAndAnalyze,
-              icon: const Icon(Icons.upload_file_outlined),
-              label: Text(
-                analyzing ? l10n.receiptAnalyzing : l10n.receiptChooseImage,
+            Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: OutlinedButton.icon(
+                onPressed: analyzing || saving ? null : pickAndAnalyze,
+                icon: const Icon(Icons.upload_file_outlined),
+                label: Text(
+                  analyzing ? l10n.receiptAnalyzing : l10n.receiptChooseImage,
+                ),
               ),
             ),
           if (fileName != null)
@@ -352,8 +406,12 @@ class _AiReviewScreenState extends State<AiReviewScreen> {
             ),
           ...items.map(
             (item) => Card(
+              margin: const EdgeInsets.only(bottom: 12),
+              color: item.selected && !_isComplete(item)
+                  ? Theme.of(context).colorScheme.error.withValues(alpha: 0.06)
+                  : null,
               child: Padding(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 18),
                 child: Column(
                   children: [
                     CheckboxListTile(
@@ -368,6 +426,7 @@ class _AiReviewScreenState extends State<AiReviewScreen> {
                         item.merchant.text.isEmpty
                             ? l10n.receiptMerchantMissing
                             : item.merchant.text,
+                        style: const TextStyle(fontWeight: FontWeight.w700),
                       ),
                       subtitle: Text(
                         item.reason.isEmpty ? l10n.expense : item.reason,

@@ -234,6 +234,43 @@ void main() {
     );
   });
 
+  testWidgets('today button returns the calendar view after month navigation', (
+    tester,
+  ) async {
+    final today = DateUtils.dateOnly(DateTime.now());
+    await tester.pumpWidget(
+      localizedTestApp(home: EntryForm(initialDate: today)),
+    );
+    await tester.tap(find.byTooltip('날짜 선택'));
+    await tester.pumpAndSettle();
+
+    final pickerContext = tester.element(find.byType(CalendarDatePicker));
+    final todayMonth = MaterialLocalizations.of(
+      pickerContext,
+    ).formatMonthYear(today);
+    await tester.tap(find.byIcon(Icons.chevron_right));
+    await tester.pumpAndSettle();
+    expect(find.text(todayMonth), findsNothing);
+
+    await tester.tap(find.text('오늘'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 80));
+    expect(find.byType(CalendarDatePicker), findsOneWidget);
+    expect(
+      tester
+          .widget<SlideTransition>(
+            find.byKey(const Key('today-calendar-slide')),
+          )
+          .position
+          .value
+          .dx,
+      isNot(0),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byType(CalendarDatePicker), findsOneWidget);
+    expect(find.text(todayMonth), findsOneWidget);
+  });
+
   testWidgets('invalid amount does not create a preview', (tester) async {
     await openForm(tester);
     await tester.enterText(find.byKey(const Key('merchant')), '마트');

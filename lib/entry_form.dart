@@ -214,6 +214,56 @@ class _EntryFormState extends State<EntryForm> {
       '쇼핑': l10n.shopping,
       '기타': l10n.other,
     };
+    Widget selectionRow({
+      required IconData icon,
+      required String label,
+      required Widget field,
+      bool showDivider = true,
+    }) => Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  icon,
+                  size: 19,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      label,
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: const Color(0xff697570),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    field,
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        if (showDivider) const Divider(height: 1, indent: 64, endIndent: 16),
+      ],
+    );
     return PopScope(
       canPop: leaving || !dirty,
       onPopInvokedWithResult: (didPop, result) {
@@ -235,12 +285,15 @@ class _EntryFormState extends State<EntryForm> {
               if (!dirty) setState(() => dirty = true);
             },
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 40),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text(l10n.entryGuide),
-                  const SizedBox(height: 20),
+                  Text(
+                    l10n.entryGuide,
+                    style: Theme.of(context).textTheme.headlineMedium,
+                  ),
+                  const SizedBox(height: 24),
                   SegmentedButton<bool>(
                     segments: [
                       ButtonSegment(value: false, label: Text(l10n.expense)),
@@ -258,10 +311,14 @@ class _EntryFormState extends State<EntryForm> {
                       dirty = true;
                     }),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 24),
                   TextFormField(
                     key: const Key('amount'),
                     controller: amount,
+                    style: const TextStyle(
+                      fontSize: 26,
+                      fontWeight: FontWeight.w800,
+                    ),
                     keyboardType: TextInputType.number,
                     inputFormatters: const [WonInputFormatter()],
                     decoration: InputDecoration(
@@ -316,42 +373,91 @@ class _EntryFormState extends State<EntryForm> {
                         ? l10n.contentRequired
                         : null,
                   ),
-                  DropdownButtonFormField<String>(
-                    key: ValueKey('category-$income'),
-                    initialValue: category,
-                    decoration: InputDecoration(labelText: l10n.category),
-                    items:
-                        (income
-                                ? ['급여', '용돈', '기타']
-                                : ['식비', '생활', '교통', '주거', '쇼핑', '기타'])
-                            .map(
-                              (v) => DropdownMenuItem(
-                                value: v,
-                                child: Text(categoryLabels[v]!),
-                              ),
-                            )
-                            .toList(),
-                    onChanged: (v) => setState(() => category = v!),
-                  ),
-                  const SizedBox(height: 16),
-                  DropdownButtonFormField<String>(
-                    key: ValueKey('payment-$income'),
-                    initialValue: payment,
-                    decoration: InputDecoration(
-                      labelText: income
-                          ? l10n.depositMethod
-                          : l10n.paymentMethod,
-                    ),
-                    items: eligibleMethods
-                        .map(
-                          (v) => DropdownMenuItem(
-                            value: v.id,
-                            child: Text(v.name),
+                  Card(
+                    child: Column(
+                      children: [
+                        selectionRow(
+                          icon: Icons.category_rounded,
+                          label: l10n.category,
+                          field: DropdownButtonFormField<String>(
+                            key: ValueKey('category-$income'),
+                            initialValue: category,
+                            isExpanded: true,
+                            icon: const Icon(Icons.chevron_right_rounded),
+                            decoration: const InputDecoration.collapsed(
+                              hintText: '',
+                            ),
+                            style: Theme.of(context).textTheme.titleMedium,
+                            items:
+                                (income
+                                        ? ['급여', '용돈', '기타']
+                                        : ['식비', '생활', '교통', '주거', '쇼핑', '기타'])
+                                    .map(
+                                      (v) => DropdownMenuItem(
+                                        value: v,
+                                        child: Text(categoryLabels[v]!),
+                                      ),
+                                    )
+                                    .toList(),
+                            onChanged: (v) => setState(() => category = v!),
                           ),
-                        )
-                        .toList(),
-                    validator: (v) => v == null ? l10n.methodRequired : null,
-                    onChanged: (v) => setState(() => payment = v),
+                        ),
+                        selectionRow(
+                          icon: income
+                              ? Icons.account_balance_rounded
+                              : Icons.credit_card_rounded,
+                          label: income
+                              ? l10n.depositMethod
+                              : l10n.paymentMethod,
+                          field: DropdownButtonFormField<String>(
+                            key: ValueKey('payment-$income'),
+                            initialValue: payment,
+                            isExpanded: true,
+                            icon: const Icon(Icons.chevron_right_rounded),
+                            decoration: const InputDecoration.collapsed(
+                              hintText: '',
+                            ),
+                            style: Theme.of(context).textTheme.titleMedium,
+                            items: eligibleMethods
+                                .map(
+                                  (v) => DropdownMenuItem(
+                                    value: v.id,
+                                    child: Text(v.name),
+                                  ),
+                                )
+                                .toList(),
+                            validator: (v) =>
+                                v == null ? l10n.methodRequired : null,
+                            onChanged: (v) => setState(() => payment = v),
+                          ),
+                        ),
+                        selectionRow(
+                          icon: Icons.person_rounded,
+                          label: l10n.actualUser,
+                          showDivider: false,
+                          field: DropdownButtonFormField<String>(
+                            initialValue: person,
+                            isExpanded: true,
+                            icon: const Icon(Icons.chevron_right_rounded),
+                            decoration: const InputDecoration.collapsed(
+                              hintText: '',
+                            ),
+                            style: Theme.of(context).textTheme.titleMedium,
+                            items: widget.members
+                                .map(
+                                  (v) => DropdownMenuItem(
+                                    value: v.id,
+                                    child: Text(v.name),
+                                  ),
+                                )
+                                .toList(),
+                            validator: (v) =>
+                                v == null ? l10n.memberRequired : null,
+                            onChanged: (v) => setState(() => person = v),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                   if (eligibleMethods.isEmpty &&
                       widget.onManagePaymentMethods != null) ...[
@@ -365,21 +471,6 @@ class _EntryFormState extends State<EntryForm> {
                       ),
                     ),
                   ],
-                  const SizedBox(height: 16),
-                  DropdownButtonFormField<String>(
-                    initialValue: person,
-                    decoration: InputDecoration(labelText: l10n.actualUser),
-                    items: widget.members
-                        .map(
-                          (v) => DropdownMenuItem(
-                            value: v.id,
-                            child: Text(v.name),
-                          ),
-                        )
-                        .toList(),
-                    validator: (v) => v == null ? l10n.memberRequired : null,
-                    onChanged: (v) => setState(() => person = v),
-                  ),
                   const SizedBox(height: 16),
                   TextFormField(
                     controller: memo,
@@ -424,11 +515,52 @@ class _DatePickerWithToday extends StatefulWidget {
   State<_DatePickerWithToday> createState() => _DatePickerWithTodayState();
 }
 
-class _DatePickerWithTodayState extends State<_DatePickerWithToday> {
+class _DatePickerWithTodayState extends State<_DatePickerWithToday>
+    with SingleTickerProviderStateMixin {
   late DateTime selectedDate = DateUtils.dateOnly(widget.initialDate);
+  late DateTime displayedMonth = DateTime(
+    widget.initialDate.year,
+    widget.initialDate.month,
+  );
+  late final AnimationController todayController = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 160),
+  );
+  int calendarRevision = 0;
+  double todayDirection = 1;
+  bool showingToday = false;
+  bool movingToToday = false;
 
-  void moveToToday() {
-    setState(() => selectedDate = DateUtils.dateOnly(DateTime.now()));
+  Future<void> moveToToday() async {
+    if (movingToToday) return;
+    final today = DateUtils.dateOnly(DateTime.now());
+    if (MediaQuery.disableAnimationsOf(context)) {
+      setState(() {
+        selectedDate = today;
+        calendarRevision += 1;
+      });
+      return;
+    }
+    setState(() {
+      todayDirection = today.isBefore(displayedMonth) ? -1 : 1;
+      showingToday = false;
+      movingToToday = true;
+    });
+    await todayController.forward(from: 0);
+    if (!mounted) return;
+    setState(() {
+      selectedDate = today;
+      calendarRevision += 1;
+      showingToday = true;
+    });
+    await todayController.forward(from: 0);
+    if (mounted) setState(() => movingToToday = false);
+  }
+
+  @override
+  void dispose() {
+    todayController.dispose();
+    super.dispose();
   }
 
   @override
@@ -440,13 +572,38 @@ class _DatePickerWithTodayState extends State<_DatePickerWithToday> {
       content: SizedBox(
         width: 330,
         height: 330,
-        child: CalendarDatePicker(
-          key: ValueKey(selectedDate),
-          initialDate: selectedDate,
-          currentDate: DateTime.now(),
-          firstDate: DateTime(2000),
-          lastDate: DateTime(2100),
-          onDateChanged: (value) => setState(() => selectedDate = value),
+        child: ClipRect(
+          child: AnimatedBuilder(
+            animation: todayController,
+            builder: (context, child) {
+              final progress = Curves.easeInOutCubic.transform(
+                todayController.value,
+              );
+              final dx = showingToday
+                  ? todayDirection * 0.12 * (1 - progress)
+                  : -todayDirection * 0.12 * progress;
+              final opacity = showingToday ? progress : 1 - progress;
+              return FadeTransition(
+                opacity: AlwaysStoppedAnimation(opacity.clamp(0.0, 1.0)),
+                child: SlideTransition(
+                  key: const Key('today-calendar-slide'),
+                  position: AlwaysStoppedAnimation(Offset(dx, 0)),
+                  child: child,
+                ),
+              );
+            },
+            child: CalendarDatePicker(
+              key: ValueKey((selectedDate, calendarRevision)),
+              initialDate: selectedDate,
+              currentDate: DateTime.now(),
+              firstDate: DateTime(2000),
+              lastDate: DateTime(2100),
+              onDisplayedMonthChanged: (value) {
+                displayedMonth = DateTime(value.year, value.month);
+              },
+              onDateChanged: (value) => setState(() => selectedDate = value),
+            ),
+          ),
         ),
       ),
       actions: [
@@ -455,7 +612,7 @@ class _DatePickerWithTodayState extends State<_DatePickerWithToday> {
           child: Text(l10n.cancel),
         ),
         FilledButton.tonalIcon(
-          onPressed: moveToToday,
+          onPressed: movingToToday ? null : moveToToday,
           icon: const Icon(Icons.today_outlined),
           label: Text(l10n.today),
         ),

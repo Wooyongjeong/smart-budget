@@ -286,34 +286,127 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final content = ListView(
-      padding: const EdgeInsets.all(24),
+      padding: EdgeInsets.fromLTRB(20, 20, 20, widget.embedded ? 124 : 28),
       children: [
-        Text(
-          l10n.paymentMethods,
-          style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w700),
+        Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    l10n.wallet,
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                  ),
+                  const SizedBox(height: 5),
+                  Text(
+                    l10n.paymentMethods,
+                    style: Theme.of(context).textTheme.headlineMedium,
+                  ),
+                ],
+              ),
+            ),
+            CircleAvatar(
+              radius: 24,
+              backgroundColor: Theme.of(context).colorScheme.primary,
+              foregroundColor: Colors.white,
+              child: IconButton(
+                tooltip: l10n.registerPaymentMethod,
+                onPressed: saving ? null : add,
+                icon: const Icon(Icons.add_rounded),
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 8),
         Text(l10n.paymentMethodsDescription),
         const SizedBox(height: 20),
-        Align(
-          alignment: Alignment.centerRight,
-          child: Wrap(
-            spacing: 8,
-            children: [
-              OutlinedButton.icon(
-                onPressed: saving ? null : () => add(initialKind: 'voucher'),
-                icon: const Icon(Icons.confirmation_number_outlined),
-                label: Text(l10n.registerVoucher),
+        FutureBuilder<List<Map<String, dynamic>>>(
+          future: cardSummary,
+          builder: (context, snapshot) {
+            final rows = snapshot.data ?? const <Map<String, dynamic>>[];
+            final actual = rows.fold<int>(
+              0,
+              (sum, row) =>
+                  sum + ((row['actual_amount_won'] as num?)?.toInt() ?? 0),
+            );
+            final target = rows.fold<int>(
+              0,
+              (sum, row) =>
+                  sum + ((row['target_amount_won'] as num?)?.toInt() ?? 0),
+            );
+            final ratio = target == 0 ? 0.0 : (actual / target).clamp(0.0, 1.0);
+            final primary = Theme.of(context).colorScheme.primary;
+            return Container(
+              padding: const EdgeInsets.all(24),
+              margin: const EdgeInsets.only(bottom: 20),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(30),
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [primary, Color.lerp(primary, Colors.black, 0.34)!],
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: primary.withValues(alpha: 0.18),
+                    blurRadius: 30,
+                    offset: const Offset(0, 14),
+                  ),
+                ],
               ),
-              FilledButton.icon(
-                onPressed: saving ? null : add,
-                icon: const Icon(Icons.add),
-                label: Text(l10n.registerPaymentMethod),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '이번 달 카드 실적',
+                    style: Theme.of(
+                      context,
+                    ).textTheme.labelLarge?.copyWith(color: Colors.white70),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '${formatWon(actual)} / ${formatWon(target)}원',
+                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      color: Colors.white,
+                      fontFeatures: const [FontFeature.tabularFigures()],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: LinearProgressIndicator(
+                      value: ratio,
+                      minHeight: 7,
+                      backgroundColor: Colors.white24,
+                      valueColor: const AlwaysStoppedAnimation(
+                        Color(0xffd8b477),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    target == 0
+                        ? '카드별 목표를 설정해 보세요'
+                        : '예상 실적 ${(ratio * 100).round()}%',
+                    style: const TextStyle(color: Colors.white70),
+                  ),
+                ],
               ),
-            ],
+            );
+          },
+        ),
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton.icon(
+            onPressed: saving ? null : () => add(initialKind: 'voucher'),
+            icon: const Icon(Icons.confirmation_number_outlined),
+            label: Text(l10n.registerVoucher),
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 16),
         if (methods.isEmpty)
           Card(
             child: Padding(
@@ -334,9 +427,23 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
         else
           ...methods.map(
             (method) => Card(
+              margin: const EdgeInsets.only(bottom: 12),
               child: ListTile(
-                leading: Icon(_iconFor(method.kind)),
-                title: Text(method.name),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 12,
+                ),
+                leading: CircleAvatar(
+                  backgroundColor: Theme.of(
+                    context,
+                  ).colorScheme.primary.withValues(alpha: 0.1),
+                  foregroundColor: Theme.of(context).colorScheme.primary,
+                  child: Icon(_iconFor(method.kind)),
+                ),
+                title: Text(
+                  method.name,
+                  style: const TextStyle(fontWeight: FontWeight.w700),
+                ),
                 subtitle:
                     method.kind == 'debit_card' || method.kind == 'credit_card'
                     ? FutureBuilder<List<Map<String, dynamic>>>(
