@@ -3,6 +3,8 @@
 .env.*
 !.env.example
 !.env.example.json
+test_image.png
+test_image2.png
 *.jks
 *.keystore
 key.properties

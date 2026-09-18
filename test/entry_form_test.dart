@@ -30,7 +30,11 @@ class _Repository implements TransactionRepository {
   @override
   Future<void> save(String h, TransactionDraft d) async {}
   @override
-  Future<void> saveMany(String h, List<TransactionDraft> d) async {}
+  Future<void> saveMany(
+    String h,
+    List<TransactionDraft> d, {
+    String? requestId,
+  }) async {}
   @override
   Future<PaymentMethodOption> addPaymentMethod(
     String h,

@@ -16,7 +16,7 @@
 - 한국어·영어 전환 및 12개 앱 테마
 - macOS, iOS, Android Flutter 실행 대상
 
-이용내역 캡처 화면은 현재 고정 예시 데이터를 검토하는 단계입니다. Edge Function의 입력·출력 검증 경계는 있지만 실제 AI 공급자 연결, 이미지 선택 UI, 운영 비용·품질 검증은 완료되지 않았습니다. 배우자 초대 RPC는 있으나 앱 UI와 실시간 동기화도 후속 범위입니다. 자세한 차이는 [코드 리뷰](docs/code-review.md)에서 확인할 수 있습니다.
+이용내역 캡처는 이미지 선택 → OpenRouter 무료 멀티모달 모델 분석 → 사용자 확인·수정 → 일괄 저장 흐름을 제공합니다. 실제 운영 전에는 모델별 품질·rate limit·개인정보 정책 검증이 필요하며, 무료 모델의 출력은 저장 전에 서버 검증과 사용자 확인을 거칩니다. 배우자 초대 RPC는 있으나 앱 UI와 실시간 동기화도 후속 범위입니다. 자세한 차이는 [코드 리뷰](docs/code-review.md)에서 확인할 수 있습니다.
 
 ## 기술 구성
 
@@ -60,6 +60,16 @@ flutter gen-l10n
 ```
 
 `service_role` 키, Kakao client secret, AI 공급자 키는 앱의 환경 파일이나 Git에 넣지 않습니다.
+
+이미지 분석을 사용하려면 Supabase Edge Function Secret에 OpenRouter 키를 등록합니다. OpenRouter 키는 `.env.json`이나 Flutter `--dart-define`에 넣지 않습니다.
+
+```sh
+supabase secrets set OPENROUTER_API_KEY=your-openrouter-key
+supabase secrets set OPENROUTER_MODEL=inclusionai/ling-3.0-flash-vl:free
+supabase functions deploy analyze-receipt
+```
+
+무료 모델은 가용성·호출 제한이 바뀔 수 있습니다. 함수는 `OPENROUTER_MODEL`을 지정하지 않으면 위 무료 모델을 기본값으로 사용합니다. 개발·시연에는 개인정보 없는 합성 또는 비식별 이미지를 사용하세요.
 
 ## Supabase와 카카오 설정
 
