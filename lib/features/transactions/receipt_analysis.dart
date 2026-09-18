@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+import 'dart:convert';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -78,11 +79,27 @@ class SupabaseReceiptAnalysisClient implements ReceiptAnalysisClient {
     required Uint8List bytes,
     required String contentType,
   }) async {
-    final response = await client.functions.invoke(
-      'analyze-receipt',
-      body: bytes,
-      headers: {'content-type': contentType, 'x-household-id': householdId},
-    );
+    late final FunctionResponse response;
+    try {
+      response = await client.functions.invoke(
+        'analyze-receipt',
+        body: bytes,
+        headers: {'content-type': contentType, 'x-household-id': householdId},
+      );
+    } on FunctionException catch (error) {
+      var code = 'network_error';
+      if (error.details is String) {
+        try {
+          final decoded = jsonDecode(error.details as String);
+          if (decoded is Map<String, dynamic> && decoded['code'] is String) {
+            code = decoded['code'] as String;
+          }
+        } on FormatException {
+          // Keep the transport-specific fallback code.
+        }
+      }
+      throw ReceiptAnalysisException(code);
+    }
     final data = response.data;
     if (data is! Map<String, dynamic>) {
       throw const FormatException('invalid_provider_response');

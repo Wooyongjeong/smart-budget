@@ -450,6 +450,48 @@ class AppLocalizationsKo extends AppLocalizations {
   String get receiptSaveFailed => '선택 항목을 저장하지 못했어요. 값을 확인하고 다시 시도해 주세요.';
 
   @override
+  String get receiptAnalyzing => '분석 중…';
+
+  @override
+  String get receiptChooseImage => '이용내역 이미지 선택';
+
+  @override
+  String get receiptEmpty => '이미지를 선택하면 분석 결과가 여기에 표시됩니다.';
+
+  @override
+  String get receiptMerchantMissing => '사용처 미입력';
+
+  @override
+  String get receiptImageSize => '10MB 이하의 이미지를 선택해 주세요.';
+
+  @override
+  String get receiptProviderMissing => '이미지 분석 제공자가 설정되지 않았어요.';
+
+  @override
+  String get receiptRateLimited => '오늘 분석 한도를 초과했어요. 내일 다시 시도해 주세요.';
+
+  @override
+  String get receiptProviderUnauthorized => 'OpenRouter 인증 키가 유효하지 않아요.';
+
+  @override
+  String get receiptProviderModelUnavailable => '현재 분석 모델을 사용할 수 없어요.';
+
+  @override
+  String get receiptProviderRequestInvalid => '분석 요청 형식이 거부됐어요.';
+
+  @override
+  String get receiptTimeout => '분석 시간이 초과됐어요. 다시 시도해 주세요.';
+
+  @override
+  String get receiptInvalidImage => '유효한 JPEG 또는 PNG 이미지를 선택해 주세요.';
+
+  @override
+  String get receiptAnalysisFailed => '이미지 분석에 실패했어요. 잠시 후 다시 시도해 주세요.';
+
+  @override
+  String get receiptNetworkFailed => '네트워크 연결을 확인하고 다시 시도해 주세요.';
+
+  @override
   String get saving => '저장 중…';
 
   @override

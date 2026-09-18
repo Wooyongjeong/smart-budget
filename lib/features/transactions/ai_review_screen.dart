@@ -8,6 +8,18 @@ import 'receipt_analysis.dart';
 import '../../money_input.dart';
 import '../../l10n/generated/app_localizations.dart';
 
+const _categories = ['식비', '생활', '교통', '주거', '쇼핑', '기타'];
+const _maxImageBytes = 10 * 1024 * 1024;
+
+DateTime? _parseAnalysisDate(String? value) {
+  if (value == null || value.isEmpty) return null;
+  try {
+    return DateFormat('yyyy-MM-dd').parseStrict(value);
+  } on FormatException {
+    return null;
+  }
+}
+
 class ReceiptFixtureItem {
   ReceiptFixtureItem({
     required this.draft,
@@ -31,33 +43,33 @@ class ReceiptFixtureItem {
     ReceiptAnalysisItem item,
     HouseholdContext context,
   ) {
-    final matchingMethods = context.paymentMethods.where(
-      (m) => m.name == item.paymentHint,
-    );
-    final method = matchingMethods.isEmpty ? null : matchingMethods.first;
     final member = context.members.isEmpty ? null : context.members.first;
-    final parsedDate = item.date == null
-        ? DateTime.now()
-        : DateFormat('yyyy-MM-dd').parseStrict(item.date!);
+    final parsedDate = _parseAnalysisDate(item.date);
+    final category = _categories.contains(item.categoryHint)
+        ? item.categoryHint
+        : null;
     final result = ReceiptFixtureItem(
       draft: TransactionDraft(
         kind: TransactionKind.expense,
-        occurredOn: parsedDate,
+        occurredOn: parsedDate ?? DateTime.now(),
         amountWon: item.amount,
         merchant: item.merchant ?? '',
-        category: item.categoryHint,
-        paymentMethodId: method?.id,
+        category: category,
+        paymentMethodId: null,
         memberId: member?.id,
         memo: '',
       ),
       reason: [
         if (item.paymentHint != null) '결제 수단: ${item.paymentHint}',
+        if (item.categoryHint != null && category == null)
+          '카테고리 확인: ${item.categoryHint}',
+        if (item.date != null && parsedDate == null) '날짜 확인: ${item.date}',
         ...item.reviewReasons,
         if (item.suggestedType != 'expense') '분류: ${item.suggestedType}',
       ].join(' · '),
       suggestedType: item.suggestedType,
     );
-    result.date.text = item.date ?? '';
+    result.date.text = parsedDate == null ? '' : item.date!;
     return result;
   }
 
@@ -78,7 +90,7 @@ class ReceiptFixtureItem {
     merchant: merchant.text.trim(),
     category: category,
     paymentMethodId: paymentMethodId,
-    memberId: draft.memberId,
+    memberId: memberId,
     memo: draft.memo,
   );
   void dispose() {
@@ -108,6 +120,46 @@ class _AiReviewScreenState extends State<AiReviewScreen> {
   bool saving = false;
   bool analyzing = false;
   String? fileName;
+  String? saveRequestId;
+
+  bool _isComplete(ReceiptFixtureItem item) {
+    if (!item.selected || item.suggestedType != 'expense') return false;
+    final date = _parseAnalysisDate(item.date.text.trim());
+    final amount = parseWon(item.amount.text);
+    return date != null &&
+        date.year >= 2000 &&
+        date.year <= 2100 &&
+        amount != null &&
+        amount > 0 &&
+        item.merchant.text.trim().isNotEmpty &&
+        item.category != null &&
+        (widget.contextData.paymentMethods.isEmpty ||
+            item.paymentMethodId != null) &&
+        (widget.contextData.members.isEmpty || item.memberId != null);
+  }
+
+  void _markEdited() {
+    saveRequestId = null;
+    setState(() {});
+  }
+
+  String _analysisErrorMessage(Object error, AppLocalizations l10n) {
+    if (error is ReceiptAnalysisException) {
+      return switch (error.code) {
+        'provider_not_configured' => l10n.receiptProviderMissing,
+        'rate_limited' => l10n.receiptRateLimited,
+        'provider_unauthorized' => l10n.receiptProviderUnauthorized,
+        'provider_model_unavailable' => l10n.receiptProviderModelUnavailable,
+        'provider_request_invalid' => l10n.receiptProviderRequestInvalid,
+        'timeout' => l10n.receiptTimeout,
+        'validation_failed' ||
+        'image_type' ||
+        'content_type' => l10n.receiptInvalidImage,
+        _ => l10n.receiptAnalysisFailed,
+      };
+    }
+    return l10n.receiptNetworkFailed;
+  }
 
   @override
   void didChangeDependencies() {
@@ -168,8 +220,6 @@ class _AiReviewScreenState extends State<AiReviewScreen> {
     if (client == null || analyzing) return;
     final file = await FilePicker.pickFile(type: FileType.image);
     if (!mounted || file == null) return;
-    final bytes = await file.xFile.readAsBytes();
-    if (!mounted) return;
     final extension = (file.extension ?? '').toLowerCase();
     final contentType = extension == 'jpg' || extension == 'jpeg'
         ? 'image/jpeg'
@@ -182,6 +232,16 @@ class _AiReviewScreenState extends State<AiReviewScreen> {
       ).showSnackBar(const SnackBar(content: Text('JPEG 또는 PNG 이미지만 지원합니다.')));
       return;
     }
+    final fileSize = await file.xFile.length();
+    if (!mounted) return;
+    if (fileSize <= 0 || fileSize > _maxImageBytes) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.of(context)!.receiptImageSize)),
+      );
+      return;
+    }
+    final bytes = await file.xFile.readAsBytes();
+    if (!mounted) return;
     setState(() {
       analyzing = true;
       fileName = file.name;
@@ -197,6 +257,7 @@ class _AiReviewScreenState extends State<AiReviewScreen> {
       }
       if (!mounted) return;
       setState(() {
+        saveRequestId = analysis.draftId.isEmpty ? null : analysis.draftId;
         items = analysis.items
             .map(
               (item) =>
@@ -204,10 +265,14 @@ class _AiReviewScreenState extends State<AiReviewScreen> {
             )
             .toList();
       });
-    } catch (_) {
+    } catch (error) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('이미지 분석에 실패했습니다. 다시 시도해 주세요.')),
+          SnackBar(
+            content: Text(
+              _analysisErrorMessage(error, AppLocalizations.of(context)!),
+            ),
+          ),
         );
       }
     } finally {
@@ -228,7 +293,15 @@ class _AiReviewScreenState extends State<AiReviewScreen> {
           )) {
         throw const FormatException();
       }
-      await widget.repository.saveMany(widget.contextData.householdId, drafts);
+      if (selected.any((item) => !_isComplete(item))) {
+        throw const FormatException();
+      }
+      saveRequestId ??= newTransactionRequestId();
+      await widget.repository.saveMany(
+        widget.contextData.householdId,
+        drafts,
+        requestId: saveRequestId,
+      );
       if (mounted) Navigator.pop(context, true);
     } catch (_) {
       if (mounted) {
@@ -255,7 +328,9 @@ class _AiReviewScreenState extends State<AiReviewScreen> {
             FilledButton.icon(
               onPressed: analyzing || saving ? null : pickAndAnalyze,
               icon: const Icon(Icons.upload_file_outlined),
-              label: Text(analyzing ? '분석 중…' : '이용내역 이미지 선택'),
+              label: Text(
+                analyzing ? l10n.receiptAnalyzing : l10n.receiptChooseImage,
+              ),
             ),
           if (fileName != null)
             Padding(
@@ -266,9 +341,9 @@ class _AiReviewScreenState extends State<AiReviewScreen> {
               ),
             ),
           if (items.isEmpty && !analyzing)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 48),
-              child: Center(child: Text('이미지를 선택하면 분석 결과가 여기에 표시됩니다.')),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 48),
+              child: Center(child: Text(l10n.receiptEmpty)),
             ),
           if (analyzing)
             const Padding(
@@ -285,28 +360,33 @@ class _AiReviewScreenState extends State<AiReviewScreen> {
                       value: item.selected,
                       onChanged: saving || item.suggestedType != 'expense'
                           ? null
-                          : (value) =>
-                                setState(() => item.selected = value ?? false),
+                          : (value) {
+                              item.selected = value ?? false;
+                              _markEdited();
+                            },
                       title: Text(
                         item.merchant.text.isEmpty
-                            ? '사용처 미입력'
+                            ? l10n.receiptMerchantMissing
                             : item.merchant.text,
                       ),
                       subtitle: Text(
-                        item.reason.isEmpty ? '일반 지출' : item.reason,
+                        item.reason.isEmpty ? l10n.expense : item.reason,
                       ),
                       contentPadding: EdgeInsets.zero,
                     ),
                     TextField(
                       controller: item.date,
+                      onChanged: (_) => _markEdited(),
                       decoration: InputDecoration(labelText: l10n.date),
                     ),
                     TextField(
                       controller: item.merchant,
+                      onChanged: (_) => _markEdited(),
                       decoration: InputDecoration(labelText: l10n.merchant),
                     ),
                     TextField(
                       controller: item.amount,
+                      onChanged: (_) => _markEdited(),
                       keyboardType: TextInputType.number,
                       inputFormatters: const [WonInputFormatter()],
                       decoration: InputDecoration(
@@ -317,7 +397,9 @@ class _AiReviewScreenState extends State<AiReviewScreen> {
                     if (widget.contextData.paymentMethods.isNotEmpty)
                       DropdownButtonFormField<String>(
                         initialValue: item.paymentMethodId,
-                        decoration: const InputDecoration(labelText: '결제 수단'),
+                        decoration: InputDecoration(
+                          labelText: l10n.paymentMethod,
+                        ),
                         items: widget.contextData.paymentMethods
                             .map(
                               (method) => DropdownMenuItem(
@@ -328,13 +410,15 @@ class _AiReviewScreenState extends State<AiReviewScreen> {
                             .toList(),
                         onChanged: saving
                             ? null
-                            : (value) =>
-                                  setState(() => item.paymentMethodId = value),
+                            : (value) {
+                                item.paymentMethodId = value;
+                                _markEdited();
+                              },
                       ),
                     if (widget.contextData.members.isNotEmpty)
                       DropdownButtonFormField<String>(
                         initialValue: item.memberId,
-                        decoration: const InputDecoration(labelText: '실제 사용자'),
+                        decoration: InputDecoration(labelText: l10n.actualUser),
                         items: widget.contextData.members
                             .map(
                               (member) => DropdownMenuItem(
@@ -345,12 +429,15 @@ class _AiReviewScreenState extends State<AiReviewScreen> {
                             .toList(),
                         onChanged: saving
                             ? null
-                            : (value) => setState(() => item.memberId = value),
+                            : (value) {
+                                item.memberId = value;
+                                _markEdited();
+                              },
                       ),
                     DropdownButtonFormField<String>(
                       initialValue: item.category,
                       decoration: InputDecoration(labelText: l10n.category),
-                      items: const ['식비', '생활', '교통', '주거', '쇼핑', '기타']
+                      items: _categories
                           .map(
                             (category) => DropdownMenuItem(
                               value: category,
@@ -360,7 +447,10 @@ class _AiReviewScreenState extends State<AiReviewScreen> {
                           .toList(),
                       onChanged: saving
                           ? null
-                          : (value) => setState(() => item.category = value),
+                          : (value) {
+                              item.category = value;
+                              _markEdited();
+                            },
                     ),
                   ],
                 ),
@@ -374,7 +464,12 @@ class _AiReviewScreenState extends State<AiReviewScreen> {
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: FilledButton(
-            onPressed: saving || !items.any((item) => item.selected)
+            onPressed:
+                saving ||
+                    !items.any((item) => item.selected) ||
+                    items
+                        .where((item) => item.selected)
+                        .any((item) => !_isComplete(item))
                 ? null
                 : save,
             child: Text(

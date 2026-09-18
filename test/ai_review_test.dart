@@ -8,6 +8,8 @@ import 'localized_test_app.dart';
 
 class FakeRepository implements TransactionRepository {
   int savedCount = 0;
+  bool failNextSave = false;
+  final requestIds = <String?>[];
   @override
   Future<HouseholdContext> loadContext() async => const HouseholdContext(
     householdId: 'household',
@@ -21,8 +23,14 @@ class FakeRepository implements TransactionRepository {
   @override
   Future<void> saveMany(
     String householdId,
-    List<TransactionDraft> drafts,
-  ) async {
+    List<TransactionDraft> drafts, {
+    String? requestId,
+  }) async {
+    requestIds.add(requestId);
+    if (failNextSave) {
+      failNextSave = false;
+      throw const TransactionSaveException('unexpected');
+    }
     savedCount = drafts.length;
   }
 
@@ -72,6 +80,14 @@ class FakeRepository implements TransactionRepository {
 }
 
 void main() {
+  const context = HouseholdContext(
+    householdId: 'household',
+    paymentMethods: [
+      PaymentMethodOption(id: 'method', name: '현금', kind: 'cash'),
+    ],
+    members: [MemberOption(id: 'member', name: '나')],
+  );
+
   test('maps nullable dates and payment hints from analysis JSON', () {
     final result = ReceiptAnalysisResult.fromJson({
       'draft_id': 'draft',
@@ -90,6 +106,46 @@ void main() {
     expect(result.items.single.date, isNull);
     expect(result.items.single.paymentHint, 'MG+ S 하나카드');
     expect(result.items.single.amount, 9000);
+  });
+
+  test('keeps invalid model hints editable instead of throwing', () {
+    final item = ReceiptFixtureItem.fromAnalysis(
+      const ReceiptAnalysisItem(
+        date: '2026-02-31',
+        merchant: '마트',
+        amount: 1000,
+        suggestedType: 'expense',
+        paymentHint: '현금',
+        categoryHint: 'Dining',
+        reviewReasons: [],
+      ),
+      context,
+    );
+    addTearDown(item.dispose);
+
+    expect(item.date.text, isEmpty);
+    expect(item.category, isNull);
+    expect(item.paymentMethodId, isNull);
+  });
+
+  test('saves the member selected during review', () {
+    final item = ReceiptFixtureItem(
+      draft: TransactionDraft(
+        kind: TransactionKind.expense,
+        occurredOn: DateTime(2026, 9, 18),
+        amountWon: 1000,
+        merchant: '마트',
+        category: '생활',
+        paymentMethodId: 'method',
+        memberId: 'old-member',
+        memo: '',
+      ),
+      reason: '',
+    );
+    addTearDown(item.dispose);
+    item.memberId = 'new-member';
+
+    expect(item.toDraft().memberId, 'new-member');
   });
 
   testWidgets('fixture items can be deselected and saved in one batch', (
@@ -111,5 +167,29 @@ void main() {
     await tester.tap(find.text('1건 저장'));
     await tester.pumpAndSettle();
     expect(repository.savedCount, 1);
+  });
+
+  testWidgets('a failed unchanged batch retries with the same request id', (
+    tester,
+  ) async {
+    final repository = FakeRepository()..failNextSave = true;
+    await tester.pumpWidget(
+      localizedTestApp(
+        home: AiReviewScreen(
+          repository: repository,
+          contextData: await repository.loadContext(),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('2건 저장'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('2건 저장'));
+    await tester.pumpAndSettle();
+
+    expect(repository.requestIds, hasLength(2));
+    expect(repository.requestIds.first, isNotNull);
+    expect(repository.requestIds.last, repository.requestIds.first);
+    expect(repository.savedCount, 2);
   });
 }

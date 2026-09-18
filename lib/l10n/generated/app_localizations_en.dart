@@ -458,6 +458,55 @@ class AppLocalizationsEn extends AppLocalizations {
       'Couldn\'t save the selected items. Check the values and try again.';
 
   @override
+  String get receiptAnalyzing => 'Analyzing…';
+
+  @override
+  String get receiptChooseImage => 'Choose statement image';
+
+  @override
+  String get receiptEmpty => 'Choose an image to see the analysis here.';
+
+  @override
+  String get receiptMerchantMissing => 'Merchant required';
+
+  @override
+  String get receiptImageSize => 'Choose an image no larger than 10 MB.';
+
+  @override
+  String get receiptProviderMissing =>
+      'The image analysis provider is not configured.';
+
+  @override
+  String get receiptRateLimited =>
+      'Today\'s analysis limit has been reached. Try again tomorrow.';
+
+  @override
+  String get receiptProviderUnauthorized =>
+      'The OpenRouter API key is invalid.';
+
+  @override
+  String get receiptProviderModelUnavailable =>
+      'The analysis model is currently unavailable.';
+
+  @override
+  String get receiptProviderRequestInvalid =>
+      'The analysis request was rejected.';
+
+  @override
+  String get receiptTimeout => 'Analysis timed out. Please try again.';
+
+  @override
+  String get receiptInvalidImage => 'Choose a valid JPEG or PNG image.';
+
+  @override
+  String get receiptAnalysisFailed =>
+      'Image analysis failed. Please try again shortly.';
+
+  @override
+  String get receiptNetworkFailed =>
+      'Check your network connection and try again.';
+
+  @override
   String get saving => 'Saving…';
 
   @override

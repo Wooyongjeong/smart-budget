@@ -48,7 +48,11 @@ class TransactionQueryResult {
 abstract interface class TransactionRepository {
   Future<HouseholdContext> loadContext();
   Future<void> save(String householdId, TransactionDraft draft);
-  Future<void> saveMany(String householdId, List<TransactionDraft> drafts);
+  Future<void> saveMany(
+    String householdId,
+    List<TransactionDraft> drafts, {
+    String? requestId,
+  });
   Future<PaymentMethodOption> addPaymentMethod(
     String householdId,
     String kind,
@@ -240,10 +244,10 @@ class SupabaseTransactionRepository implements TransactionRepository {
 
   @override
   Future<int> voucherBalance(String householdId, String voucherId) async {
-    final result = await client.rpc('voucher_balance', params: {
-      'p_household_id': householdId,
-      'p_voucher_id': voucherId,
-    });
+    final result = await client.rpc(
+      'voucher_balance',
+      params: {'p_household_id': householdId, 'p_voucher_id': voucherId},
+    );
     return (result as num).toInt();
   }
 
@@ -255,16 +259,17 @@ class SupabaseTransactionRepository implements TransactionRepository {
   @override
   Future<void> saveMany(
     String householdId,
-    List<TransactionDraft> drafts,
-  ) async {
+    List<TransactionDraft> drafts, {
+    String? requestId,
+  }) async {
     if (drafts.isEmpty) return;
-    final requestId = _requestId();
+    final resolvedRequestId = requestId ?? newTransactionRequestId();
     try {
       await client.rpc(
         'save_transactions',
         params: {
           'p_household_id': householdId,
-          'p_request_id': requestId,
+          'p_request_id': resolvedRequestId,
           'p_entries': drafts
               .map(
                 (draft) => {
@@ -324,7 +329,7 @@ String _dateOnly(DateTime value) =>
     '${value.year.toString().padLeft(4, '0')}-'
     '${value.month.toString().padLeft(2, '0')}-${value.day.toString().padLeft(2, '0')}';
 
-String _requestId() {
+String newTransactionRequestId() {
   final random = Random.secure();
   final bytes = List<int>.generate(16, (_) => random.nextInt(256));
   bytes[6] = (bytes[6] & 0x0f) | 0x40;

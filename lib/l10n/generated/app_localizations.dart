@@ -938,6 +938,90 @@ abstract class AppLocalizations {
   /// **'선택 항목을 저장하지 못했어요. 값을 확인하고 다시 시도해 주세요.'**
   String get receiptSaveFailed;
 
+  /// No description provided for @receiptAnalyzing.
+  ///
+  /// In ko, this message translates to:
+  /// **'분석 중…'**
+  String get receiptAnalyzing;
+
+  /// No description provided for @receiptChooseImage.
+  ///
+  /// In ko, this message translates to:
+  /// **'이용내역 이미지 선택'**
+  String get receiptChooseImage;
+
+  /// No description provided for @receiptEmpty.
+  ///
+  /// In ko, this message translates to:
+  /// **'이미지를 선택하면 분석 결과가 여기에 표시됩니다.'**
+  String get receiptEmpty;
+
+  /// No description provided for @receiptMerchantMissing.
+  ///
+  /// In ko, this message translates to:
+  /// **'사용처 미입력'**
+  String get receiptMerchantMissing;
+
+  /// No description provided for @receiptImageSize.
+  ///
+  /// In ko, this message translates to:
+  /// **'10MB 이하의 이미지를 선택해 주세요.'**
+  String get receiptImageSize;
+
+  /// No description provided for @receiptProviderMissing.
+  ///
+  /// In ko, this message translates to:
+  /// **'이미지 분석 제공자가 설정되지 않았어요.'**
+  String get receiptProviderMissing;
+
+  /// No description provided for @receiptRateLimited.
+  ///
+  /// In ko, this message translates to:
+  /// **'오늘 분석 한도를 초과했어요. 내일 다시 시도해 주세요.'**
+  String get receiptRateLimited;
+
+  /// No description provided for @receiptProviderUnauthorized.
+  ///
+  /// In ko, this message translates to:
+  /// **'OpenRouter 인증 키가 유효하지 않아요.'**
+  String get receiptProviderUnauthorized;
+
+  /// No description provided for @receiptProviderModelUnavailable.
+  ///
+  /// In ko, this message translates to:
+  /// **'현재 분석 모델을 사용할 수 없어요.'**
+  String get receiptProviderModelUnavailable;
+
+  /// No description provided for @receiptProviderRequestInvalid.
+  ///
+  /// In ko, this message translates to:
+  /// **'분석 요청 형식이 거부됐어요.'**
+  String get receiptProviderRequestInvalid;
+
+  /// No description provided for @receiptTimeout.
+  ///
+  /// In ko, this message translates to:
+  /// **'분석 시간이 초과됐어요. 다시 시도해 주세요.'**
+  String get receiptTimeout;
+
+  /// No description provided for @receiptInvalidImage.
+  ///
+  /// In ko, this message translates to:
+  /// **'유효한 JPEG 또는 PNG 이미지를 선택해 주세요.'**
+  String get receiptInvalidImage;
+
+  /// No description provided for @receiptAnalysisFailed.
+  ///
+  /// In ko, this message translates to:
+  /// **'이미지 분석에 실패했어요. 잠시 후 다시 시도해 주세요.'**
+  String get receiptAnalysisFailed;
+
+  /// No description provided for @receiptNetworkFailed.
+  ///
+  /// In ko, this message translates to:
+  /// **'네트워크 연결을 확인하고 다시 시도해 주세요.'**
+  String get receiptNetworkFailed;
+
   /// No description provided for @saving.
   ///
   /// In ko, this message translates to:
