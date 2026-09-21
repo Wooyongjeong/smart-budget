@@ -76,7 +76,10 @@ void main() {
     await tester.tap(find.text('초대 코드 만들기'));
     await tester.pumpAndSettle();
 
-    expect(find.text('a' * 48), findsOneWidget);
+    expect(
+      find.text('https://smart-budget.app/invite/${'a' * 48}'),
+      findsOneWidget,
+    );
     expect(find.byTooltip('초대 코드 복사'), findsOneWidget);
   });
 

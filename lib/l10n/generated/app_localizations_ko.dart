@@ -629,4 +629,20 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get retry => '다시 시도';
+
+  @override
+  String get shareInvitation => '카카오톡으로 초대하기';
+
+  @override
+  String get invitationOnboardingTitle => '공동 가계부에 참여할까요?';
+
+  @override
+  String get invitationOnboardingDescription =>
+      '배우자가 보낸 초대 링크예요. 코드를 확인한 뒤 함께 기록을 시작할 수 있어요.';
+
+  @override
+  String get skipInvitation => '나중에 참여할게요';
+
+  @override
+  String get invitationLinkInvalid => '초대 링크를 확인할 수 없어요. 다시 전달받아 주세요.';
 }

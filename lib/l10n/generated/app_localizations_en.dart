@@ -652,4 +652,21 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get retry => 'Try again';
+
+  @override
+  String get shareInvitation => 'Invite via KakaoTalk';
+
+  @override
+  String get invitationOnboardingTitle => 'Join the shared budget?';
+
+  @override
+  String get invitationOnboardingDescription =>
+      'This is an invitation from your partner. Confirm the code to start recording together.';
+
+  @override
+  String get skipInvitation => 'I\'ll join later';
+
+  @override
+  String get invitationLinkInvalid =>
+      'We couldn\'t read this invitation link. Ask for a new one.';
 }

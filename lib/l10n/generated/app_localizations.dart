@@ -1291,6 +1291,36 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'다시 시도'**
   String get retry;
+
+  /// No description provided for @shareInvitation.
+  ///
+  /// In ko, this message translates to:
+  /// **'카카오톡으로 초대하기'**
+  String get shareInvitation;
+
+  /// No description provided for @invitationOnboardingTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'공동 가계부에 참여할까요?'**
+  String get invitationOnboardingTitle;
+
+  /// No description provided for @invitationOnboardingDescription.
+  ///
+  /// In ko, this message translates to:
+  /// **'배우자가 보낸 초대 링크예요. 코드를 확인한 뒤 함께 기록을 시작할 수 있어요.'**
+  String get invitationOnboardingDescription;
+
+  /// No description provided for @skipInvitation.
+  ///
+  /// In ko, this message translates to:
+  /// **'나중에 참여할게요'**
+  String get skipInvitation;
+
+  /// No description provided for @invitationLinkInvalid.
+  ///
+  /// In ko, this message translates to:
+  /// **'초대 링크를 확인할 수 없어요. 다시 전달받아 주세요.'**
+  String get invitationLinkInvalid;
 }
 
 class _AppLocalizationsDelegate

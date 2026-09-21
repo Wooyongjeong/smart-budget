@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:app_links/app_links.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -16,6 +19,8 @@ import 'features/transactions/receipt_analysis.dart';
 import 'features/payment_methods/payment_methods_screen.dart';
 import 'features/household/household_repository.dart';
 import 'features/household/household_screen.dart';
+import 'features/household/invitation_link.dart';
+import 'features/household/invitation_onboarding_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -243,7 +248,7 @@ class _MonthlySummaryCard extends StatelessWidget {
   }
 }
 
-class AuthRoot extends StatelessWidget {
+class AuthRoot extends StatefulWidget {
   const AuthRoot({
     super.key,
     required this.config,
@@ -261,29 +266,118 @@ class AuthRoot extends StatelessWidget {
   final AuthService? service;
 
   @override
+  State<AuthRoot> createState() => _AuthRootState();
+}
+
+class _AuthRootState extends State<AuthRoot> {
+  late final AuthService auth =
+      widget.service ?? SupabaseAuthService(widget.config.redirectUrl);
+  late final SupabaseTransactionRepository transactionRepository =
+      SupabaseTransactionRepository();
+  late final SupabaseHouseholdRepository householdRepository =
+      SupabaseHouseholdRepository();
+  final appLinks = AppLinks();
+  StreamSubscription<Uri>? linkSubscription;
+  String? pendingInvitationToken;
+  Future<HouseholdOverview>? initialHouseholdCheck;
+  bool onboardingSkipped = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _listenForInvitationLinks();
+  }
+
+  Future<void> _listenForInvitationLinks() async {
+    try {
+      final initial = await appLinks.getInitialLink();
+      if (initial != null) _receiveInvitationLink(initial);
+    } catch (_) {
+      // A missing initial link must not prevent authentication.
+    }
+    linkSubscription = appLinks.uriLinkStream.listen(_receiveInvitationLink);
+  }
+
+  void _receiveInvitationLink(Uri uri) {
+    final token = invitationTokenFromUri(uri);
+    if (token == null || !mounted) return;
+    setState(() => pendingInvitationToken = token);
+  }
+
+  @override
+  void dispose() {
+    linkSubscription?.cancel();
+    super.dispose();
+  }
+
+  void finishInvitation() {
+    if (mounted) {
+      setState(() {
+        pendingInvitationToken = null;
+        onboardingSkipped = true;
+      });
+    }
+  }
+
+  Widget _signedInHome() {
+    if (pendingInvitationToken != null) {
+      return InvitationOnboardingScreen(
+        repository: householdRepository,
+        initialToken: pendingInvitationToken,
+        onAccepted: transactionRepository.useHousehold,
+        onComplete: finishInvitation,
+      );
+    }
+    if (onboardingSkipped) return _budgetApp();
+    initialHouseholdCheck ??= householdRepository.load();
+    return FutureBuilder<HouseholdOverview>(
+      future: initialHouseholdCheck,
+      builder: (context, snapshot) {
+        if (snapshot.hasError &&
+            snapshot.error is HouseholdException &&
+            (snapshot.error! as HouseholdException).code == 'not_found') {
+          return InvitationOnboardingScreen(
+            repository: householdRepository,
+            onAccepted: transactionRepository.useHousehold,
+            onComplete: finishInvitation,
+          );
+        }
+        if (!snapshot.hasData && !snapshot.hasError) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+        return _budgetApp();
+      },
+    );
+  }
+
+  Widget _budgetApp() => BudgetApp(
+    initialTheme: widget.initialTheme,
+    initialLocale: widget.initialLocale,
+    saveTheme: widget.saveTheme,
+    saveLocale: widget.saveLocale,
+    transactionRepository: transactionRepository,
+    householdRepository: householdRepository,
+    onHouseholdChanged: transactionRepository.useHousehold,
+    onSignOut: auth.signOut,
+    invitationLinkBaseUrl: widget.config.invitationLinkBaseUrl,
+  );
+
+  @override
   Widget build(BuildContext context) {
-    final auth = service ?? SupabaseAuthService(config.redirectUrl);
-    final transactionRepository = SupabaseTransactionRepository();
     return MaterialApp(
-      title: lookupAppLocalizations(Locale(initialLocale ?? 'ko')).appTitle,
-      locale: Locale(initialLocale ?? 'ko'),
+      title: lookupAppLocalizations(
+        Locale(widget.initialLocale ?? 'ko'),
+      ).appTitle,
+      locale: Locale(widget.initialLocale ?? 'ko'),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       debugShowCheckedModeBanner: false,
       home: StreamBuilder(
         stream: auth.authStateChanges,
-        builder: (context, snapshot) => auth.isSignedIn
-            ? BudgetApp(
-                initialTheme: initialTheme,
-                initialLocale: initialLocale,
-                saveTheme: saveTheme,
-                saveLocale: saveLocale,
-                transactionRepository: transactionRepository,
-                householdRepository: SupabaseHouseholdRepository(),
-                onHouseholdChanged: transactionRepository.useHousehold,
-                onSignOut: auth.signOut,
-              )
-            : AuthScreen(service: auth),
+        builder: (context, snapshot) =>
+            auth.isSignedIn ? _signedInHome() : AuthScreen(service: auth),
       ),
     );
   }
@@ -300,6 +394,7 @@ class BudgetApp extends StatefulWidget {
     this.householdRepository,
     this.onSignOut,
     this.onHouseholdChanged,
+    this.invitationLinkBaseUrl = 'https://smart-budget.app/invite',
     this.entryPaymentMethods = const [],
     this.entryMembers = const [],
   });
@@ -311,6 +406,7 @@ class BudgetApp extends StatefulWidget {
   final HouseholdRepository? householdRepository;
   final Future<void> Function()? onSignOut;
   final ValueChanged<String>? onHouseholdChanged;
+  final String invitationLinkBaseUrl;
   final List<PaymentMethodOption> entryPaymentMethods;
   final List<MemberOption> entryMembers;
 
@@ -516,6 +612,7 @@ class _BudgetAppState extends State<BudgetApp> {
       MaterialPageRoute<void>(
         builder: (_) => HouseholdScreen(
           repository: repository,
+          invitationLinkBaseUrl: widget.invitationLinkBaseUrl,
           onHouseholdChanged: (householdId) {
             widget.onHouseholdChanged?.call(householdId);
             refreshOverview();

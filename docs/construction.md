@@ -54,13 +54,13 @@ authenticated 역할의 실제 카드 목표/충전/사용 RPC 테스트를 추�
 
 ## T09 — 초대·탈퇴·접근 회수
 
-DB 구현 브랜치: `feat/t09-household-invitations`. 앱 연결 브랜치: `feat/couple-household-connection`.
+DB 구현 브랜치: `feat/t09-household-invitations`. 앱 연결 브랜치: `feat/couple-household-connection`. 링크·가입 연결 브랜치: `feat/invitation-deep-link-onboarding`.
 
 `invitations`에 원문이 아닌 SHA-256 토큰 해시만 저장하고, `create_invitation`/`accept_invitation`에서 만료·일회성·활성 구성원 2명 정원과 가계부 잠금을 함께 검사한다. `leave_household`는 구성원을 즉시 비활성화하고 마지막 구성원이 나가면 가계부를 archived 처리한다. 초대 테이블 직접 읽기와 구성원 직접 변경은 차단하고 RPC만 실행 가능하게 했다.
 
 설정의 공동 가계부 화면에서 현재 구성원을 확인하고, 7일 유효 초대 코드를 생성·복사하거나 받은 48자리 코드를 수락할 수 있다. 서버 오류를 만료/재사용·이미 참여·정원 초과·접근 불가 안내로 구분한다. 탈퇴는 영향 확인 뒤 RPC를 실행하며 성공 시 공동 데이터 참조를 비우고 Supabase 세션을 종료한다. 초대 코드는 앱에 영구 저장하지 않는다.
 
-검증: `supabase/tests/t09_invitations.sql`에 함수·권한·활성 구성원 유일성 회귀가 있다. 앱 연결은 `test/household_screen_test.dart` 4건을 포함한 `flutter test` 전체 30건, `flutter analyze`, `flutter build macos --debug`, `git diff --check`로 검증했다. Supabase CLI/psql이 없어 실제 migration/원격 두 계정/병렬 세션 검증은 미실행이며, Realtime 구독과 로그인 전 초대 딥링크는 남아 있다.
+검증: `supabase/tests/t09_invitations.sql`에 함수·권한·활성 구성원 유일성 회귀가 있다. 앱 연결은 초대 링크/자동 입력 테스트를 포함한 `flutter test` 전체 35건, `flutter analyze`, `flutter build macos --debug`, `flutter build ios --no-codesign`, `git diff --check`로 검증했다. `flutter build apk --debug`는 Gradle이 70초 이상 출력 없이 대기해 중단했으며 Android APK 빌드는 미검증이다. Supabase CLI/psql이 없어 실제 migration/원격 두 계정/병렬 세션 검증은 미실행이며, Realtime 구독은 남아 있다. 실제 HTTPS 도메인 연결, iOS Associated Domains 파일 배포, Android `assetlinks.json`, 카카오톡 공유 화면은 운영 설정 후 실기기에서 확인해야 한다.
 
 ## T08 — 영수증 이미지 분석 함수 경계
 

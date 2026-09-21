@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../l10n/generated/app_localizations.dart';
 import 'household_repository.dart';
+import 'invitation_link.dart';
 
 class HouseholdScreen extends StatefulWidget {
   const HouseholdScreen({
@@ -10,11 +12,13 @@ class HouseholdScreen extends StatefulWidget {
     required this.repository,
     required this.onLeft,
     this.onHouseholdChanged,
+    this.invitationLinkBaseUrl = 'https://smart-budget.app/invite',
   });
 
   final HouseholdRepository repository;
   final Future<void> Function() onLeft;
   final ValueChanged<String>? onHouseholdChanged;
+  final String invitationLinkBaseUrl;
 
   @override
   State<HouseholdScreen> createState() => _HouseholdScreenState();
@@ -38,8 +42,13 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
     if (busy) return;
     setState(() => busy = true);
     try {
-      final value = await widget.repository.createInvitation(household.id);
-      if (mounted) setState(() => invitation = value);
+      final token = await widget.repository.createInvitation(household.id);
+      if (mounted) {
+        setState(
+          () =>
+              invitation = invitationLink(widget.invitationLinkBaseUrl, token),
+        );
+      }
     } on HouseholdException catch (error) {
       if (mounted) _showError(error.code);
     } catch (_) {
@@ -190,19 +199,38 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
                   child: ListTile(
                     title: SelectableText(invitation!),
                     subtitle: Text(l10n.invitationExpires),
-                    trailing: IconButton(
-                      tooltip: l10n.copyInvitation,
-                      onPressed: () async {
-                        await Clipboard.setData(
-                          ClipboardData(text: invitation!),
-                        );
-                        if (!context.mounted) return;
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text(l10n.invitationCopied)),
-                        );
-                      },
-                      icon: const Icon(Icons.copy_rounded),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          tooltip: l10n.shareInvitation,
+                          onPressed: () async {
+                            await SharePlus.instance.share(
+                              ShareParams(text: invitation!),
+                            );
+                          },
+                          icon: const Icon(Icons.ios_share_rounded),
+                        ),
+                        IconButton(
+                          tooltip: l10n.copyInvitation,
+                          onPressed: () async {
+                            await Clipboard.setData(
+                              ClipboardData(text: invitation!),
+                            );
+                            if (!context.mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text(l10n.invitationCopied)),
+                            );
+                          },
+                          icon: const Icon(Icons.copy_rounded),
+                        ),
+                      ],
                     ),
+                    onTap: () async {
+                      await SharePlus.instance.share(
+                        ShareParams(text: invitation!),
+                      );
+                    },
                   ),
                 ),
               ],
