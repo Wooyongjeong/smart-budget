@@ -670,4 +670,19 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get nicknameInvalid => '이름을 한 글자 이상 입력해 주세요.';
+
+  @override
+  String get signOut => '로그아웃';
+
+  @override
+  String get signOutDescription => '이 기기에서 카카오 로그인 세션을 종료해요.';
+
+  @override
+  String get signOutTitle => '로그아웃할까요?';
+
+  @override
+  String get signOutBody => '이 기기의 로그인 세션만 종료되며, 가계부 데이터는 삭제되지 않아요.';
+
+  @override
+  String get signOutFailed => '로그아웃하지 못했어요. 다시 시도해 주세요.';
 }

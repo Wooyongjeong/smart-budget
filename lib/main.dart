@@ -463,6 +463,7 @@ class _BudgetAppState extends State<BudgetApp> {
   late Locale locale = Locale(widget.initialLocale ?? 'ko');
   int tab = 0;
   bool saving = false;
+  bool signingOut = false;
   bool openingEntry = false;
   DateTime selectedDate = DateTime.now();
   late Future<TransactionQueryResult>? overview = _loadOverview(selectedDate);
@@ -665,6 +666,39 @@ class _BudgetAppState extends State<BudgetApp> {
         ),
       ),
     );
+  }
+
+  Future<void> confirmSignOut(BuildContext context) async {
+    if (signingOut || widget.onSignOut == null) return;
+    final l10n = lookupAppLocalizations(locale);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(l10n.signOutTitle),
+        content: Text(l10n.signOutBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: Text(l10n.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: Text(l10n.signOut),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    setState(() => signingOut = true);
+    try {
+      await widget.onSignOut!.call();
+    } catch (_) {
+      messenger.currentState?.showSnackBar(
+        SnackBar(content: Text(l10n.signOutFailed)),
+      );
+    } finally {
+      if (mounted) setState(() => signingOut = false);
+    }
   }
 
   @override
@@ -1086,6 +1120,32 @@ class _BudgetAppState extends State<BudgetApp> {
                             onTap: () => openHousehold(context),
                           ),
                         ),
+                      if (widget.onSignOut != null) ...[
+                        const SizedBox(height: 8),
+                        Card(
+                          child: Builder(
+                            builder: (itemContext) => ListTile(
+                              key: const ValueKey('sign-out'),
+                              leading: Icon(
+                                Icons.logout_rounded,
+                                color: Theme.of(itemContext).colorScheme.error,
+                              ),
+                              title: Text(l10n.signOut),
+                              subtitle: Text(l10n.signOutDescription),
+                              trailing: signingOut
+                                  ? const SizedBox.square(
+                                      dimension: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : const Icon(Icons.chevron_right_rounded),
+                              enabled: !signingOut,
+                              onTap: () => confirmSignOut(itemContext),
+                            ),
+                          ),
+                        ),
+                      ],
                     ],
                   ],
                 ),

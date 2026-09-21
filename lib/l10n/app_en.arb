@@ -196,4 +196,9 @@
   ,"nickname": "Name"
   ,"nicknameSave": "Start with this name"
   ,"nicknameInvalid": "Enter at least one character."
+  ,"signOut": "Sign out"
+  ,"signOutDescription": "End the Kakao login session on this device."
+  ,"signOutTitle": "Sign out?"
+  ,"signOutBody": "Only this device will be signed out. Your budget data won't be deleted."
+  ,"signOutFailed": "Couldn't sign out. Try again."
 }

@@ -695,4 +695,21 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get nicknameInvalid => 'Enter at least one character.';
+
+  @override
+  String get signOut => 'Sign out';
+
+  @override
+  String get signOutDescription =>
+      'End the Kakao login session on this device.';
+
+  @override
+  String get signOutTitle => 'Sign out?';
+
+  @override
+  String get signOutBody =>
+      'Only this device will be signed out. Your budget data won\'t be deleted.';
+
+  @override
+  String get signOutFailed => 'Couldn\'t sign out. Try again.';
 }

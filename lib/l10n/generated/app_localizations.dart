@@ -1369,6 +1369,36 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'이름을 한 글자 이상 입력해 주세요.'**
   String get nicknameInvalid;
+
+  /// No description provided for @signOut.
+  ///
+  /// In ko, this message translates to:
+  /// **'로그아웃'**
+  String get signOut;
+
+  /// No description provided for @signOutDescription.
+  ///
+  /// In ko, this message translates to:
+  /// **'이 기기에서 카카오 로그인 세션을 종료해요.'**
+  String get signOutDescription;
+
+  /// No description provided for @signOutTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'로그아웃할까요?'**
+  String get signOutTitle;
+
+  /// No description provided for @signOutBody.
+  ///
+  /// In ko, this message translates to:
+  /// **'이 기기의 로그인 세션만 종료되며, 가계부 데이터는 삭제되지 않아요.'**
+  String get signOutBody;
+
+  /// No description provided for @signOutFailed.
+  ///
+  /// In ko, this message translates to:
+  /// **'로그아웃하지 못했어요. 다시 시도해 주세요.'**
+  String get signOutFailed;
 }
 
 class _AppLocalizationsDelegate

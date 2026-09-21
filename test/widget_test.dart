@@ -138,4 +138,52 @@ void main() {
     await tester.scrollUntilVisible(find.text('모노 올리브'), 200);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('sign out requires confirmation and calls the session callback', (
+    tester,
+  ) async {
+    var signOutCount = 0;
+    await tester.pumpWidget(
+      BudgetApp(saveTheme: (_) async {}, onSignOut: () async => signOutCount++),
+    );
+    await tester.tap(find.text('설정'));
+    await tester.pumpAndSettle();
+    final signOut = find.byKey(const ValueKey('sign-out'));
+    await tester.scrollUntilVisible(signOut, 300);
+
+    await tester.tap(signOut);
+    await tester.pumpAndSettle();
+    expect(find.text('로그아웃할까요?'), findsOneWidget);
+    await tester.tap(find.text('취소'));
+    await tester.pumpAndSettle();
+    expect(signOutCount, 0);
+
+    await tester.tap(signOut);
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, '로그아웃'));
+    await tester.pumpAndSettle();
+    expect(signOutCount, 1);
+  });
+
+  testWidgets('a failed sign out keeps the app open and shows an error', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      BudgetApp(
+        saveTheme: (_) async {},
+        onSignOut: () async => throw Exception('network'),
+      ),
+    );
+    await tester.tap(find.text('설정'));
+    await tester.pumpAndSettle();
+    final signOut = find.byKey(const ValueKey('sign-out'));
+    await tester.scrollUntilVisible(signOut, 300);
+    await tester.tap(signOut);
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, '로그아웃'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('로그아웃하지 못했어요. 다시 시도해 주세요.'), findsOneWidget);
+    expect(find.text('설정'), findsOneWidget);
+  });
 }
