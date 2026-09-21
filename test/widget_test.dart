@@ -4,6 +4,7 @@ import 'package:smart_budget/main.dart';
 import 'package:smart_budget/themes.dart';
 import 'package:smart_budget/features/household/household_repository.dart';
 import 'package:smart_budget/features/household/household_screen.dart';
+import 'package:smart_budget/features/transactions/transaction_repository.dart';
 import 'localized_test_app.dart';
 
 class _HouseholdRepository implements HouseholdRepository {
@@ -38,6 +39,43 @@ class _HouseholdRepository implements HouseholdRepository {
 }
 
 void main() {
+  testWidgets('calendar today button selects today and resets the picker', (
+    tester,
+  ) async {
+    var selectedDate = DateTime(2024, 1, 15);
+    await tester.pumpWidget(
+      localizedTestApp(
+        home: StatefulBuilder(
+          builder: (context, setState) => Scaffold(
+            body: CalendarOverview(
+              selectedDate: selectedDate,
+              result: const TransactionQueryResult(
+                items: [],
+                totalIncome: 0,
+                totalExpense: 0,
+              ),
+              onDateChanged: (value) {
+                setState(() => selectedDate = value);
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.byKey(const ValueKey('calendar-today')));
+    await tester.pumpAndSettle();
+
+    final now = DateTime.now();
+    expect(selectedDate, DateTime(now.year, now.month, now.day));
+    expect(
+      tester
+          .widget<CalendarDatePicker>(find.byType(CalendarDatePicker))
+          .initialDate,
+      selectedDate,
+    );
+  });
+
   testWidgets('profile avatar uses the saved display name initial', (
     tester,
   ) async {
