@@ -11,6 +11,8 @@ class FakeAuthService implements AuthService {
   @override
   bool isSignedIn = false;
   @override
+  String? suggestedDisplayName;
+  @override
   Stream<AuthState> get authStateChanges => const Stream.empty();
   @override
   Future<AuthResult> signInWithKakao() async => result;

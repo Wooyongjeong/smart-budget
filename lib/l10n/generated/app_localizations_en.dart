@@ -679,4 +679,20 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get displayNameInvalid =>
       'Enter at least one character for your name.';
+
+  @override
+  String get nicknameOnboardingTitle => 'Choose a name for your budget';
+
+  @override
+  String get nicknameOnboardingDescription =>
+      'This is the name shown when you record together. You can change it anytime.';
+
+  @override
+  String get nickname => 'Name';
+
+  @override
+  String get nicknameSave => 'Start with this name';
+
+  @override
+  String get nicknameInvalid => 'Enter at least one character.';
 }

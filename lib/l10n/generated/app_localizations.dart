@@ -1339,6 +1339,36 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'이름을 한 글자 이상 입력해 주세요.'**
   String get displayNameInvalid;
+
+  /// No description provided for @nicknameOnboardingTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'가계부에서 사용할 이름을 정해요'**
+  String get nicknameOnboardingTitle;
+
+  /// No description provided for @nicknameOnboardingDescription.
+  ///
+  /// In ko, this message translates to:
+  /// **'함께 기록할 때 보여줄 이름이에요. 언제든 수정할 수 있어요.'**
+  String get nicknameOnboardingDescription;
+
+  /// No description provided for @nickname.
+  ///
+  /// In ko, this message translates to:
+  /// **'이름'**
+  String get nickname;
+
+  /// No description provided for @nicknameSave.
+  ///
+  /// In ko, this message translates to:
+  /// **'이 이름으로 시작하기'**
+  String get nicknameSave;
+
+  /// No description provided for @nicknameInvalid.
+  ///
+  /// In ko, this message translates to:
+  /// **'이름을 한 글자 이상 입력해 주세요.'**
+  String get nicknameInvalid;
 }
 
 class _AppLocalizationsDelegate

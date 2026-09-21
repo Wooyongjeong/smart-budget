@@ -1,0 +1,81 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:smart_budget/features/household/household_repository.dart';
+import 'package:smart_budget/features/household/nickname_onboarding_screen.dart';
+import 'package:smart_budget/l10n/generated/app_localizations.dart';
+import 'localized_test_app.dart';
+
+class _Repository implements HouseholdRepository {
+  String? saved;
+
+  @override
+  Future<HouseholdOverview> load() async =>
+      const HouseholdOverview(id: 'household', name: '가계부', members: []);
+
+  @override
+  Future<String> updateDisplayName(String name) async {
+    saved = name;
+    return name;
+  }
+
+  @override
+  Future<String> createInvitation(String householdId) async => 'a' * 48;
+
+  @override
+  Future<String> acceptInvitation(String token) async => 'household';
+
+  @override
+  Future<void> leave(String householdId) async {}
+}
+
+void main() {
+  testWidgets('uses the fallback name and saves an edited name', (
+    tester,
+  ) async {
+    final repository = _Repository();
+    String? completed;
+    await tester.pumpWidget(
+      localizedTestApp(
+        home: NicknameOnboardingScreen(
+          repository: repository,
+          initialName: '나',
+          onComplete: (name) => completed = name,
+        ),
+      ),
+    );
+
+    expect(find.text('나'), findsOneWidget);
+    await tester.enterText(
+      find.byKey(const ValueKey('onboarding-nickname')),
+      '민지',
+    );
+    await tester.tap(find.text('이 이름으로 시작하기'));
+    await tester.pumpAndSettle();
+
+    expect(repository.saved, '민지');
+    expect(completed, '민지');
+  });
+
+  testWidgets('shows the Kakao nickname as the editable initial value', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      localizedTestApp(
+        home: NicknameOnboardingScreen(
+          repository: _Repository(),
+          initialName: '카카오닉네임',
+          onComplete: (_) {},
+        ),
+      ),
+    );
+    expect(find.text('카카오닉네임'), findsOneWidget);
+    expect(
+      find.text(
+        AppLocalizations.of(
+          tester.element(find.byType(NicknameOnboardingScreen)),
+        )!.nicknameOnboardingTitle,
+      ),
+      findsOneWidget,
+    );
+  });
+}

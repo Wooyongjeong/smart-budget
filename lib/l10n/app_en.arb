@@ -191,4 +191,9 @@
   ,"editDisplayName": "Edit name",
   "displayName": "Display name",
   "displayNameInvalid": "Enter at least one character for your name."
+  ,"nicknameOnboardingTitle": "Choose a name for your budget"
+  ,"nicknameOnboardingDescription": "This is the name shown when you record together. You can change it anytime."
+  ,"nickname": "Name"
+  ,"nicknameSave": "Start with this name"
+  ,"nicknameInvalid": "Enter at least one character."
 }

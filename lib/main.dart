@@ -21,6 +21,7 @@ import 'features/household/household_repository.dart';
 import 'features/household/household_screen.dart';
 import 'features/household/invitation_link.dart';
 import 'features/household/invitation_onboarding_screen.dart';
+import 'features/household/nickname_onboarding_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -282,6 +283,7 @@ class _AuthRootState extends State<AuthRoot> {
   String? pendingInvitationToken;
   Future<HouseholdOverview>? initialHouseholdCheck;
   bool onboardingSkipped = false;
+  bool nicknameOnboardingCompleted = false;
   String? activeUserId;
 
   @override
@@ -317,11 +319,13 @@ class _AuthRootState extends State<AuthRoot> {
         activeUserId = null;
         initialHouseholdCheck = null;
         onboardingSkipped = false;
+        nicknameOnboardingCompleted = false;
         pendingInvitationToken = null;
       } else if (userChanged && nextUserId != null) {
         activeUserId = nextUserId;
         initialHouseholdCheck = null;
         onboardingSkipped = false;
+        nicknameOnboardingCompleted = false;
       }
     });
   }
@@ -352,14 +356,6 @@ class _AuthRootState extends State<AuthRoot> {
   }
 
   Widget _signedInHome() {
-    if (pendingInvitationToken != null) {
-      return InvitationOnboardingScreen(
-        repository: householdRepository,
-        initialToken: pendingInvitationToken,
-        onAccepted: transactionRepository.useHousehold,
-        onComplete: finishInvitation,
-      );
-    }
     if (onboardingSkipped) return _budgetApp();
     initialHouseholdCheck ??= householdRepository.load();
     return FutureBuilder<HouseholdOverview>(
@@ -368,6 +364,15 @@ class _AuthRootState extends State<AuthRoot> {
         if (snapshot.hasError &&
             snapshot.error is HouseholdException &&
             (snapshot.error! as HouseholdException).code == 'not_found') {
+          if (!nicknameOnboardingCompleted) {
+            return NicknameOnboardingScreen(
+              repository: householdRepository,
+              initialName: auth.suggestedDisplayName ?? '나',
+              onComplete: (_) => setState(() {
+                nicknameOnboardingCompleted = true;
+              }),
+            );
+          }
           return InvitationOnboardingScreen(
             repository: householdRepository,
             onAccepted: transactionRepository.useHousehold,
@@ -377,6 +382,14 @@ class _AuthRootState extends State<AuthRoot> {
         if (!snapshot.hasData && !snapshot.hasError) {
           return const Scaffold(
             body: Center(child: CircularProgressIndicator()),
+          );
+        }
+        if (pendingInvitationToken != null) {
+          return InvitationOnboardingScreen(
+            repository: householdRepository,
+            initialToken: pendingInvitationToken,
+            onAccepted: transactionRepository.useHousehold,
+            onComplete: finishInvitation,
           );
         }
         return _budgetApp();

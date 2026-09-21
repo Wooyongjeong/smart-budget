@@ -654,4 +654,20 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get displayNameInvalid => '이름을 한 글자 이상 입력해 주세요.';
+
+  @override
+  String get nicknameOnboardingTitle => '가계부에서 사용할 이름을 정해요';
+
+  @override
+  String get nicknameOnboardingDescription =>
+      '함께 기록할 때 보여줄 이름이에요. 언제든 수정할 수 있어요.';
+
+  @override
+  String get nickname => '이름';
+
+  @override
+  String get nicknameSave => '이 이름으로 시작하기';
+
+  @override
+  String get nicknameInvalid => '이름을 한 글자 이상 입력해 주세요.';
 }

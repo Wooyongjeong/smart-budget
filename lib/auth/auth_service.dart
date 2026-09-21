@@ -2,6 +2,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 abstract interface class AuthService {
   bool get isSignedIn;
+  String? get suggestedDisplayName;
   Stream<AuthState> get authStateChanges;
   Future<AuthResult> signInWithKakao();
   Future<void> signOut();
@@ -32,6 +33,17 @@ class SupabaseAuthService implements AuthService {
 
   @override
   bool get isSignedIn => client.auth.currentSession != null;
+
+  @override
+  String? get suggestedDisplayName {
+    final metadata = client.auth.currentUser?.userMetadata;
+    if (metadata == null) return null;
+    for (final key in ['nickname', 'name', 'preferred_username']) {
+      final value = metadata[key];
+      if (value is String && value.trim().isNotEmpty) return value.trim();
+    }
+    return null;
+  }
 
   @override
   Stream<AuthState> get authStateChanges => client.auth.onAuthStateChange;
