@@ -14,6 +14,8 @@ import 'features/transactions/transaction_repository.dart';
 import 'features/transactions/ai_review_screen.dart';
 import 'features/transactions/receipt_analysis.dart';
 import 'features/payment_methods/payment_methods_screen.dart';
+import 'features/household/household_repository.dart';
+import 'features/household/household_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -261,6 +263,7 @@ class AuthRoot extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final auth = service ?? SupabaseAuthService(config.redirectUrl);
+    final transactionRepository = SupabaseTransactionRepository();
     return MaterialApp(
       title: lookupAppLocalizations(Locale(initialLocale ?? 'ko')).appTitle,
       locale: Locale(initialLocale ?? 'ko'),
@@ -275,7 +278,10 @@ class AuthRoot extends StatelessWidget {
                 initialLocale: initialLocale,
                 saveTheme: saveTheme,
                 saveLocale: saveLocale,
-                transactionRepository: SupabaseTransactionRepository(),
+                transactionRepository: transactionRepository,
+                householdRepository: SupabaseHouseholdRepository(),
+                onHouseholdChanged: transactionRepository.useHousehold,
+                onSignOut: auth.signOut,
               )
             : AuthScreen(service: auth),
       ),
@@ -291,6 +297,9 @@ class BudgetApp extends StatefulWidget {
     required this.saveTheme,
     this.saveLocale,
     this.transactionRepository,
+    this.householdRepository,
+    this.onSignOut,
+    this.onHouseholdChanged,
     this.entryPaymentMethods = const [],
     this.entryMembers = const [],
   });
@@ -299,6 +308,9 @@ class BudgetApp extends StatefulWidget {
   final Future<void> Function(String) saveTheme;
   final Future<void> Function(String)? saveLocale;
   final TransactionRepository? transactionRepository;
+  final HouseholdRepository? householdRepository;
+  final Future<void> Function()? onSignOut;
+  final ValueChanged<String>? onHouseholdChanged;
   final List<PaymentMethodOption> entryPaymentMethods;
   final List<MemberOption> entryMembers;
 
@@ -495,6 +507,26 @@ class _BudgetAppState extends State<BudgetApp> {
         );
       }
     }
+  }
+
+  Future<void> openHousehold(BuildContext context) async {
+    final repository = widget.householdRepository;
+    if (repository == null) return;
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => HouseholdScreen(
+          repository: repository,
+          onHouseholdChanged: (householdId) {
+            widget.onHouseholdChanged?.call(householdId);
+            refreshOverview();
+          },
+          onLeft: () async {
+            overview = null;
+            await widget.onSignOut?.call();
+          },
+        ),
+      ),
+    );
   }
 
   @override
@@ -904,7 +936,18 @@ class _BudgetAppState extends State<BudgetApp> {
                         ),
                       ),
                       const SizedBox(height: 8),
-                      Text(l10n.accountComingSoon),
+                      if (widget.householdRepository == null)
+                        Text(l10n.accountComingSoon)
+                      else
+                        Card(
+                          child: ListTile(
+                            leading: const Icon(Icons.people_outline_rounded),
+                            title: Text(l10n.sharedHousehold),
+                            subtitle: Text(l10n.manageHouseholdDescription),
+                            trailing: const Icon(Icons.chevron_right_rounded),
+                            onTap: () => openHousehold(context),
+                          ),
+                        ),
                     ],
                   ],
                 ),

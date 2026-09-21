@@ -96,14 +96,19 @@ class SupabaseTransactionRepository implements TransactionRepository {
   SupabaseTransactionRepository({SupabaseClient? client})
     : client = client ?? Supabase.instance.client;
   final SupabaseClient client;
+  String? _preferredHouseholdId;
+
+  void useHousehold(String householdId) {
+    _preferredHouseholdId = householdId;
+  }
 
   @override
   Future<HouseholdContext> loadContext() async {
-    final rows = await client
-        .from('households')
-        .select('id')
-        .order('created_at')
-        .limit(1);
+    var query = client.from('households').select('id');
+    if (_preferredHouseholdId != null) {
+      query = query.eq('id', _preferredHouseholdId!);
+    }
+    final rows = await query.order('created_at').limit(1);
     String householdId;
     if (rows.isEmpty) {
       final created = await client.rpc(
