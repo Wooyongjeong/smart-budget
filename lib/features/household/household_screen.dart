@@ -61,7 +61,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
   Future<void> acceptInvitation() async {
     if (busy) return;
     final token = tokenController.text.trim();
-    if (token.length != 48) {
+    if (!isInvitationToken(token)) {
       _showError('invitation_invalid');
       return;
     }
@@ -84,6 +84,16 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
     } finally {
       if (mounted) setState(() => busy = false);
     }
+  }
+
+  Future<void> shareInvitation(BuildContext context, String value) async {
+    final box = context.findRenderObject() as RenderBox?;
+    final origin = box == null
+        ? null
+        : box.localToGlobal(Offset.zero) & box.size;
+    await SharePlus.instance.share(
+      ShareParams(text: value, sharePositionOrigin: origin),
+    );
   }
 
   Future<void> confirmLeave(HouseholdOverview household) async {
@@ -204,11 +214,8 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
                       children: [
                         IconButton(
                           tooltip: l10n.shareInvitation,
-                          onPressed: () async {
-                            await SharePlus.instance.share(
-                              ShareParams(text: invitation!),
-                            );
-                          },
+                          onPressed: () =>
+                              shareInvitation(context, invitation!),
                           icon: const Icon(Icons.ios_share_rounded),
                         ),
                         IconButton(
@@ -226,11 +233,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
                         ),
                       ],
                     ),
-                    onTap: () async {
-                      await SharePlus.instance.share(
-                        ShareParams(text: invitation!),
-                      );
-                    },
+                    onTap: () => shareInvitation(context, invitation!),
                   ),
                 ),
               ],

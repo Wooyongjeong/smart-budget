@@ -278,28 +278,59 @@ class _AuthRootState extends State<AuthRoot> {
       SupabaseHouseholdRepository();
   final appLinks = AppLinks();
   StreamSubscription<Uri>? linkSubscription;
+  StreamSubscription<AuthState>? authSubscription;
   String? pendingInvitationToken;
   Future<HouseholdOverview>? initialHouseholdCheck;
   bool onboardingSkipped = false;
+  String? activeUserId;
 
   @override
   void initState() {
     super.initState();
+    authSubscription = auth.authStateChanges.listen(
+      _authStateChanged,
+      onError: (_) {},
+    );
     _listenForInvitationLinks();
   }
 
   Future<void> _listenForInvitationLinks() async {
+    linkSubscription = appLinks.uriLinkStream.listen(
+      _receiveInvitationLink,
+      onError: (_) {},
+    );
     try {
       final initial = await appLinks.getInitialLink();
       if (initial != null) _receiveInvitationLink(initial);
     } catch (_) {
       // A missing initial link must not prevent authentication.
     }
-    linkSubscription = appLinks.uriLinkStream.listen(_receiveInvitationLink);
+  }
+
+  void _authStateChanged(AuthState state) {
+    final nextUserId = state.session?.user.id;
+    final userChanged = nextUserId != activeUserId;
+    final signedOut = state.event == AuthChangeEvent.signedOut;
+    if (!mounted) return;
+    setState(() {
+      if (signedOut) {
+        activeUserId = null;
+        initialHouseholdCheck = null;
+        onboardingSkipped = false;
+        pendingInvitationToken = null;
+      } else if (userChanged && nextUserId != null) {
+        activeUserId = nextUserId;
+        initialHouseholdCheck = null;
+        onboardingSkipped = false;
+      }
+    });
   }
 
   void _receiveInvitationLink(Uri uri) {
-    final token = invitationTokenFromUri(uri);
+    final token = invitationTokenFromUri(
+      uri,
+      allowedWebHost: Uri.parse(widget.config.invitationLinkBaseUrl).host,
+    );
     if (token == null || !mounted) return;
     setState(() => pendingInvitationToken = token);
   }
@@ -307,6 +338,7 @@ class _AuthRootState extends State<AuthRoot> {
   @override
   void dispose() {
     linkSubscription?.cancel();
+    authSubscription?.cancel();
     super.dispose();
   }
 
@@ -374,11 +406,7 @@ class _AuthRootState extends State<AuthRoot> {
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       debugShowCheckedModeBanner: false,
-      home: StreamBuilder(
-        stream: auth.authStateChanges,
-        builder: (context, snapshot) =>
-            auth.isSignedIn ? _signedInHome() : AuthScreen(service: auth),
-      ),
+      home: auth.isSignedIn ? _signedInHome() : AuthScreen(service: auth),
     );
   }
 }

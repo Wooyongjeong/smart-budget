@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../l10n/generated/app_localizations.dart';
 import 'household_repository.dart';
+import 'invitation_link.dart';
 
 class InvitationOnboardingScreen extends StatefulWidget {
   const InvitationOnboardingScreen({
@@ -30,6 +31,15 @@ class _InvitationOnboardingScreenState
   bool busy = false;
 
   @override
+  void didUpdateWidget(covariant InvitationOnboardingScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final nextToken = widget.initialToken;
+    if (nextToken != null && nextToken != oldWidget.initialToken) {
+      controller.text = nextToken;
+    }
+  }
+
+  @override
   void dispose() {
     controller.dispose();
     super.dispose();
@@ -37,7 +47,7 @@ class _InvitationOnboardingScreenState
 
   Future<void> accept() async {
     final token = controller.text.trim();
-    if (token.length != 48) {
+    if (!isInvitationToken(token)) {
       _showError('invitation_invalid');
       return;
     }

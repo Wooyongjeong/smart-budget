@@ -25,21 +25,22 @@ class _Repository implements HouseholdRepository {
   Future<void> leave(String householdId) async {}
 }
 
-Widget _app(_Repository repository, VoidCallback complete) => MaterialApp(
-  locale: const Locale('ko'),
-  localizationsDelegates: const [
-    AppLocalizations.delegate,
-    GlobalMaterialLocalizations.delegate,
-    GlobalWidgetsLocalizations.delegate,
-    GlobalCupertinoLocalizations.delegate,
-  ],
-  supportedLocales: AppLocalizations.supportedLocales,
-  home: InvitationOnboardingScreen(
-    repository: repository,
-    initialToken: 'a' * 48,
-    onComplete: complete,
-  ),
-);
+Widget _app(_Repository repository, VoidCallback complete, {String? token}) =>
+    MaterialApp(
+      locale: const Locale('ko'),
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: AppLocalizations.supportedLocales,
+      home: InvitationOnboardingScreen(
+        repository: repository,
+        initialToken: token,
+        onComplete: complete,
+      ),
+    );
 
 void main() {
   testWidgets('prefills a deep-link token and accepts it after login', (
@@ -47,7 +48,9 @@ void main() {
   ) async {
     final repository = _Repository();
     var completed = false;
-    await tester.pumpWidget(_app(repository, () => completed = true));
+    await tester.pumpWidget(
+      _app(repository, () => completed = true, token: 'a' * 48),
+    );
     await tester.pumpAndSettle();
 
     expect(find.text('a' * 48), findsOneWidget);
@@ -66,5 +69,18 @@ void main() {
 
     await tester.tap(find.text('나중에 참여할게요'));
     expect(completed, isTrue);
+  });
+
+  testWidgets('updates the field when a warm invitation link arrives', (
+    tester,
+  ) async {
+    final repository = _Repository();
+    await tester.pumpWidget(_app(repository, () {}));
+    expect(find.text('b' * 48), findsNothing);
+
+    await tester.pumpWidget(_app(repository, () {}, token: 'b' * 48));
+    await tester.pump();
+
+    expect(find.text('b' * 48), findsOneWidget);
   });
 }

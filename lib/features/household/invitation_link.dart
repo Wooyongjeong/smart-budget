@@ -1,9 +1,13 @@
 const invitationTokenLength = 48;
 
-String? invitationTokenFromUri(Uri uri) {
+bool isInvitationToken(String value) =>
+    RegExp(r'^[0-9a-f]{48}$').hasMatch(value);
+
+String? invitationTokenFromUri(Uri uri, {required String allowedWebHost}) {
   final isSupportedScheme = uri.scheme == 'smartbudget';
   final isSupportedWebLink =
-      (uri.scheme == 'https' || uri.scheme == 'http') &&
+      uri.scheme == 'https' &&
+      uri.host == allowedWebHost &&
       uri.pathSegments.length == 2 &&
       uri.pathSegments.first == 'invite';
   if (!isSupportedScheme && !isSupportedWebLink) return null;
@@ -13,7 +17,7 @@ String? invitationTokenFromUri(Uri uri) {
             ? uri.pathSegments.single
             : null)
       : uri.pathSegments.last;
-  if (token == null || !RegExp(r'^[0-9a-fA-F]{48}$').hasMatch(token)) {
+  if (token == null || !isInvitationToken(token)) {
     return null;
   }
   return token;
