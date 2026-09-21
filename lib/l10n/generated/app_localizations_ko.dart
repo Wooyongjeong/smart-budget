@@ -645,4 +645,13 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get invitationLinkInvalid => '초대 링크를 확인할 수 없어요. 다시 전달받아 주세요.';
+
+  @override
+  String get editDisplayName => '이름 수정';
+
+  @override
+  String get displayName => '표시할 이름';
+
+  @override
+  String get displayNameInvalid => '이름을 한 글자 이상 입력해 주세요.';
 }

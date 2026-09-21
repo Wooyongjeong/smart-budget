@@ -35,6 +35,7 @@ class HouseholdException implements Exception {
 
 abstract interface class HouseholdRepository {
   Future<HouseholdOverview> load();
+  Future<String> updateDisplayName(String name);
   Future<String> createInvitation(String householdId);
   Future<String> acceptInvitation(String token);
   Future<void> leave(String householdId);
@@ -88,12 +89,27 @@ class SupabaseHouseholdRepository implements HouseholdRepository {
               id: row['id'] as String,
               name: names[row['user_id']]?.isNotEmpty == true
                   ? names[row['user_id']]!
-                  : '구성원',
+                  : row['user_id'] == currentUserId
+                  ? '나'
+                  : '배우자',
               isMe: row['user_id'] == currentUserId,
             ),
           )
           .toList(growable: false),
     );
+  }
+
+  @override
+  Future<String> updateDisplayName(String name) async {
+    try {
+      final value = await client.rpc(
+        'update_profile_display_name',
+        params: {'p_display_name': name.trim()},
+      );
+      return value as String;
+    } on PostgrestException catch (error) {
+      throw HouseholdException(_code(error));
+    }
   }
 
   @override

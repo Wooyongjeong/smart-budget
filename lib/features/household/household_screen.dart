@@ -86,6 +86,48 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
     }
   }
 
+  Future<void> editDisplayName(HouseholdMember member) async {
+    final controller = TextEditingController(text: member.name);
+    final name = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(AppLocalizations.of(context)!.editDisplayName),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          maxLength: 100,
+          decoration: InputDecoration(
+            labelText: AppLocalizations.of(context)!.displayName,
+          ),
+          onSubmitted: (value) => Navigator.pop(context, value),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(AppLocalizations.of(context)!.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, controller.text),
+            child: Text(AppLocalizations.of(context)!.save),
+          ),
+        ],
+      ),
+    );
+    WidgetsBinding.instance.addPostFrameCallback((_) => controller.dispose());
+    if (name == null || name.trim().isEmpty || busy) return;
+    setState(() => busy = true);
+    try {
+      await widget.repository.updateDisplayName(name);
+      reload();
+    } on HouseholdException catch (error) {
+      if (mounted) _showError(error.code);
+    } catch (_) {
+      if (mounted) _showError('unexpected');
+    } finally {
+      if (mounted) setState(() => busy = false);
+    }
+  }
+
   Future<void> shareInvitation(BuildContext context, String value) async {
     final box = context.findRenderObject() as RenderBox?;
     final origin = box == null
@@ -139,6 +181,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
       'household_full' => l10n.householdFull,
       'household_unavailable' => l10n.householdUnavailable,
       'forbidden' => l10n.householdForbidden,
+      'display_name_invalid' => l10n.displayNameInvalid,
       _ => l10n.householdActionFailed,
     };
     ScaffoldMessenger.of(
@@ -182,7 +225,16 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
                             child: Icon(Icons.person_outline),
                           ),
                           title: Text(member.name),
-                          trailing: member.isMe ? Text(l10n.me) : null,
+                          trailing: member.isMe
+                              ? IconButton(
+                                  key: const ValueKey('edit-display-name'),
+                                  tooltip: l10n.editDisplayName,
+                                  onPressed: busy
+                                      ? null
+                                      : () => editDisplayName(member),
+                                  icon: const Icon(Icons.edit_outlined),
+                                )
+                              : null,
                         ),
                       )
                       .toList(growable: false),

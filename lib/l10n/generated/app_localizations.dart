@@ -1321,6 +1321,24 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'초대 링크를 확인할 수 없어요. 다시 전달받아 주세요.'**
   String get invitationLinkInvalid;
+
+  /// No description provided for @editDisplayName.
+  ///
+  /// In ko, this message translates to:
+  /// **'이름 수정'**
+  String get editDisplayName;
+
+  /// No description provided for @displayName.
+  ///
+  /// In ko, this message translates to:
+  /// **'표시할 이름'**
+  String get displayName;
+
+  /// No description provided for @displayNameInvalid.
+  ///
+  /// In ko, this message translates to:
+  /// **'이름을 한 글자 이상 입력해 주세요.'**
+  String get displayNameInvalid;
 }
 
 class _AppLocalizationsDelegate

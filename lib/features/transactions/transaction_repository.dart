@@ -131,6 +131,20 @@ class SupabaseTransactionRepository implements TransactionRepository {
         .eq('household_id', householdId)
         .isFilter('left_at', null)
         .order('joined_at');
+    final memberUserIds = members
+        .map((row) => row['user_id'] as String)
+        .toList(growable: false);
+    final profiles = memberUserIds.isEmpty
+        ? <Map<String, dynamic>>[]
+        : await client
+              .from('profiles')
+              .select('user_id,display_name')
+              .inFilter('user_id', memberUserIds);
+    final displayNames = {
+      for (final row in profiles)
+        row['user_id'] as String: (row['display_name'] as String).trim(),
+    };
+    final currentUserId = client.auth.currentUser?.id;
     return HouseholdContext(
       householdId: householdId,
       paymentMethods: methods
@@ -145,7 +159,16 @@ class SupabaseTransactionRepository implements TransactionRepository {
           .toList(growable: false),
       members: members
           .map((row) {
-            return MemberOption(id: row['id'] as String, name: '구성원');
+            final userId = row['user_id'] as String;
+            final name = displayNames[userId];
+            return MemberOption(
+              id: row['id'] as String,
+              name: name?.isNotEmpty == true
+                  ? name!
+                  : userId == currentUserId
+                  ? '나'
+                  : '배우자',
+            );
           })
           .toList(growable: false),
     );

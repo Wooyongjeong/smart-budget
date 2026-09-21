@@ -19,6 +19,19 @@ class _Repository implements HouseholdRepository {
   Future<HouseholdOverview> load() async => value;
 
   @override
+  Future<String> updateDisplayName(String name) async {
+    value = HouseholdOverview(
+      id: value.id,
+      name: value.name,
+      members: [
+        HouseholdMember(id: 'member-1', name: name.trim(), isMe: true),
+        ...value.members.skip(1),
+      ],
+    );
+    return name.trim();
+  }
+
+  @override
   Future<String> createInvitation(String householdId) async {
     if (createError != null) throw HouseholdException(createError!);
     return 'a' * 48;
@@ -105,6 +118,27 @@ void main() {
     expect(selectedHousehold, 'household-2');
     expect(find.text('구성원 2/2명'), findsOneWidget);
     expect(find.text('배우자'), findsOneWidget);
+  });
+
+  testWidgets('uses 나 as the fallback and lets me edit my display name', (
+    tester,
+  ) async {
+    final repository = _Repository()
+      ..value = const HouseholdOverview(
+        id: 'household-1',
+        name: '우리 가계부',
+        members: [HouseholdMember(id: 'member-1', name: '나', isMe: true)],
+      );
+    await tester.pumpWidget(_app(repository));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey('edit-display-name')));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField).last, '우영');
+    await tester.tap(find.text('저장'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('우영'), findsOneWidget);
   });
 
   testWidgets('maps a full household error to an actionable message', (

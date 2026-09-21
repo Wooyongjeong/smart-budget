@@ -669,4 +669,14 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get invitationLinkInvalid =>
       'We couldn\'t read this invitation link. Ask for a new one.';
+
+  @override
+  String get editDisplayName => 'Edit name';
+
+  @override
+  String get displayName => 'Display name';
+
+  @override
+  String get displayNameInvalid =>
+      'Enter at least one character for your name.';
 }

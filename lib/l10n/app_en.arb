@@ -188,4 +188,7 @@
   "invitationOnboardingDescription": "This is an invitation from your partner. Confirm the code to start recording together.",
   "skipInvitation": "I'll join later",
   "invitationLinkInvalid": "We couldn't read this invitation link. Ask for a new one."
+  ,"editDisplayName": "Edit name",
+  "displayName": "Display name",
+  "displayNameInvalid": "Enter at least one character for your name."
 }
