@@ -2,8 +2,56 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:smart_budget/main.dart';
 import 'package:smart_budget/themes.dart';
+import 'package:smart_budget/features/household/household_repository.dart';
+
+class _HouseholdRepository implements HouseholdRepository {
+  _HouseholdRepository(this.displayName);
+
+  final String displayName;
+
+  @override
+  Future<String> loadCurrentDisplayName() async => displayName;
+
+  @override
+  Future<HouseholdOverview> load() async => HouseholdOverview(
+    id: 'household',
+    name: '우리 가계부',
+    members: [HouseholdMember(id: 'member', name: displayName, isMe: true)],
+  );
+
+  @override
+  Future<String> updateDisplayName(String name) async => name.trim();
+
+  @override
+  Future<String> createInvitation(String householdId) async => 'a' * 48;
+
+  @override
+  Future<String> acceptInvitation(String token) async => 'household';
+
+  @override
+  Future<void> leave(String householdId) async {}
+}
 
 void main() {
+  testWidgets('profile avatar uses the saved display name initial', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      BudgetApp(
+        saveTheme: (_) async {},
+        householdRepository: _HouseholdRepository('민지'),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final avatar = find.byKey(const ValueKey('profile-avatar'));
+    expect(
+      find.descendant(of: avatar, matching: find.text('민')),
+      findsOneWidget,
+    );
+    expect(find.text('우'), findsNothing);
+  });
+
   testWidgets('new theme choices can be selected and saved', (tester) async {
     String? saved;
     await tester.pumpWidget(BudgetApp(saveTheme: (id) async => saved = id));

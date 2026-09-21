@@ -35,6 +35,7 @@ class HouseholdException implements Exception {
 
 abstract interface class HouseholdRepository {
   Future<HouseholdOverview> load();
+  Future<String> loadCurrentDisplayName();
   Future<String> updateDisplayName(String name);
   Future<String> createInvitation(String householdId);
   Future<String> acceptInvitation(String token);
@@ -47,6 +48,13 @@ class SupabaseHouseholdRepository implements HouseholdRepository {
 
   final SupabaseClient client;
   String? _preferredHouseholdId;
+
+  @override
+  Future<String> loadCurrentDisplayName() async {
+    final value = await client.rpc('current_profile_display_name');
+    final name = (value as String).trim();
+    return name.isEmpty ? '나' : name;
+  }
 
   @override
   Future<HouseholdOverview> load() async {

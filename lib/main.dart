@@ -141,9 +141,14 @@ class CalendarOverview extends StatelessWidget {
 }
 
 class _TopHeader extends StatelessWidget {
-  const _TopHeader({required this.eyebrow, required this.title});
+  const _TopHeader({
+    required this.eyebrow,
+    required this.title,
+    required this.displayName,
+  });
   final String eyebrow;
   final String title;
+  final String displayName;
 
   @override
   Widget build(BuildContext context) => Padding(
@@ -167,12 +172,13 @@ class _TopHeader extends StatelessWidget {
           ),
         ),
         CircleAvatar(
+          key: const ValueKey('profile-avatar'),
           radius: 24,
           backgroundColor: Theme.of(
             context,
           ).colorScheme.primary.withValues(alpha: 0.11),
           child: Text(
-            '우',
+            _avatarInitial(displayName),
             style: TextStyle(
               color: Theme.of(context).colorScheme.primary,
               fontWeight: FontWeight.w800,
@@ -182,6 +188,11 @@ class _TopHeader extends StatelessWidget {
       ],
     ),
   );
+
+  String _avatarInitial(String value) {
+    final name = value.trim();
+    return name.isEmpty ? '나' : String.fromCharCode(name.runes.first);
+  }
 }
 
 class _MonthlySummaryCard extends StatelessWidget {
@@ -465,10 +476,28 @@ class _BudgetAppState extends State<BudgetApp> {
   bool saving = false;
   bool signingOut = false;
   bool openingEntry = false;
+  String displayName = '나';
   DateTime selectedDate = DateTime.now();
   late Future<TransactionQueryResult>? overview = _loadOverview(selectedDate);
   final messenger = GlobalKey<ScaffoldMessengerState>();
   AppLocalizations get _l10n => lookupAppLocalizations(locale);
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDisplayName();
+  }
+
+  Future<void> _loadDisplayName() async {
+    final repository = widget.householdRepository;
+    if (repository == null) return;
+    try {
+      final value = await repository.loadCurrentDisplayName();
+      if (mounted) setState(() => displayName = value);
+    } catch (_) {
+      // Keep the safe fallback until the profile can be read again.
+    }
+  }
 
   Future<TransactionQueryResult>? _loadOverview([DateTime? anchor]) {
     final repository = widget.transactionRepository;
@@ -658,6 +687,9 @@ class _BudgetAppState extends State<BudgetApp> {
           onHouseholdChanged: (householdId) {
             widget.onHouseholdChanged?.call(householdId);
             refreshOverview();
+          },
+          onDisplayNameChanged: (value) {
+            if (mounted) setState(() => displayName = value);
           },
           onLeft: () async {
             overview = null;
@@ -878,6 +910,7 @@ class _BudgetAppState extends State<BudgetApp> {
                     if (tab != 3) ...[
                       _TopHeader(
                         eyebrow: tab == 0 ? '우리 가계부' : l10n.appTitle,
+                        displayName: displayName,
                         title: tab == 0
                             ? l10n.calendarHeading
                             : [l10n.historyHeading, l10n.walletHeading][tab -
@@ -1025,6 +1058,7 @@ class _BudgetAppState extends State<BudgetApp> {
                       _TopHeader(
                         eyebrow: l10n.settings,
                         title: l10n.themeTitle,
+                        displayName: displayName,
                       ),
                       const SizedBox(height: 8),
                       Text(l10n.themeDescription),

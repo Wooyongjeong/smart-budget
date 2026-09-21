@@ -58,11 +58,11 @@ DB 구현 브랜치: `feat/t09-household-invitations`. 앱 연결 브랜치: `fe
 
 `invitations`에 원문이 아닌 SHA-256 토큰 해시만 저장하고, `create_invitation`/`accept_invitation`에서 만료·일회성·활성 구성원 2명 정원과 가계부 잠금을 함께 검사한다. `leave_household`는 구성원을 즉시 비활성화하고 마지막 구성원이 나가면 가계부를 archived 처리한다. 초대 테이블 직접 읽기와 구성원 직접 변경은 차단하고 RPC만 실행 가능하게 했다.
 
-설정의 공동 가계부 화면에서 현재 구성원을 확인하고, 이름이 비어 있으면 본인은 `나`, 상대는 `배우자`로 표시한다. 본인 이름은 `update_profile_display_name` RPC로 수정할 수 있다. 신규 카카오 가입자는 닉네임 이용 동의 메타데이터(`nickname`/`name`/`preferred_username`)를 기본 이름으로 사용하고, 값이 없으면 `나`를 보여 준 뒤 초대 코드 화면으로 진행한다. 설정에서 확인 후 현재 기기의 Supabase 세션만 로그아웃할 수 있으며 가계부 데이터는 삭제하지 않는다. 7일 유효 초대 코드를 생성·복사하거나 받은 48자리 코드를 수락할 수 있으며, 서버 오류를 만료/재사용·이미 참여·정원 초과·접근 불가 안내로 구분한다. 탈퇴는 영향 확인 뒤 RPC를 실행하며 성공 시 공동 데이터 참조를 비우고 Supabase 세션을 종료한다. 초대 코드는 앱에 영구 저장하지 않는다.
+설정의 공동 가계부 화면에서 현재 구성원을 확인하고, 이름이 비어 있으면 본인은 `나`, 상대는 `배우자`로 표시한다. 본인 이름은 `update_profile_display_name` RPC로 수정할 수 있고 상단 프로필 원형에도 같은 이름의 첫 글자를 표시한다. 첫 가계부 생성 시 빈 기본 인자가 이미 저장한 표시 이름을 덮어쓰지 않도록 보정했다. 신규 카카오 가입자는 닉네임 이용 동의 메타데이터(`nickname`/`name`/`full_name`/`preferred_username`)를 기본 이름으로 사용하고, 값이 없으면 `나`를 보여 준 뒤 초대 코드 화면으로 진행한다. 설정에서 확인 후 현재 기기의 Supabase 세션만 로그아웃할 수 있으며 가계부 데이터는 삭제하지 않는다. 7일 유효 초대 코드를 생성·복사하거나 받은 48자리 코드를 수락할 수 있으며, 서버 오류를 만료/재사용·이미 참여·정원 초과·접근 불가 안내로 구분한다. 탈퇴는 영향 확인 뒤 RPC를 실행하며 성공 시 공동 데이터 참조를 비우고 Supabase 세션을 종료한다. 초대 코드는 앱에 영구 저장하지 않는다.
 
 코드리뷰에서 warm link가 기존 입력 컨트롤러에 반영되지 않던 상태, 로그아웃 후 다른 계정에 온보딩 상태가 남던 상태, 초기 링크 조회와 스트림 구독 사이의 이벤트 유실 가능성을 수정했다. HTTPS 링크는 설정된 도메인과 소문자 48자리 토큰만 허용하고, iPad 공유 시트에 popover 기준 영역을 전달한다.
 
-검증: `supabase/tests/t09_invitations.sql`에 함수·권한·활성 구성원 유일성·표시 이름 RPC 회귀가 있다. 앱 연결은 이름 fallback/수정, 카카오 닉네임 초기값, 서버 이름 검증 오류, 로그아웃 확인/실패, 초대 링크/자동 입력 테스트를 포함한 `flutter test` 전체 43건, `flutter analyze`, `flutter build macos --debug`, `flutter build ios --no-codesign`, `git diff --check`로 검증했다. `flutter build apk --debug`는 Gradle이 70초 이상 출력 없이 대기해 중단했으며 Android APK 빌드는 미검증이다. Supabase CLI/psql이 없어 실제 migration/원격 두 계정/병렬 세션 검증은 미실행이며, Realtime 구독은 남아 있다. 실제 HTTPS 도메인 연결, iOS Associated Domains 파일 배포, Android `assetlinks.json`, 카카오톡 공유 화면은 운영 설정 후 실기기에서 확인해야 한다.
+검증: `supabase/tests/t09_invitations.sql`에 함수·권한·활성 구성원 유일성·표시 이름 RPC 회귀가 있다. 앱 연결은 이름 fallback/수정, 프로필 원형 반영, 카카오 닉네임 초기값, 서버 이름 검증 오류, 로그아웃 확인/실패, 초대 링크/자동 입력 테스트를 포함한 `flutter test` 전체 44건, `flutter analyze`, `flutter build macos --debug`, `flutter build ios --no-codesign`, `git diff --check`로 검증했다. `flutter build apk --debug`는 Gradle이 70초 이상 출력 없이 대기해 중단했으며 Android APK 빌드는 미검증이다. 원격 migration 이력은 적용 후 재확인하며, 원격 두 계정/병렬 세션 검증과 Realtime 구독은 남아 있다. 실제 HTTPS 도메인 연결, iOS Associated Domains 파일 배포, Android `assetlinks.json`, 카카오톡 공유 화면은 운영 설정 후 실기기에서 확인해야 한다.
 
 ## T08 — 영수증 이미지 분석 함수 경계
 

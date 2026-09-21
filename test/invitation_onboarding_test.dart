@@ -13,6 +13,9 @@ class _Repository implements HouseholdRepository {
       const HouseholdOverview(id: 'household', name: '우리 가계부', members: []);
 
   @override
+  Future<String> loadCurrentDisplayName() async => '나';
+
+  @override
   Future<String> updateDisplayName(String name) async => name.trim();
 
   @override

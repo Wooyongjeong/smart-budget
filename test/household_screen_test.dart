@@ -19,6 +19,10 @@ class _Repository implements HouseholdRepository {
   Future<HouseholdOverview> load() async => value;
 
   @override
+  Future<String> loadCurrentDisplayName() async =>
+      value.members.firstWhere((member) => member.isMe).name;
+
+  @override
   Future<String> updateDisplayName(String name) async {
     value = HouseholdOverview(
       id: value.id,
@@ -59,6 +63,7 @@ Widget _app(
   _Repository repository, {
   Future<void> Function()? onLeft,
   ValueChanged<String>? onHouseholdChanged,
+  ValueChanged<String>? onDisplayNameChanged,
 }) {
   return MaterialApp(
     locale: const Locale('ko'),
@@ -73,6 +78,7 @@ Widget _app(
       repository: repository,
       onLeft: onLeft ?? () async {},
       onHouseholdChanged: onHouseholdChanged,
+      onDisplayNameChanged: onDisplayNameChanged,
     ),
   );
 }
@@ -129,7 +135,10 @@ void main() {
         name: '우리 가계부',
         members: [HouseholdMember(id: 'member-1', name: '나', isMe: true)],
       );
-    await tester.pumpWidget(_app(repository));
+    String? changedName;
+    await tester.pumpWidget(
+      _app(repository, onDisplayNameChanged: (value) => changedName = value),
+    );
     await tester.pumpAndSettle();
 
     await tester.tap(find.byKey(const ValueKey('edit-display-name')));
@@ -139,6 +148,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('우영'), findsOneWidget);
+    expect(changedName, '우영');
   });
 
   testWidgets('maps a full household error to an actionable message', (

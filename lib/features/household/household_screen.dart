@@ -12,12 +12,14 @@ class HouseholdScreen extends StatefulWidget {
     required this.repository,
     required this.onLeft,
     this.onHouseholdChanged,
+    this.onDisplayNameChanged,
     this.invitationLinkBaseUrl = 'https://smart-budget.app/invite',
   });
 
   final HouseholdRepository repository;
   final Future<void> Function() onLeft;
   final ValueChanged<String>? onHouseholdChanged;
+  final ValueChanged<String>? onDisplayNameChanged;
   final String invitationLinkBaseUrl;
 
   @override
@@ -117,7 +119,8 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
     if (name == null || name.trim().isEmpty || busy) return;
     setState(() => busy = true);
     try {
-      await widget.repository.updateDisplayName(name);
+      final savedName = await widget.repository.updateDisplayName(name);
+      widget.onDisplayNameChanged?.call(savedName);
       reload();
     } on HouseholdException catch (error) {
       if (mounted) _showError(error.code);
