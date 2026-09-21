@@ -1141,6 +1141,264 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'맑은 하늘'**
   String get themeSky;
+
+  /// No description provided for @sharedHousehold.
+  ///
+  /// In ko, this message translates to:
+  /// **'공동 가계부'**
+  String get sharedHousehold;
+
+  /// No description provided for @manageHouseholdDescription.
+  ///
+  /// In ko, this message translates to:
+  /// **'구성원을 확인하고 배우자를 초대해요.'**
+  String get manageHouseholdDescription;
+
+  /// No description provided for @householdMembersCount.
+  ///
+  /// In ko, this message translates to:
+  /// **'구성원 {count}/2명'**
+  String householdMembersCount(int count);
+
+  /// No description provided for @me.
+  ///
+  /// In ko, this message translates to:
+  /// **'나'**
+  String get me;
+
+  /// No description provided for @invitePartner.
+  ///
+  /// In ko, this message translates to:
+  /// **'배우자 초대'**
+  String get invitePartner;
+
+  /// No description provided for @invitationDescription.
+  ///
+  /// In ko, this message translates to:
+  /// **'초대 코드는 7일 동안 한 번만 사용할 수 있어요.'**
+  String get invitationDescription;
+
+  /// No description provided for @createInvitation.
+  ///
+  /// In ko, this message translates to:
+  /// **'초대 코드 만들기'**
+  String get createInvitation;
+
+  /// No description provided for @invitationExpires.
+  ///
+  /// In ko, this message translates to:
+  /// **'7일 이내에 전달해 주세요.'**
+  String get invitationExpires;
+
+  /// No description provided for @copyInvitation.
+  ///
+  /// In ko, this message translates to:
+  /// **'초대 코드 복사'**
+  String get copyInvitation;
+
+  /// No description provided for @invitationCopied.
+  ///
+  /// In ko, this message translates to:
+  /// **'초대 코드를 복사했어요.'**
+  String get invitationCopied;
+
+  /// No description provided for @joinHousehold.
+  ///
+  /// In ko, this message translates to:
+  /// **'초대 코드로 참여'**
+  String get joinHousehold;
+
+  /// No description provided for @invitationCode.
+  ///
+  /// In ko, this message translates to:
+  /// **'48자리 초대 코드'**
+  String get invitationCode;
+
+  /// No description provided for @acceptInvitation.
+  ///
+  /// In ko, this message translates to:
+  /// **'공동 가계부 참여'**
+  String get acceptInvitation;
+
+  /// No description provided for @invitationAccepted.
+  ///
+  /// In ko, this message translates to:
+  /// **'공동 가계부에 참여했어요.'**
+  String get invitationAccepted;
+
+  /// No description provided for @invitationInvalid.
+  ///
+  /// In ko, this message translates to:
+  /// **'48자리 초대 코드를 확인해 주세요.'**
+  String get invitationInvalid;
+
+  /// No description provided for @invitationExpiredOrUsed.
+  ///
+  /// In ko, this message translates to:
+  /// **'만료되었거나 이미 사용한 초대 코드예요.'**
+  String get invitationExpiredOrUsed;
+
+  /// No description provided for @alreadyHouseholdMember.
+  ///
+  /// In ko, this message translates to:
+  /// **'이미 이 공동 가계부에 참여 중이에요.'**
+  String get alreadyHouseholdMember;
+
+  /// No description provided for @householdFull.
+  ///
+  /// In ko, this message translates to:
+  /// **'공동 가계부에는 두 명까지만 참여할 수 있어요.'**
+  String get householdFull;
+
+  /// No description provided for @householdUnavailable.
+  ///
+  /// In ko, this message translates to:
+  /// **'더 이상 참여할 수 없는 가계부예요.'**
+  String get householdUnavailable;
+
+  /// No description provided for @householdForbidden.
+  ///
+  /// In ko, this message translates to:
+  /// **'이 가계부에서 해당 작업을 할 권한이 없어요.'**
+  String get householdForbidden;
+
+  /// No description provided for @householdActionFailed.
+  ///
+  /// In ko, this message translates to:
+  /// **'공동 가계부 작업을 완료하지 못했어요. 다시 시도해 주세요.'**
+  String get householdActionFailed;
+
+  /// No description provided for @leaveHousehold.
+  ///
+  /// In ko, this message translates to:
+  /// **'공동 가계부 나가기'**
+  String get leaveHousehold;
+
+  /// No description provided for @leaveHouseholdTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'공동 가계부를 나갈까요?'**
+  String get leaveHouseholdTitle;
+
+  /// No description provided for @leaveHouseholdBody.
+  ///
+  /// In ko, this message translates to:
+  /// **'즉시 모든 공동 기록에 접근할 수 없게 되고 로그아웃돼요. 기존 기록은 남은 구성원에게 유지됩니다.'**
+  String get leaveHouseholdBody;
+
+  /// No description provided for @retry.
+  ///
+  /// In ko, this message translates to:
+  /// **'다시 시도'**
+  String get retry;
+
+  /// No description provided for @shareInvitation.
+  ///
+  /// In ko, this message translates to:
+  /// **'카카오톡으로 초대하기'**
+  String get shareInvitation;
+
+  /// No description provided for @invitationOnboardingTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'공동 가계부에 참여할까요?'**
+  String get invitationOnboardingTitle;
+
+  /// No description provided for @invitationOnboardingDescription.
+  ///
+  /// In ko, this message translates to:
+  /// **'배우자가 보낸 초대 링크예요. 코드를 확인한 뒤 함께 기록을 시작할 수 있어요.'**
+  String get invitationOnboardingDescription;
+
+  /// No description provided for @skipInvitation.
+  ///
+  /// In ko, this message translates to:
+  /// **'나중에 참여할게요'**
+  String get skipInvitation;
+
+  /// No description provided for @invitationLinkInvalid.
+  ///
+  /// In ko, this message translates to:
+  /// **'초대 링크를 확인할 수 없어요. 다시 전달받아 주세요.'**
+  String get invitationLinkInvalid;
+
+  /// No description provided for @editDisplayName.
+  ///
+  /// In ko, this message translates to:
+  /// **'이름 수정'**
+  String get editDisplayName;
+
+  /// No description provided for @displayName.
+  ///
+  /// In ko, this message translates to:
+  /// **'표시할 이름'**
+  String get displayName;
+
+  /// No description provided for @displayNameInvalid.
+  ///
+  /// In ko, this message translates to:
+  /// **'이름을 한 글자 이상 입력해 주세요.'**
+  String get displayNameInvalid;
+
+  /// No description provided for @nicknameOnboardingTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'가계부에서 사용할 이름을 정해요'**
+  String get nicknameOnboardingTitle;
+
+  /// No description provided for @nicknameOnboardingDescription.
+  ///
+  /// In ko, this message translates to:
+  /// **'함께 기록할 때 보여줄 이름이에요. 언제든 수정할 수 있어요.'**
+  String get nicknameOnboardingDescription;
+
+  /// No description provided for @nickname.
+  ///
+  /// In ko, this message translates to:
+  /// **'이름'**
+  String get nickname;
+
+  /// No description provided for @nicknameSave.
+  ///
+  /// In ko, this message translates to:
+  /// **'이 이름으로 시작하기'**
+  String get nicknameSave;
+
+  /// No description provided for @nicknameInvalid.
+  ///
+  /// In ko, this message translates to:
+  /// **'이름을 한 글자 이상 입력해 주세요.'**
+  String get nicknameInvalid;
+
+  /// No description provided for @signOut.
+  ///
+  /// In ko, this message translates to:
+  /// **'로그아웃'**
+  String get signOut;
+
+  /// No description provided for @signOutDescription.
+  ///
+  /// In ko, this message translates to:
+  /// **'이 기기에서 카카오 로그인 세션을 종료해요.'**
+  String get signOutDescription;
+
+  /// No description provided for @signOutTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'로그아웃할까요?'**
+  String get signOutTitle;
+
+  /// No description provided for @signOutBody.
+  ///
+  /// In ko, this message translates to:
+  /// **'이 기기의 로그인 세션만 종료되며, 가계부 데이터는 삭제되지 않아요.'**
+  String get signOutBody;
+
+  /// No description provided for @signOutFailed.
+  ///
+  /// In ko, this message translates to:
+  /// **'로그아웃하지 못했어요. 다시 시도해 주세요.'**
+  String get signOutFailed;
 }
 
 class _AppLocalizationsDelegate

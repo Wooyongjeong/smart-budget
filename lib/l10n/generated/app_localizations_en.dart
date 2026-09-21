@@ -567,4 +567,149 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get themeSky => 'Clear Sky';
+
+  @override
+  String get sharedHousehold => 'Shared budget';
+
+  @override
+  String get manageHouseholdDescription =>
+      'View members and invite your partner.';
+
+  @override
+  String householdMembersCount(int count) {
+    return '$count of 2 members';
+  }
+
+  @override
+  String get me => 'Me';
+
+  @override
+  String get invitePartner => 'Invite your partner';
+
+  @override
+  String get invitationDescription =>
+      'An invitation code can be used once within 7 days.';
+
+  @override
+  String get createInvitation => 'Create invitation code';
+
+  @override
+  String get invitationExpires => 'Share this code within 7 days.';
+
+  @override
+  String get copyInvitation => 'Copy invitation code';
+
+  @override
+  String get invitationCopied => 'Invitation code copied.';
+
+  @override
+  String get joinHousehold => 'Join with an invitation';
+
+  @override
+  String get invitationCode => '48-character invitation code';
+
+  @override
+  String get acceptInvitation => 'Join shared budget';
+
+  @override
+  String get invitationAccepted => 'You joined the shared budget.';
+
+  @override
+  String get invitationInvalid => 'Check the 48-character invitation code.';
+
+  @override
+  String get invitationExpiredOrUsed =>
+      'This invitation has expired or was already used.';
+
+  @override
+  String get alreadyHouseholdMember =>
+      'You are already a member of this shared budget.';
+
+  @override
+  String get householdFull => 'A shared budget can have up to two members.';
+
+  @override
+  String get householdUnavailable =>
+      'This budget is no longer available to join.';
+
+  @override
+  String get householdForbidden =>
+      'You do not have permission for this action.';
+
+  @override
+  String get householdActionFailed =>
+      'Couldn\'t complete the shared budget action. Try again.';
+
+  @override
+  String get leaveHousehold => 'Leave shared budget';
+
+  @override
+  String get leaveHouseholdTitle => 'Leave the shared budget?';
+
+  @override
+  String get leaveHouseholdBody =>
+      'You will immediately lose access to shared records and be signed out. Existing records remain available to the other member.';
+
+  @override
+  String get retry => 'Try again';
+
+  @override
+  String get shareInvitation => 'Invite via KakaoTalk';
+
+  @override
+  String get invitationOnboardingTitle => 'Join the shared budget?';
+
+  @override
+  String get invitationOnboardingDescription =>
+      'This is an invitation from your partner. Confirm the code to start recording together.';
+
+  @override
+  String get skipInvitation => 'I\'ll join later';
+
+  @override
+  String get invitationLinkInvalid =>
+      'We couldn\'t read this invitation link. Ask for a new one.';
+
+  @override
+  String get editDisplayName => 'Edit name';
+
+  @override
+  String get displayName => 'Display name';
+
+  @override
+  String get displayNameInvalid =>
+      'Enter at least one character for your name.';
+
+  @override
+  String get nicknameOnboardingTitle => 'Choose a name for your budget';
+
+  @override
+  String get nicknameOnboardingDescription =>
+      'This is the name shown when you record together. You can change it anytime.';
+
+  @override
+  String get nickname => 'Name';
+
+  @override
+  String get nicknameSave => 'Start with this name';
+
+  @override
+  String get nicknameInvalid => 'Enter at least one character.';
+
+  @override
+  String get signOut => 'Sign out';
+
+  @override
+  String get signOutDescription =>
+      'End the Kakao login session on this device.';
+
+  @override
+  String get signOutTitle => 'Sign out?';
+
+  @override
+  String get signOutBody =>
+      'Only this device will be signed out. Your budget data won\'t be deleted.';
+
+  @override
+  String get signOutFailed => 'Couldn\'t sign out. Try again.';
 }

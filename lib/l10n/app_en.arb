@@ -156,5 +156,49 @@
   "themeForest": "Forest Cream", "themeOcean": "Ocean Sand", "themeLavender": "Lavender Milk",
   "themeRose": "Rose Tea", "themeOlive": "Mono Olive", "themeTerracotta": "Apricot Terracotta",
   "themeLemon": "Lemon Garden", "themeMint": "Mint Soda", "themeCocoa": "Cocoa Latte", "themeIndigo": "Indigo Cloud",
-  "themePlum": "Plum & Apricot", "themeSky": "Clear Sky"
+  "themePlum": "Plum & Apricot", "themeSky": "Clear Sky",
+  "sharedHousehold": "Shared budget",
+  "manageHouseholdDescription": "View members and invite your partner.",
+  "householdMembersCount": "{count} of 2 members",
+  "@householdMembersCount": {"placeholders": {"count": {"type": "int"}}},
+  "me": "Me",
+  "invitePartner": "Invite your partner",
+  "invitationDescription": "An invitation code can be used once within 7 days.",
+  "createInvitation": "Create invitation code",
+  "invitationExpires": "Share this code within 7 days.",
+  "copyInvitation": "Copy invitation code",
+  "invitationCopied": "Invitation code copied.",
+  "joinHousehold": "Join with an invitation",
+  "invitationCode": "48-character invitation code",
+  "acceptInvitation": "Join shared budget",
+  "invitationAccepted": "You joined the shared budget.",
+  "invitationInvalid": "Check the 48-character invitation code.",
+  "invitationExpiredOrUsed": "This invitation has expired or was already used.",
+  "alreadyHouseholdMember": "You are already a member of this shared budget.",
+  "householdFull": "A shared budget can have up to two members.",
+  "householdUnavailable": "This budget is no longer available to join.",
+  "householdForbidden": "You do not have permission for this action.",
+  "householdActionFailed": "Couldn't complete the shared budget action. Try again.",
+  "leaveHousehold": "Leave shared budget",
+  "leaveHouseholdTitle": "Leave the shared budget?",
+  "leaveHouseholdBody": "You will immediately lose access to shared records and be signed out. Existing records remain available to the other member.",
+  "retry": "Try again"
+  ,"shareInvitation": "Invite via KakaoTalk",
+  "invitationOnboardingTitle": "Join the shared budget?",
+  "invitationOnboardingDescription": "This is an invitation from your partner. Confirm the code to start recording together.",
+  "skipInvitation": "I'll join later",
+  "invitationLinkInvalid": "We couldn't read this invitation link. Ask for a new one."
+  ,"editDisplayName": "Edit name",
+  "displayName": "Display name",
+  "displayNameInvalid": "Enter at least one character for your name."
+  ,"nicknameOnboardingTitle": "Choose a name for your budget"
+  ,"nicknameOnboardingDescription": "This is the name shown when you record together. You can change it anytime."
+  ,"nickname": "Name"
+  ,"nicknameSave": "Start with this name"
+  ,"nicknameInvalid": "Enter at least one character."
+  ,"signOut": "Sign out"
+  ,"signOutDescription": "End the Kakao login session on this device."
+  ,"signOutTitle": "Sign out?"
+  ,"signOutBody": "Only this device will be signed out. Your budget data won't be deleted."
+  ,"signOutFailed": "Couldn't sign out. Try again."
 }

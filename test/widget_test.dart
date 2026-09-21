@@ -2,8 +2,102 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:smart_budget/main.dart';
 import 'package:smart_budget/themes.dart';
+import 'package:smart_budget/features/household/household_repository.dart';
+import 'package:smart_budget/features/household/household_screen.dart';
+import 'localized_test_app.dart';
+
+class _HouseholdRepository implements HouseholdRepository {
+  _HouseholdRepository(this.displayName);
+
+  String displayName;
+
+  @override
+  Future<String> loadCurrentDisplayName() async => displayName;
+
+  @override
+  Future<HouseholdOverview> load() async => HouseholdOverview(
+    id: 'household',
+    name: '우리 가계부',
+    members: [HouseholdMember(id: 'member', name: displayName, isMe: true)],
+  );
+
+  @override
+  Future<String> updateDisplayName(String name) async {
+    displayName = name.trim();
+    return displayName;
+  }
+
+  @override
+  Future<String> createInvitation(String householdId) async => 'a' * 48;
+
+  @override
+  Future<String> acceptInvitation(String token) async => 'household';
+
+  @override
+  Future<void> leave(String householdId) async {}
+}
 
 void main() {
+  testWidgets('profile avatar uses the saved display name initial', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      BudgetApp(
+        saveTheme: (_) async {},
+        householdRepository: _HouseholdRepository('민지'),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final avatar = find.byKey(const ValueKey('profile-avatar'));
+    expect(
+      find.descendant(of: avatar, matching: find.text('민')),
+      findsOneWidget,
+    );
+    expect(find.text('우'), findsNothing);
+  });
+
+  testWidgets(
+    'editing the household name updates the avatar without an error',
+    (tester) async {
+      final repository = _HouseholdRepository('나');
+      await tester.pumpWidget(
+        localizedTestApp(
+          home: BudgetApp(
+            saveTheme: (_) async {},
+            householdRepository: repository,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('설정'));
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(find.text('공동 가계부'), 300);
+      await tester.drag(find.byType(ListView).last, const Offset(0, -180));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(ListTile, '공동 가계부'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const ValueKey('edit-display-name')));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField).last, '테스트계정입니다');
+      await tester.tap(find.text('저장'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('테스트계정입니다'), findsOneWidget);
+      expect(find.text('공동 가계부 작업을 완료하지 못했어요. 다시 시도해 주세요.'), findsNothing);
+      Navigator.of(tester.element(find.byType(HouseholdScreen))).pop();
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('캘린더'));
+      await tester.pumpAndSettle();
+      final avatar = find.byKey(const ValueKey('profile-avatar'));
+      expect(
+        find.descendant(of: avatar, matching: find.text('테')),
+        findsOneWidget,
+      );
+    },
+  );
+
   testWidgets('new theme choices can be selected and saved', (tester) async {
     String? saved;
     await tester.pumpWidget(BudgetApp(saveTheme: (id) async => saved = id));
@@ -137,5 +231,53 @@ void main() {
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(find.text('모노 올리브'), 200);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('sign out requires confirmation and calls the session callback', (
+    tester,
+  ) async {
+    var signOutCount = 0;
+    await tester.pumpWidget(
+      BudgetApp(saveTheme: (_) async {}, onSignOut: () async => signOutCount++),
+    );
+    await tester.tap(find.text('설정'));
+    await tester.pumpAndSettle();
+    final signOut = find.byKey(const ValueKey('sign-out'));
+    await tester.scrollUntilVisible(signOut, 300);
+
+    await tester.tap(signOut);
+    await tester.pumpAndSettle();
+    expect(find.text('로그아웃할까요?'), findsOneWidget);
+    await tester.tap(find.text('취소'));
+    await tester.pumpAndSettle();
+    expect(signOutCount, 0);
+
+    await tester.tap(signOut);
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, '로그아웃'));
+    await tester.pumpAndSettle();
+    expect(signOutCount, 1);
+  });
+
+  testWidgets('a failed sign out keeps the app open and shows an error', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      BudgetApp(
+        saveTheme: (_) async {},
+        onSignOut: () async => throw Exception('network'),
+      ),
+    );
+    await tester.tap(find.text('설정'));
+    await tester.pumpAndSettle();
+    final signOut = find.byKey(const ValueKey('sign-out'));
+    await tester.scrollUntilVisible(signOut, 300);
+    await tester.tap(signOut);
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, '로그아웃'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('로그아웃하지 못했어요. 다시 시도해 주세요.'), findsOneWidget);
+    expect(find.text('설정'), findsOneWidget);
   });
 }

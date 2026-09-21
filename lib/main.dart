@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:app_links/app_links.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -14,6 +17,11 @@ import 'features/transactions/transaction_repository.dart';
 import 'features/transactions/ai_review_screen.dart';
 import 'features/transactions/receipt_analysis.dart';
 import 'features/payment_methods/payment_methods_screen.dart';
+import 'features/household/household_repository.dart';
+import 'features/household/household_screen.dart';
+import 'features/household/invitation_link.dart';
+import 'features/household/invitation_onboarding_screen.dart';
+import 'features/household/nickname_onboarding_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -133,9 +141,14 @@ class CalendarOverview extends StatelessWidget {
 }
 
 class _TopHeader extends StatelessWidget {
-  const _TopHeader({required this.eyebrow, required this.title});
+  const _TopHeader({
+    required this.eyebrow,
+    required this.title,
+    required this.displayName,
+  });
   final String eyebrow;
   final String title;
+  final String displayName;
 
   @override
   Widget build(BuildContext context) => Padding(
@@ -159,12 +172,13 @@ class _TopHeader extends StatelessWidget {
           ),
         ),
         CircleAvatar(
+          key: const ValueKey('profile-avatar'),
           radius: 24,
           backgroundColor: Theme.of(
             context,
           ).colorScheme.primary.withValues(alpha: 0.11),
           child: Text(
-            '우',
+            _avatarInitial(displayName),
             style: TextStyle(
               color: Theme.of(context).colorScheme.primary,
               fontWeight: FontWeight.w800,
@@ -174,6 +188,11 @@ class _TopHeader extends StatelessWidget {
       ],
     ),
   );
+
+  String _avatarInitial(String value) {
+    final name = value.trim();
+    return name.isEmpty ? '나' : String.fromCharCode(name.runes.first);
+  }
 }
 
 class _MonthlySummaryCard extends StatelessWidget {
@@ -241,7 +260,7 @@ class _MonthlySummaryCard extends StatelessWidget {
   }
 }
 
-class AuthRoot extends StatelessWidget {
+class AuthRoot extends StatefulWidget {
   const AuthRoot({
     super.key,
     required this.config,
@@ -259,26 +278,159 @@ class AuthRoot extends StatelessWidget {
   final AuthService? service;
 
   @override
+  State<AuthRoot> createState() => _AuthRootState();
+}
+
+class _AuthRootState extends State<AuthRoot> {
+  late final AuthService auth =
+      widget.service ?? SupabaseAuthService(widget.config.redirectUrl);
+  late final SupabaseTransactionRepository transactionRepository =
+      SupabaseTransactionRepository();
+  late final SupabaseHouseholdRepository householdRepository =
+      SupabaseHouseholdRepository();
+  final appLinks = AppLinks();
+  StreamSubscription<Uri>? linkSubscription;
+  StreamSubscription<AuthState>? authSubscription;
+  String? pendingInvitationToken;
+  Future<HouseholdOverview>? initialHouseholdCheck;
+  bool onboardingSkipped = false;
+  bool nicknameOnboardingCompleted = false;
+  String? activeUserId;
+
+  @override
+  void initState() {
+    super.initState();
+    authSubscription = auth.authStateChanges.listen(
+      _authStateChanged,
+      onError: (_) {},
+    );
+    _listenForInvitationLinks();
+  }
+
+  Future<void> _listenForInvitationLinks() async {
+    linkSubscription = appLinks.uriLinkStream.listen(
+      _receiveInvitationLink,
+      onError: (_) {},
+    );
+    try {
+      final initial = await appLinks.getInitialLink();
+      if (initial != null) _receiveInvitationLink(initial);
+    } catch (_) {
+      // A missing initial link must not prevent authentication.
+    }
+  }
+
+  void _authStateChanged(AuthState state) {
+    final nextUserId = state.session?.user.id;
+    final userChanged = nextUserId != activeUserId;
+    final signedOut = state.event == AuthChangeEvent.signedOut;
+    if (!mounted) return;
+    setState(() {
+      if (signedOut) {
+        activeUserId = null;
+        initialHouseholdCheck = null;
+        onboardingSkipped = false;
+        nicknameOnboardingCompleted = false;
+        pendingInvitationToken = null;
+      } else if (userChanged && nextUserId != null) {
+        activeUserId = nextUserId;
+        initialHouseholdCheck = null;
+        onboardingSkipped = false;
+        nicknameOnboardingCompleted = false;
+      }
+    });
+  }
+
+  void _receiveInvitationLink(Uri uri) {
+    final token = invitationTokenFromUri(
+      uri,
+      allowedWebHost: Uri.parse(widget.config.invitationLinkBaseUrl).host,
+    );
+    if (token == null || !mounted) return;
+    setState(() => pendingInvitationToken = token);
+  }
+
+  @override
+  void dispose() {
+    linkSubscription?.cancel();
+    authSubscription?.cancel();
+    super.dispose();
+  }
+
+  void finishInvitation() {
+    if (mounted) {
+      setState(() {
+        pendingInvitationToken = null;
+        onboardingSkipped = true;
+      });
+    }
+  }
+
+  Widget _signedInHome() {
+    if (onboardingSkipped && pendingInvitationToken == null) {
+      return _budgetApp();
+    }
+    initialHouseholdCheck ??= householdRepository.load();
+    return FutureBuilder<HouseholdOverview>(
+      future: initialHouseholdCheck,
+      builder: (context, snapshot) {
+        if (snapshot.hasError &&
+            snapshot.error is HouseholdException &&
+            (snapshot.error! as HouseholdException).code == 'not_found') {
+          if (!nicknameOnboardingCompleted) {
+            return NicknameOnboardingScreen(
+              repository: householdRepository,
+              initialName: auth.suggestedDisplayName ?? '나',
+              onComplete: (_) => setState(() {
+                nicknameOnboardingCompleted = true;
+              }),
+            );
+          }
+          return _invitationOnboarding();
+        }
+        if (!snapshot.hasData && !snapshot.hasError) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+        if (pendingInvitationToken != null) {
+          return _invitationOnboarding();
+        }
+        return _budgetApp();
+      },
+    );
+  }
+
+  Widget _invitationOnboarding() => InvitationOnboardingScreen(
+    repository: householdRepository,
+    initialToken: pendingInvitationToken,
+    onAccepted: transactionRepository.useHousehold,
+    onComplete: finishInvitation,
+  );
+
+  Widget _budgetApp() => BudgetApp(
+    initialTheme: widget.initialTheme,
+    initialLocale: widget.initialLocale,
+    saveTheme: widget.saveTheme,
+    saveLocale: widget.saveLocale,
+    transactionRepository: transactionRepository,
+    householdRepository: householdRepository,
+    onHouseholdChanged: transactionRepository.useHousehold,
+    onSignOut: auth.signOut,
+    invitationLinkBaseUrl: widget.config.invitationLinkBaseUrl,
+  );
+
+  @override
   Widget build(BuildContext context) {
-    final auth = service ?? SupabaseAuthService(config.redirectUrl);
     return MaterialApp(
-      title: lookupAppLocalizations(Locale(initialLocale ?? 'ko')).appTitle,
-      locale: Locale(initialLocale ?? 'ko'),
+      title: lookupAppLocalizations(
+        Locale(widget.initialLocale ?? 'ko'),
+      ).appTitle,
+      locale: Locale(widget.initialLocale ?? 'ko'),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       debugShowCheckedModeBanner: false,
-      home: StreamBuilder(
-        stream: auth.authStateChanges,
-        builder: (context, snapshot) => auth.isSignedIn
-            ? BudgetApp(
-                initialTheme: initialTheme,
-                initialLocale: initialLocale,
-                saveTheme: saveTheme,
-                saveLocale: saveLocale,
-                transactionRepository: SupabaseTransactionRepository(),
-              )
-            : AuthScreen(service: auth),
-      ),
+      home: auth.isSignedIn ? _signedInHome() : AuthScreen(service: auth),
     );
   }
 }
@@ -291,6 +443,10 @@ class BudgetApp extends StatefulWidget {
     required this.saveTheme,
     this.saveLocale,
     this.transactionRepository,
+    this.householdRepository,
+    this.onSignOut,
+    this.onHouseholdChanged,
+    this.invitationLinkBaseUrl = 'https://smart-budget.app/invite',
     this.entryPaymentMethods = const [],
     this.entryMembers = const [],
   });
@@ -299,6 +455,10 @@ class BudgetApp extends StatefulWidget {
   final Future<void> Function(String) saveTheme;
   final Future<void> Function(String)? saveLocale;
   final TransactionRepository? transactionRepository;
+  final HouseholdRepository? householdRepository;
+  final Future<void> Function()? onSignOut;
+  final ValueChanged<String>? onHouseholdChanged;
+  final String invitationLinkBaseUrl;
   final List<PaymentMethodOption> entryPaymentMethods;
   final List<MemberOption> entryMembers;
 
@@ -314,11 +474,30 @@ class _BudgetAppState extends State<BudgetApp> {
   late Locale locale = Locale(widget.initialLocale ?? 'ko');
   int tab = 0;
   bool saving = false;
+  bool signingOut = false;
   bool openingEntry = false;
+  String displayName = '나';
   DateTime selectedDate = DateTime.now();
   late Future<TransactionQueryResult>? overview = _loadOverview(selectedDate);
   final messenger = GlobalKey<ScaffoldMessengerState>();
   AppLocalizations get _l10n => lookupAppLocalizations(locale);
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDisplayName();
+  }
+
+  Future<void> _loadDisplayName() async {
+    final repository = widget.householdRepository;
+    if (repository == null) return;
+    try {
+      final value = await repository.loadCurrentDisplayName();
+      if (mounted) setState(() => displayName = value);
+    } catch (_) {
+      // Keep the safe fallback until the profile can be read again.
+    }
+  }
 
   Future<TransactionQueryResult>? _loadOverview([DateTime? anchor]) {
     final repository = widget.transactionRepository;
@@ -494,6 +673,63 @@ class _BudgetAppState extends State<BudgetApp> {
           SnackBar(content: Text(_l10n.paymentLoadFailed)),
         );
       }
+    }
+  }
+
+  Future<void> openHousehold(BuildContext context) async {
+    final repository = widget.householdRepository;
+    if (repository == null) return;
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => HouseholdScreen(
+          repository: repository,
+          invitationLinkBaseUrl: widget.invitationLinkBaseUrl,
+          onHouseholdChanged: (householdId) {
+            widget.onHouseholdChanged?.call(householdId);
+            refreshOverview();
+          },
+          onDisplayNameChanged: (value) {
+            if (mounted) setState(() => displayName = value);
+          },
+          onLeft: () async {
+            overview = null;
+            await widget.onSignOut?.call();
+          },
+        ),
+      ),
+    );
+  }
+
+  Future<void> confirmSignOut(BuildContext context) async {
+    if (signingOut || widget.onSignOut == null) return;
+    final l10n = lookupAppLocalizations(locale);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(l10n.signOutTitle),
+        content: Text(l10n.signOutBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: Text(l10n.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: Text(l10n.signOut),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    setState(() => signingOut = true);
+    try {
+      await widget.onSignOut!.call();
+    } catch (_) {
+      messenger.currentState?.showSnackBar(
+        SnackBar(content: Text(l10n.signOutFailed)),
+      );
+    } finally {
+      if (mounted) setState(() => signingOut = false);
     }
   }
 
@@ -674,6 +910,7 @@ class _BudgetAppState extends State<BudgetApp> {
                     if (tab != 3) ...[
                       _TopHeader(
                         eyebrow: tab == 0 ? '우리 가계부' : l10n.appTitle,
+                        displayName: displayName,
                         title: tab == 0
                             ? l10n.calendarHeading
                             : [l10n.historyHeading, l10n.walletHeading][tab -
@@ -821,6 +1058,7 @@ class _BudgetAppState extends State<BudgetApp> {
                       _TopHeader(
                         eyebrow: l10n.settings,
                         title: l10n.themeTitle,
+                        displayName: displayName,
                       ),
                       const SizedBox(height: 8),
                       Text(l10n.themeDescription),
@@ -904,7 +1142,44 @@ class _BudgetAppState extends State<BudgetApp> {
                         ),
                       ),
                       const SizedBox(height: 8),
-                      Text(l10n.accountComingSoon),
+                      if (widget.householdRepository == null)
+                        Text(l10n.accountComingSoon)
+                      else
+                        Card(
+                          child: ListTile(
+                            leading: const Icon(Icons.people_outline_rounded),
+                            title: Text(l10n.sharedHousehold),
+                            subtitle: Text(l10n.manageHouseholdDescription),
+                            trailing: const Icon(Icons.chevron_right_rounded),
+                            onTap: () => openHousehold(context),
+                          ),
+                        ),
+                      if (widget.onSignOut != null) ...[
+                        const SizedBox(height: 8),
+                        Card(
+                          child: Builder(
+                            builder: (itemContext) => ListTile(
+                              key: const ValueKey('sign-out'),
+                              leading: Icon(
+                                Icons.logout_rounded,
+                                color: Theme.of(itemContext).colorScheme.error,
+                              ),
+                              title: Text(l10n.signOut),
+                              subtitle: Text(l10n.signOutDescription),
+                              trailing: signingOut
+                                  ? const SizedBox.square(
+                                      dimension: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : const Icon(Icons.chevron_right_rounded),
+                              enabled: !signingOut,
+                              onTap: () => confirmSignOut(itemContext),
+                            ),
+                          ),
+                        ),
+                      ],
                     ],
                   ],
                 ),

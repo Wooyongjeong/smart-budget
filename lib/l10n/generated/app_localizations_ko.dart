@@ -551,4 +551,138 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get themeSky => '맑은 하늘';
+
+  @override
+  String get sharedHousehold => '공동 가계부';
+
+  @override
+  String get manageHouseholdDescription => '구성원을 확인하고 배우자를 초대해요.';
+
+  @override
+  String householdMembersCount(int count) {
+    return '구성원 $count/2명';
+  }
+
+  @override
+  String get me => '나';
+
+  @override
+  String get invitePartner => '배우자 초대';
+
+  @override
+  String get invitationDescription => '초대 코드는 7일 동안 한 번만 사용할 수 있어요.';
+
+  @override
+  String get createInvitation => '초대 코드 만들기';
+
+  @override
+  String get invitationExpires => '7일 이내에 전달해 주세요.';
+
+  @override
+  String get copyInvitation => '초대 코드 복사';
+
+  @override
+  String get invitationCopied => '초대 코드를 복사했어요.';
+
+  @override
+  String get joinHousehold => '초대 코드로 참여';
+
+  @override
+  String get invitationCode => '48자리 초대 코드';
+
+  @override
+  String get acceptInvitation => '공동 가계부 참여';
+
+  @override
+  String get invitationAccepted => '공동 가계부에 참여했어요.';
+
+  @override
+  String get invitationInvalid => '48자리 초대 코드를 확인해 주세요.';
+
+  @override
+  String get invitationExpiredOrUsed => '만료되었거나 이미 사용한 초대 코드예요.';
+
+  @override
+  String get alreadyHouseholdMember => '이미 이 공동 가계부에 참여 중이에요.';
+
+  @override
+  String get householdFull => '공동 가계부에는 두 명까지만 참여할 수 있어요.';
+
+  @override
+  String get householdUnavailable => '더 이상 참여할 수 없는 가계부예요.';
+
+  @override
+  String get householdForbidden => '이 가계부에서 해당 작업을 할 권한이 없어요.';
+
+  @override
+  String get householdActionFailed => '공동 가계부 작업을 완료하지 못했어요. 다시 시도해 주세요.';
+
+  @override
+  String get leaveHousehold => '공동 가계부 나가기';
+
+  @override
+  String get leaveHouseholdTitle => '공동 가계부를 나갈까요?';
+
+  @override
+  String get leaveHouseholdBody =>
+      '즉시 모든 공동 기록에 접근할 수 없게 되고 로그아웃돼요. 기존 기록은 남은 구성원에게 유지됩니다.';
+
+  @override
+  String get retry => '다시 시도';
+
+  @override
+  String get shareInvitation => '카카오톡으로 초대하기';
+
+  @override
+  String get invitationOnboardingTitle => '공동 가계부에 참여할까요?';
+
+  @override
+  String get invitationOnboardingDescription =>
+      '배우자가 보낸 초대 링크예요. 코드를 확인한 뒤 함께 기록을 시작할 수 있어요.';
+
+  @override
+  String get skipInvitation => '나중에 참여할게요';
+
+  @override
+  String get invitationLinkInvalid => '초대 링크를 확인할 수 없어요. 다시 전달받아 주세요.';
+
+  @override
+  String get editDisplayName => '이름 수정';
+
+  @override
+  String get displayName => '표시할 이름';
+
+  @override
+  String get displayNameInvalid => '이름을 한 글자 이상 입력해 주세요.';
+
+  @override
+  String get nicknameOnboardingTitle => '가계부에서 사용할 이름을 정해요';
+
+  @override
+  String get nicknameOnboardingDescription =>
+      '함께 기록할 때 보여줄 이름이에요. 언제든 수정할 수 있어요.';
+
+  @override
+  String get nickname => '이름';
+
+  @override
+  String get nicknameSave => '이 이름으로 시작하기';
+
+  @override
+  String get nicknameInvalid => '이름을 한 글자 이상 입력해 주세요.';
+
+  @override
+  String get signOut => '로그아웃';
+
+  @override
+  String get signOutDescription => '이 기기에서 카카오 로그인 세션을 종료해요.';
+
+  @override
+  String get signOutTitle => '로그아웃할까요?';
+
+  @override
+  String get signOutBody => '이 기기의 로그인 세션만 종료되며, 가계부 데이터는 삭제되지 않아요.';
+
+  @override
+  String get signOutFailed => '로그아웃하지 못했어요. 다시 시도해 주세요.';
 }
