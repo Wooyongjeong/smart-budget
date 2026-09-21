@@ -62,7 +62,7 @@ DB 구현 브랜치: `feat/t09-household-invitations`. 앱 연결 브랜치: `fe
 
 코드리뷰에서 warm link가 기존 입력 컨트롤러에 반영되지 않던 상태, 로그아웃 후 다른 계정에 온보딩 상태가 남던 상태, 초기 링크 조회와 스트림 구독 사이의 이벤트 유실 가능성을 수정했다. HTTPS 링크는 설정된 도메인과 소문자 48자리 토큰만 허용하고, iPad 공유 시트에 popover 기준 영역을 전달한다.
 
-검증: `supabase/tests/t09_invitations.sql`에 함수·권한·활성 구성원 유일성·표시 이름 RPC 회귀가 있다. 앱 연결은 이름 fallback/수정, 프로필 원형 반영, 카카오 닉네임 초기값, 서버 이름 검증 오류, 로그아웃 확인/실패, 초대 링크/자동 입력 테스트를 포함한 `flutter test` 전체 44건, `flutter analyze`, `flutter build macos --debug`, `flutter build ios --no-codesign`, `git diff --check`로 검증했다. `flutter build apk --debug`는 Gradle이 70초 이상 출력 없이 대기해 중단했으며 Android APK 빌드는 미검증이다. 원격 migration 이력은 적용 후 재확인하며, 원격 두 계정/병렬 세션 검증과 Realtime 구독은 남아 있다. 실제 HTTPS 도메인 연결, iOS Associated Domains 파일 배포, Android `assetlinks.json`, 카카오톡 공유 화면은 운영 설정 후 실기기에서 확인해야 한다.
+검증: `supabase/tests/t09_invitations.sql`에 함수·권한·활성 구성원 유일성·표시 이름 RPC 회귀가 있다. 앱 연결은 이름 fallback/수정, 수정 후 잘못된 오류 토스트 방지, 프로필 원형 반영, 카카오 닉네임 초기값, 서버 이름 검증 오류, 로그아웃 확인/실패, 초대 링크/자동 입력 테스트를 포함한 `flutter test` 전체 45건, `flutter analyze`, `flutter build macos --debug`, `flutter build ios --no-codesign`, `git diff --check`로 검증했다. `flutter build apk --debug`는 Gradle이 70초 이상 출력 없이 대기해 중단했으며 Android APK 빌드는 미검증이다. 원격 migration 이력은 적용 후 재확인하며, 원격 두 계정/병렬 세션 검증과 Realtime 구독은 남아 있다. 실제 HTTPS 도메인 연결, iOS Associated Domains 파일 배포, Android `assetlinks.json`, 카카오톡 공유 화면은 운영 설정 후 실기기에서 확인해야 한다.
 
 ## T08 — 영수증 이미지 분석 함수 경계
 

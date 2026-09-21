@@ -3,11 +3,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:smart_budget/main.dart';
 import 'package:smart_budget/themes.dart';
 import 'package:smart_budget/features/household/household_repository.dart';
+import 'package:smart_budget/features/household/household_screen.dart';
+import 'localized_test_app.dart';
 
 class _HouseholdRepository implements HouseholdRepository {
   _HouseholdRepository(this.displayName);
 
-  final String displayName;
+  String displayName;
 
   @override
   Future<String> loadCurrentDisplayName() async => displayName;
@@ -20,7 +22,10 @@ class _HouseholdRepository implements HouseholdRepository {
   );
 
   @override
-  Future<String> updateDisplayName(String name) async => name.trim();
+  Future<String> updateDisplayName(String name) async {
+    displayName = name.trim();
+    return displayName;
+  }
 
   @override
   Future<String> createInvitation(String householdId) async => 'a' * 48;
@@ -51,6 +56,47 @@ void main() {
     );
     expect(find.text('우'), findsNothing);
   });
+
+  testWidgets(
+    'editing the household name updates the avatar without an error',
+    (tester) async {
+      final repository = _HouseholdRepository('나');
+      await tester.pumpWidget(
+        localizedTestApp(
+          home: BudgetApp(
+            saveTheme: (_) async {},
+            householdRepository: repository,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('설정'));
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(find.text('공동 가계부'), 300);
+      await tester.drag(find.byType(ListView).last, const Offset(0, -180));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(ListTile, '공동 가계부'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const ValueKey('edit-display-name')));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField).last, '테스트계정입니다');
+      await tester.tap(find.text('저장'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('테스트계정입니다'), findsOneWidget);
+      expect(find.text('공동 가계부 작업을 완료하지 못했어요. 다시 시도해 주세요.'), findsNothing);
+      Navigator.of(tester.element(find.byType(HouseholdScreen))).pop();
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('캘린더'));
+      await tester.pumpAndSettle();
+      final avatar = find.byKey(const ValueKey('profile-avatar'));
+      expect(
+        find.descendant(of: avatar, matching: find.text('테')),
+        findsOneWidget,
+      );
+    },
+  );
 
   testWidgets('new theme choices can be selected and saved', (tester) async {
     String? saved;

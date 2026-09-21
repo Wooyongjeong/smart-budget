@@ -38,7 +38,11 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
     super.dispose();
   }
 
-  void reload() => setState(() => overview = widget.repository.load());
+  void reload() {
+    setState(() {
+      overview = widget.repository.load();
+    });
+  }
 
   Future<void> createInvitation(HouseholdOverview household) async {
     if (busy) return;
@@ -118,17 +122,23 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) => controller.dispose());
     if (name == null || name.trim().isEmpty || busy) return;
     setState(() => busy = true);
+    String savedName;
     try {
-      final savedName = await widget.repository.updateDisplayName(name);
-      widget.onDisplayNameChanged?.call(savedName);
-      reload();
+      savedName = await widget.repository.updateDisplayName(name);
     } on HouseholdException catch (error) {
       if (mounted) _showError(error.code);
+      return;
     } catch (_) {
       if (mounted) _showError('unexpected');
+      return;
     } finally {
       if (mounted) setState(() => busy = false);
     }
+    if (!mounted) return;
+    reload();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      widget.onDisplayNameChanged?.call(savedName);
+    });
   }
 
   Future<void> shareInvitation(BuildContext context, String value) async {
