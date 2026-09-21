@@ -7,6 +7,7 @@ import 'localized_test_app.dart';
 
 class _Repository implements HouseholdRepository {
   String? saved;
+  String? updateError;
 
   @override
   Future<HouseholdOverview> load() async =>
@@ -14,6 +15,7 @@ class _Repository implements HouseholdRepository {
 
   @override
   Future<String> updateDisplayName(String name) async {
+    if (updateError case final code?) throw HouseholdException(code);
     saved = name;
     return name;
   }
@@ -77,5 +79,25 @@ void main() {
       ),
       findsOneWidget,
     );
+  });
+
+  testWidgets('shows a specific validation error returned by the server', (
+    tester,
+  ) async {
+    final repository = _Repository()..updateError = 'display_name_invalid';
+    await tester.pumpWidget(
+      localizedTestApp(
+        home: NicknameOnboardingScreen(
+          repository: repository,
+          initialName: '나',
+          onComplete: (_) {},
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('이 이름으로 시작하기'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('이름을 한 글자 이상 입력해 주세요.'), findsOneWidget);
   });
 }

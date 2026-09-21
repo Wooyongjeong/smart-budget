@@ -356,7 +356,9 @@ class _AuthRootState extends State<AuthRoot> {
   }
 
   Widget _signedInHome() {
-    if (onboardingSkipped) return _budgetApp();
+    if (onboardingSkipped && pendingInvitationToken == null) {
+      return _budgetApp();
+    }
     initialHouseholdCheck ??= householdRepository.load();
     return FutureBuilder<HouseholdOverview>(
       future: initialHouseholdCheck,
@@ -373,11 +375,7 @@ class _AuthRootState extends State<AuthRoot> {
               }),
             );
           }
-          return InvitationOnboardingScreen(
-            repository: householdRepository,
-            onAccepted: transactionRepository.useHousehold,
-            onComplete: finishInvitation,
-          );
+          return _invitationOnboarding();
         }
         if (!snapshot.hasData && !snapshot.hasError) {
           return const Scaffold(
@@ -385,17 +383,19 @@ class _AuthRootState extends State<AuthRoot> {
           );
         }
         if (pendingInvitationToken != null) {
-          return InvitationOnboardingScreen(
-            repository: householdRepository,
-            initialToken: pendingInvitationToken,
-            onAccepted: transactionRepository.useHousehold,
-            onComplete: finishInvitation,
-          );
+          return _invitationOnboarding();
         }
         return _budgetApp();
       },
     );
   }
+
+  Widget _invitationOnboarding() => InvitationOnboardingScreen(
+    repository: householdRepository,
+    initialToken: pendingInvitationToken,
+    onAccepted: transactionRepository.useHousehold,
+    onComplete: finishInvitation,
+  );
 
   Widget _budgetApp() => BudgetApp(
     initialTheme: widget.initialTheme,

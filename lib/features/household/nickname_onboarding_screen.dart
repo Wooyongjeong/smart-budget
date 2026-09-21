@@ -60,7 +60,7 @@ class _NicknameOnboardingScreenState extends State<NicknameOnboardingScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final error = switch (errorCode) {
-      'invalid' => l10n.nicknameInvalid,
+      'invalid' || 'display_name_invalid' => l10n.nicknameInvalid,
       _ when errorCode != null => l10n.householdActionFailed,
       _ => null,
     };
@@ -92,7 +92,9 @@ class _NicknameOnboardingScreenState extends State<NicknameOnboardingScreen> {
                     controller: controller,
                     maxLength: 100,
                     textInputAction: TextInputAction.done,
-                    onSubmitted: (_) => busy ? null : save(),
+                    onSubmitted: (_) {
+                      if (!busy) save();
+                    },
                     decoration: InputDecoration(
                       labelText: l10n.nickname,
                       prefixIcon: const Icon(Icons.person_outline_rounded),

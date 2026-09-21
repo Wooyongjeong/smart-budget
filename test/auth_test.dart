@@ -21,6 +21,18 @@ class FakeAuthService implements AuthService {
 }
 
 void main() {
+  test('prefers a consented Kakao nickname and ignores blank metadata', () {
+    expect(
+      suggestedDisplayNameFromMetadata({'nickname': '  민지  ', 'name': '다른 이름'}),
+      '민지',
+    );
+    expect(
+      suggestedDisplayNameFromMetadata({'nickname': ' ', 'name': '우영'}),
+      '우영',
+    );
+    expect(suggestedDisplayNameFromMetadata({'nickname': 123}), isNull);
+  });
+
   test('configuration accepts only a complete HTTPS URL and all values', () {
     expect(
       const SupabaseConfig(

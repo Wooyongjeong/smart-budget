@@ -36,13 +36,9 @@ class SupabaseAuthService implements AuthService {
 
   @override
   String? get suggestedDisplayName {
-    final metadata = client.auth.currentUser?.userMetadata;
-    if (metadata == null) return null;
-    for (final key in ['nickname', 'name', 'preferred_username']) {
-      final value = metadata[key];
-      if (value is String && value.trim().isNotEmpty) return value.trim();
-    }
-    return null;
+    return suggestedDisplayNameFromMetadata(
+      client.auth.currentUser?.userMetadata,
+    );
   }
 
   @override
@@ -65,4 +61,13 @@ class SupabaseAuthService implements AuthService {
 
   @override
   Future<void> signOut() => client.auth.signOut();
+}
+
+String? suggestedDisplayNameFromMetadata(Map<String, dynamic>? metadata) {
+  if (metadata == null) return null;
+  for (final key in ['nickname', 'name', 'full_name', 'preferred_username']) {
+    final value = metadata[key];
+    if (value is String && value.trim().isNotEmpty) return value.trim();
+  }
+  return null;
 }

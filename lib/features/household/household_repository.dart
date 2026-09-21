@@ -160,6 +160,7 @@ class SupabaseHouseholdRepository implements HouseholdRepository {
       'household_full',
       'household_unavailable',
       'forbidden',
+      'display_name_invalid',
     };
     return codes.contains(error.message) ? error.message : 'unexpected';
   }
