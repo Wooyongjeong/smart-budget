@@ -66,10 +66,16 @@ class CalendarOverview extends StatefulWidget {
     required this.selectedDate,
     required this.result,
     required this.onDateChanged,
+    this.isLoading = false,
+    this.hasError = false,
+    this.onRetry,
   });
   final DateTime selectedDate;
   final TransactionQueryResult? result;
   final ValueChanged<DateTime> onDateChanged;
+  final bool isLoading;
+  final bool hasError;
+  final VoidCallback? onRetry;
 
   @override
   State<CalendarOverview> createState() => _CalendarOverviewState();
@@ -88,6 +94,12 @@ class _CalendarOverviewState extends State<CalendarOverview> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    if (widget.hasError) {
+      return _QueryErrorState(
+        message: l10n.loadHistoryFailed,
+        onRetry: widget.onRetry,
+      );
+    }
     final items =
         widget.result?.items
             .where((item) => item['occurred_on'] == _date(widget.selectedDate))
@@ -112,10 +124,10 @@ class _CalendarOverviewState extends State<CalendarOverview> {
           onDateChanged: widget.onDateChanged,
         ),
         const SizedBox(height: 8),
-        if (widget.result == null)
+        if (widget.isLoading || widget.result == null)
           const Padding(
             padding: EdgeInsets.all(16),
-            child: CircularProgressIndicator(),
+            child: CircularProgressIndicator(value: 0.35),
           )
         else if (items.isEmpty)
           Padding(
@@ -219,15 +231,68 @@ class _TopHeader extends StatelessWidget {
   }
 }
 
+class _QueryErrorState extends StatelessWidget {
+  const _QueryErrorState({required this.message, required this.onRetry});
+
+  final String message;
+  final VoidCallback? onRetry;
+
+  @override
+  Widget build(BuildContext context) => Card(
+    child: Padding(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.cloud_off_outlined,
+            color: Theme.of(context).colorScheme.error,
+          ),
+          const SizedBox(height: 12),
+          Text(message, textAlign: TextAlign.center),
+          const SizedBox(height: 8),
+          TextButton.icon(
+            onPressed: onRetry,
+            icon: const Icon(Icons.refresh_rounded),
+            label: Text(AppLocalizations.of(context)!.retry),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
 class _MonthlySummaryCard extends StatelessWidget {
-  const _MonthlySummaryCard({required this.result});
+  const _MonthlySummaryCard({
+    required this.result,
+    required this.isLoading,
+    required this.hasError,
+    required this.onRetry,
+  });
   final TransactionQueryResult? result;
+  final bool isLoading;
+  final bool hasError;
+  final VoidCallback onRetry;
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    if (hasError) {
+      return _QueryErrorState(
+        message: l10n.loadHistoryFailed,
+        onRetry: onRetry,
+      );
+    }
+    if (isLoading || result == null) {
+      return const SizedBox(
+        height: 150,
+        child: Center(child: CircularProgressIndicator(value: 0.35)),
+      );
+    }
+    final data = result!;
     final primary = Theme.of(context).colorScheme.primary;
-    final expense = result?.totalExpense ?? 0;
-    final income = result?.totalIncome ?? 0;
+    final expense = data.totalExpense;
+    final income = data.totalIncome;
     final balance = income - expense;
     return Container(
       padding: const EdgeInsets.all(24),
@@ -952,8 +1017,12 @@ class _BudgetAppState extends State<BudgetApp> {
                       if (tab < 2)
                         FutureBuilder<TransactionQueryResult>(
                           future: overview,
-                          builder: (context, snapshot) =>
-                              _MonthlySummaryCard(result: snapshot.data),
+                          builder: (context, snapshot) => _MonthlySummaryCard(
+                            result: snapshot.data,
+                            isLoading: !snapshot.hasData && !snapshot.hasError,
+                            hasError: snapshot.hasError,
+                            onRetry: refreshOverview,
+                          ),
                         ),
                       if (tab < 2) const SizedBox(height: 24),
                       if (tab == 2 && widget.transactionRepository != null)
@@ -972,6 +1041,9 @@ class _BudgetAppState extends State<BudgetApp> {
                             selectedDate: selectedDate,
                             result: snapshot.data,
                             onDateChanged: selectCalendarDate,
+                            isLoading: !snapshot.hasData && !snapshot.hasError,
+                            hasError: snapshot.hasError,
+                            onRetry: refreshOverview,
                           ),
                         ),
                       if (widget.transactionRepository == null)
@@ -1001,11 +1073,9 @@ class _BudgetAppState extends State<BudgetApp> {
                           future: overview,
                           builder: (context, snapshot) {
                             if (snapshot.hasError) {
-                              return Card(
-                                child: Padding(
-                                  padding: const EdgeInsets.all(24),
-                                  child: Text(l10n.loadHistoryFailed),
-                                ),
+                              return _QueryErrorState(
+                                message: l10n.loadHistoryFailed,
+                                onRetry: refreshOverview,
                               );
                             }
                             if (!snapshot.hasData) {

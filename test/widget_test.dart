@@ -85,6 +85,29 @@ void main() {
     );
   });
 
+  testWidgets('calendar query error offers retry instead of endless loading', (
+    tester,
+  ) async {
+    var retried = false;
+    await tester.pumpWidget(
+      localizedTestApp(
+        home: CalendarOverview(
+          selectedDate: DateTime(2026, 9, 22),
+          result: null,
+          hasError: true,
+          onRetry: () => retried = true,
+          onDateChanged: (_) {},
+        ),
+      ),
+    );
+
+    expect(find.byType(CalendarDatePicker), findsNothing);
+    expect(find.text('내역을 불러오지 못했어요. 다시 시도해 주세요.'), findsOneWidget);
+
+    await tester.tap(find.text('다시 시도'));
+    expect(retried, isTrue);
+  });
+
   testWidgets('profile avatar uses the saved display name initial', (
     tester,
   ) async {

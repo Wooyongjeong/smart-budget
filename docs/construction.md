@@ -1,5 +1,13 @@
 # Construction 진행
 
+## UX01 — 조회 로딩·실패·재시도 상태 통일
+
+구현 브랜치: `fix/query-loading-error-states`.
+
+캘린더·월 요약·내역 조회를 로딩, 성공, 빈 결과, 실패 상태로 구분했다. 조회 실패는 0원 요약이나 무한 로딩으로 보이지 않고 공통 오류 카드와 다시 시도 동작을 제공한다. 재시도는 현재 선택 월을 유지한 채 동일 조회 future를 새로 만든다. 로딩 표시에는 정적 진행값을 사용해 위젯 테스트의 `pumpAndSettle`이 무한 대기하지 않도록 했다.
+
+검증: 캘린더 오류·재시도 위젯 테스트, `flutter test test/widget_test.dart`, `flutter analyze`, `git diff --check` 통과. 전체 Flutter 테스트와 macOS 빌드는 커밋 전 추가 확인한다.
+
 ## T13 — OpenRouter 카드 이용내역 이미지 분석
 
 브랜치: `feat/t13-openrouter-receipt-analysis`.
