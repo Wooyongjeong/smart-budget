@@ -141,38 +141,40 @@ class _CalendarOverviewState extends State<CalendarOverview> {
         else
           Card(
             child: Column(
-              children: items
-                  .map(
-                    (item) => ListTile(
-                      leading: CircleAvatar(
-                        backgroundColor: Theme.of(
-                          context,
-                        ).colorScheme.primary.withValues(alpha: 0.1),
-                        child: Icon(
-                          Icons.receipt_long_rounded,
-                          color: Theme.of(context).colorScheme.primary,
-                          size: 19,
-                        ),
-                      ),
-                      title: Text(
-                        item['merchant'] as String,
-                        style: const TextStyle(fontWeight: FontWeight.w700),
-                      ),
-                      trailing: Text(
-                        l10n.formattedAmount(
-                          formatWon((item['amount_won'] as num).toInt()),
-                        ),
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w700,
-                          fontFeatures: [FontFeature.tabularFigures()],
-                        ),
-                      ),
-                      onTap: widget.onTransactionTap == null
-                          ? null
-                          : () => widget.onTransactionTap!(item),
+              children: items.map((item) {
+                final isIncome = item['kind'] == 'income';
+                final color = isIncome
+                    ? Colors.teal.shade700
+                    : Theme.of(context).colorScheme.error;
+                return ListTile(
+                  leading: CircleAvatar(
+                    backgroundColor: color.withValues(alpha: 0.1),
+                    child: Icon(
+                      isIncome
+                          ? Icons.south_west_rounded
+                          : Icons.north_east_rounded,
+                      color: color,
+                      size: 19,
                     ),
-                  )
-                  .toList(),
+                  ),
+                  title: Text(
+                    item['merchant'] as String,
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                  subtitle: Text(isIncome ? l10n.income : l10n.expense),
+                  trailing: Text(
+                    '${isIncome ? '+' : '−'}${l10n.formattedAmount(formatWon((item['amount_won'] as num).toInt()))}',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: color,
+                      fontFeatures: const [FontFeature.tabularFigures()],
+                    ),
+                  ),
+                  onTap: widget.onTransactionTap == null
+                      ? null
+                      : () => widget.onTransactionTap!(item),
+                );
+              }).toList(),
             ),
           ),
       ],

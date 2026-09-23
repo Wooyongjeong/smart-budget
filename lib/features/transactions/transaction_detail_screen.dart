@@ -156,7 +156,8 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final transaction = widget.transaction;
-    final amount = l10n.formattedAmount(formatWon(transaction.amountWon));
+    final amount =
+        '${transaction.kind == 'income' ? '+' : '−'}${l10n.formattedAmount(formatWon(transaction.amountWon))}';
     return Scaffold(
       appBar: AppBar(title: Text(l10n.transactionDetail)),
       body: ListView(
