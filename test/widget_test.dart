@@ -42,7 +42,8 @@ void main() {
   testWidgets('calendar today button selects today and resets the picker', (
     tester,
   ) async {
-    var selectedDate = DateTime(2024, 1, 15);
+    final today = DateUtils.dateOnly(DateTime.now());
+    var selectedDate = today;
     await tester.pumpWidget(
       localizedTestApp(
         home: StatefulBuilder(
@@ -63,11 +64,19 @@ void main() {
       ),
     );
 
+    final pickerContext = tester.element(find.byType(CalendarDatePicker));
+    final todayMonth = MaterialLocalizations.of(
+      pickerContext,
+    ).formatMonthYear(today);
+    await tester.tap(find.byIcon(Icons.chevron_right));
+    await tester.pumpAndSettle();
+    expect(find.text(todayMonth), findsNothing);
+
     await tester.tap(find.byKey(const ValueKey('calendar-today')));
     await tester.pumpAndSettle();
 
-    final now = DateTime.now();
-    expect(selectedDate, DateTime(now.year, now.month, now.day));
+    expect(selectedDate, today);
+    expect(find.text(todayMonth), findsOneWidget);
     expect(
       tester
           .widget<CalendarDatePicker>(find.byType(CalendarDatePicker))

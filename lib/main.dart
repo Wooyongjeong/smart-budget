@@ -76,12 +76,12 @@ class CalendarOverview extends StatefulWidget {
 }
 
 class _CalendarOverviewState extends State<CalendarOverview> {
-  int pickerRevision = 0;
+  int _pickerRevision = 0;
 
-  void goToToday() {
+  void _goToToday() {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    setState(() => pickerRevision++);
+    setState(() => _pickerRevision++);
     widget.onDateChanged(today);
   }
 
@@ -99,13 +99,13 @@ class _CalendarOverviewState extends State<CalendarOverview> {
           alignment: Alignment.centerRight,
           child: TextButton.icon(
             key: const ValueKey('calendar-today'),
-            onPressed: goToToday,
+            onPressed: _goToToday,
             icon: const Icon(Icons.today_outlined, size: 18),
             label: Text(l10n.today),
           ),
         ),
         CalendarDatePicker(
-          key: ValueKey(pickerRevision),
+          key: ValueKey(_pickerRevision),
           initialDate: widget.selectedDate,
           firstDate: DateTime(2000),
           lastDate: DateTime(2100),
