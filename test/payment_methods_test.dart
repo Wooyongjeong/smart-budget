@@ -208,6 +208,32 @@ void main() {
     expect(find.text('Card spending this month'), findsOneWidget);
   });
 
+  testWidgets('English card performance formats both amounts in English', (
+    tester,
+  ) async {
+    final repository = _Repository()..target = 100000;
+    repository.methods.add(
+      const PaymentMethodOption(
+        id: 'card',
+        name: 'Shared card',
+        kind: 'credit_card',
+      ),
+    );
+    await tester.pumpWidget(
+      localizedTestApp(
+        locale: const Locale('en'),
+        home: PaymentMethodsScreen(
+          repository: repository,
+          contextData: await repository.loadContext(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('₩120,000 / ₩100,000'), findsOneWidget);
+    expect(find.textContaining('원'), findsNothing);
+  });
+
   testWidgets('registers a payment method from the management screen', (
     tester,
   ) async {

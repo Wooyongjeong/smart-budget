@@ -64,7 +64,7 @@ class MonthlySummaryCard extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           Text(
-            '${formatWon(balance)}원',
+            l10n.formattedAmount(formatWon(balance)),
             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
               color: Colors.white,
               fontFeatures: const [FontFeature.tabularFigures()],

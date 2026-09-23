@@ -549,7 +549,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    '${formatWon(actual)} / ${formatWon(target)}원',
+                    '${l10n.formattedAmount(formatWon(actual))} / ${l10n.formattedAmount(formatWon(target))}',
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                       color: Colors.white,
                       fontFeatures: const [FontFeature.tabularFigures()],
