@@ -74,11 +74,11 @@ void main() {
 
     await tester.pumpWidget(
       localizedTestApp(
-        home: AuthScreen(service: FakeAuthService(const AuthFailed('설정 오류'))),
+        home: AuthScreen(service: FakeAuthService(const AuthFailed())),
       ),
     );
     await tester.tap(find.text('카카오로 시작하기'));
     await tester.pumpAndSettle();
-    expect(find.text('설정 오류'), findsOneWidget);
+    expect(find.text('카카오 로그인 중 문제가 발생했어요. 잠시 후 다시 시도해 주세요.'), findsOneWidget);
   });
 }

@@ -18,6 +18,7 @@ import 'features/transactions/transaction_request_tracker.dart';
 import 'features/transactions/transaction_detail_screen.dart';
 import 'features/transactions/transaction_history_screen.dart';
 import 'features/transactions/calendar_summary.dart';
+import 'features/transactions/transaction_display.dart';
 import 'features/transactions/ai_review_screen.dart';
 import 'features/transactions/receipt_analysis.dart';
 import 'features/payment_methods/payment_methods_screen.dart';
@@ -165,7 +166,7 @@ class _CalendarOverviewState extends State<CalendarOverview> {
                     ),
                   ),
                   title: Text(
-                    item['merchant'] as String,
+                    localizedMerchantName(l10n, item['merchant'] as String),
                     style: const TextStyle(fontWeight: FontWeight.w700),
                   ),
                   subtitle: Text(isIncome ? l10n.income : l10n.expense),
@@ -331,7 +332,7 @@ class _MonthlySummaryCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            '이번 달 남은 금액',
+            AppLocalizations.of(context)!.remainingBalance,
             style: Theme.of(
               context,
             ).textTheme.labelLarge?.copyWith(color: Colors.white70),
@@ -349,12 +350,12 @@ class _MonthlySummaryCard extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  '수입 +${formatWon(income)}원',
+                  AppLocalizations.of(context)!.monthIncome(formatWon(income)),
                   style: const TextStyle(color: Colors.white70),
                 ),
               ),
               Text(
-                '지출 −${formatWon(expense)}원',
+                AppLocalizations.of(context)!.monthExpense(formatWon(expense)),
                 style: const TextStyle(color: Colors.white70),
               ),
             ],
@@ -910,7 +911,7 @@ class _BudgetAppState extends State<BudgetApp> {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            '어떻게 기록할까요?',
+                            l10n.recordPrompt,
                             style: Theme.of(sheetContext).textTheme.bodyLarge
                                 ?.copyWith(color: const Color(0xff697570)),
                           ),
@@ -1053,7 +1054,7 @@ class _BudgetAppState extends State<BudgetApp> {
                   children: [
                     if (tab != 3) ...[
                       _TopHeader(
-                        eyebrow: tab == 0 ? '우리 가계부' : l10n.appTitle,
+                        eyebrow: l10n.appTitle,
                         displayName: displayName,
                         title: tab == 0
                             ? l10n.calendarHeading
@@ -1186,7 +1187,10 @@ class _BudgetAppState extends State<BudgetApp> {
                                                 ),
                                               ),
                                               title: Text(
-                                                item['merchant'] as String,
+                                                localizedMerchantName(
+                                                  l10n,
+                                                  item['merchant'] as String,
+                                                ),
                                                 style: const TextStyle(
                                                   fontWeight: FontWeight.w700,
                                                 ),

@@ -8,6 +8,14 @@ import 'receipt_analysis.dart';
 import '../../money_input.dart';
 import '../../l10n/generated/app_localizations.dart';
 
+String _localizedReceiptType(AppLocalizations l10n, String type) =>
+    switch (type) {
+      'income' => l10n.income,
+      'refund' => l10n.receiptRefundType,
+      'unknown' => l10n.receiptUnknownType,
+      _ => l10n.receiptUnknownType,
+    };
+
 const _categories = ['식비', '생활', '교통', '주거', '쇼핑', '기타'];
 const _maxImageBytes = 10 * 1024 * 1024;
 
@@ -42,6 +50,7 @@ class ReceiptFixtureItem {
   factory ReceiptFixtureItem.fromAnalysis(
     ReceiptAnalysisItem item,
     HouseholdContext context,
+    AppLocalizations l10n,
   ) {
     final member = context.members.isEmpty ? null : context.members.first;
     final parsedDate = _parseAnalysisDate(item.date);
@@ -60,12 +69,17 @@ class ReceiptFixtureItem {
         memo: '',
       ),
       reason: [
-        if (item.paymentHint != null) '결제 수단: ${item.paymentHint}',
+        if (item.paymentHint != null)
+          l10n.receiptPaymentHint(item.paymentHint!),
         if (item.categoryHint != null && category == null)
-          '카테고리 확인: ${item.categoryHint}',
-        if (item.date != null && parsedDate == null) '날짜 확인: ${item.date}',
-        ...item.reviewReasons,
-        if (item.suggestedType != 'expense') '분류: ${item.suggestedType}',
+          l10n.receiptCategoryHint,
+        if (item.date != null && parsedDate == null)
+          l10n.receiptDateHint(item.date!),
+        if (item.reviewReasons.isNotEmpty) l10n.receiptNeedsReview,
+        if (item.suggestedType != 'expense')
+          l10n.receiptUnsupportedType(
+            _localizedReceiptType(l10n, item.suggestedType),
+          ),
       ].join(' · '),
       suggestedType: item.suggestedType,
     );
@@ -228,9 +242,11 @@ class _AiReviewScreenState extends State<AiReviewScreen> {
         ? 'image/png'
         : '';
     if (contentType.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('JPEG 또는 PNG 이미지만 지원합니다.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.receiptInvalidImage),
+        ),
+      );
       return;
     }
     final fileSize = await file.xFile.length();
@@ -264,8 +280,11 @@ class _AiReviewScreenState extends State<AiReviewScreen> {
         saveRequestId = analysis.draftId.isEmpty ? null : analysis.draftId;
         items = analysis.items
             .map(
-              (item) =>
-                  ReceiptFixtureItem.fromAnalysis(item, widget.contextData),
+              (item) => ReceiptFixtureItem.fromAnalysis(
+                item,
+                widget.contextData,
+                AppLocalizations.of(context)!,
+              ),
             )
             .toList();
       });
@@ -398,7 +417,7 @@ class _AiReviewScreenState extends State<AiReviewScreen> {
               padding: const EdgeInsets.only(right: 20),
               child: Center(
                 child: Text(
-                  '${items.length}개 찾음',
+                  l10n.receiptItemsFound(items.length),
                   style: Theme.of(context).textTheme.labelMedium?.copyWith(
                     color: Theme.of(context).colorScheme.primary,
                     fontWeight: FontWeight.w700,
@@ -445,12 +464,12 @@ class _AiReviewScreenState extends State<AiReviewScreen> {
                         ),
                       ),
                     ),
-                    const Positioned(
+                    Positioned(
                       left: 16,
                       right: 16,
                       bottom: 12,
                       child: Text(
-                        '탭하여 원본 확대',
+                        l10n.receiptTapToZoom,
                         style: TextStyle(color: Colors.white, fontSize: 13),
                       ),
                     ),

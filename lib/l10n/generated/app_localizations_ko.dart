@@ -115,6 +115,32 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
+  String get remainingBalance => '이번 달 남은 금액';
+
+  @override
+  String get recordPrompt => '어떻게 기록할까요?';
+
+  @override
+  String get previousMonth => '이전 달';
+
+  @override
+  String get nextMonth => '다음 달';
+
+  @override
+  String get currentMonth => '이번 달';
+
+  @override
+  String get cardPerformanceMonth => '이번 달 카드 실적';
+
+  @override
+  String get setCardTargetsPrompt => '카드별 목표를 설정해 보세요';
+
+  @override
+  String expectedPerformance(int percent) {
+    return '예상 실적 $percent%';
+  }
+
+  @override
   String get noTransactions => '거래가 없는 기간이에요.';
 
   @override
@@ -580,6 +606,41 @@ class AppLocalizationsKo extends AppLocalizations {
   String receiptRemainingErrors(Object count) {
     return '수정이 필요한 항목 $count개';
   }
+
+  @override
+  String receiptItemsFound(int count) {
+    return '$count개 찾음';
+  }
+
+  @override
+  String get receiptTapToZoom => '탭하여 원본 확대';
+
+  @override
+  String get receiptNeedsReview => '내용을 확인해 주세요';
+
+  @override
+  String receiptPaymentHint(String hint) {
+    return '결제 수단: $hint';
+  }
+
+  @override
+  String get receiptCategoryHint => '카테고리를 확인해 주세요';
+
+  @override
+  String receiptDateHint(String date) {
+    return '날짜 확인: $date';
+  }
+
+  @override
+  String receiptUnsupportedType(String type) {
+    return '지원하지 않는 유형: $type';
+  }
+
+  @override
+  String get receiptRefundType => '환불';
+
+  @override
+  String get receiptUnknownType => '확인 필요';
 
   @override
   String get receiptImageSize => '10MB 이하의 이미지를 선택해 주세요.';

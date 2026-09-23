@@ -115,6 +115,32 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get remainingBalance => 'Remaining this month';
+
+  @override
+  String get recordPrompt => 'How would you like to add it?';
+
+  @override
+  String get previousMonth => 'Previous month';
+
+  @override
+  String get nextMonth => 'Next month';
+
+  @override
+  String get currentMonth => 'This month';
+
+  @override
+  String get cardPerformanceMonth => 'Card spending this month';
+
+  @override
+  String get setCardTargetsPrompt => 'Set a goal for each card';
+
+  @override
+  String expectedPerformance(int percent) {
+    return '$percent% of goal';
+  }
+
+  @override
   String get noTransactions => 'No transactions in this period.';
 
   @override
@@ -593,6 +619,47 @@ class AppLocalizationsEn extends AppLocalizations {
   String receiptRemainingErrors(Object count) {
     return '$count item(s) need attention';
   }
+
+  @override
+  String receiptItemsFound(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count items found',
+      one: '1 item found',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get receiptTapToZoom => 'Tap to enlarge the original';
+
+  @override
+  String get receiptNeedsReview => 'Review this information';
+
+  @override
+  String receiptPaymentHint(String hint) {
+    return 'Payment method: $hint';
+  }
+
+  @override
+  String get receiptCategoryHint => 'Check the category';
+
+  @override
+  String receiptDateHint(String date) {
+    return 'Check the date: $date';
+  }
+
+  @override
+  String receiptUnsupportedType(String type) {
+    return 'Unsupported type: $type';
+  }
+
+  @override
+  String get receiptRefundType => 'Refund';
+
+  @override
+  String get receiptUnknownType => 'Needs review';
 
   @override
   String get receiptImageSize => 'Choose an image no larger than 10 MB.';

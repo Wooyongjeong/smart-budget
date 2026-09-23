@@ -4,6 +4,7 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../l10n/generated/app_localizations.dart';
 import 'household_repository.dart';
+import '../transactions/transaction_display.dart';
 import 'invitation_link.dart';
 
 class HouseholdScreen extends StatefulWidget {
@@ -227,7 +228,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
             children: [
               Text(
-                household.name,
+                localizedHouseholdName(l10n, household.name),
                 style: Theme.of(context).textTheme.headlineSmall,
               ),
               const SizedBox(height: 8),
