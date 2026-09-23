@@ -14,6 +14,7 @@ import 'auth/auth_screen.dart';
 import 'auth/auth_service.dart';
 import 'auth/config_missing_screen.dart';
 import 'features/transactions/transaction_repository.dart';
+import 'features/transactions/transaction_request_tracker.dart';
 import 'features/transactions/transaction_detail_screen.dart';
 import 'features/transactions/transaction_history_screen.dart';
 import 'features/transactions/calendar_summary.dart';
@@ -746,6 +747,7 @@ class _BudgetAppState extends State<BudgetApp> {
             )
           : await repository.loadContext();
       if (!context.mounted) return;
+      final requestTracker = TransactionRequestTracker();
       await Navigator.of(context).push(
         MaterialPageRoute<void>(
           builder: (_) => EntryForm(
@@ -765,8 +767,13 @@ class _BudgetAppState extends State<BudgetApp> {
                 ? null
                 : (draft) async {
                     try {
-                      await repository.save(data.householdId, draft);
+                      await repository.saveMany(
+                        data.householdId,
+                        [draft],
+                        requestId: requestTracker.requestIdFor(draft),
+                      );
                       if (!context.mounted) return;
+                      requestTracker.markSucceeded();
                       refreshOverview();
                       Navigator.of(context).pop();
                       messenger.currentState?.showSnackBar(

@@ -5,6 +5,7 @@ import 'package:smart_budget/main.dart';
 import 'package:smart_budget/entry_form.dart';
 import 'package:smart_budget/features/transactions/transaction_draft.dart';
 import 'package:smart_budget/features/transactions/transaction_repository.dart';
+import 'package:smart_budget/features/transactions/transaction_request_tracker.dart';
 import 'localized_test_app.dart';
 
 class _Repository implements TransactionRepository {
@@ -44,6 +45,7 @@ class _Repository implements TransactionRepository {
     List<TransactionDraft> d, {
     String? requestId,
   }) async {}
+
   @override
   Future<void> edit(
     String h,
@@ -159,6 +161,25 @@ void main() {
       find.byKey(const ValueKey('payment-true')),
     );
     expect(incomeField.initialValue, 'cash');
+  });
+
+  test('direct-entry retry reuses request id until the draft changes', () {
+    final tracker = TransactionRequestTracker();
+    final first = TransactionDraft(
+      kind: TransactionKind.expense,
+      occurredOn: DateTime.utc(2026, 9, 23),
+      amountWon: 1000,
+      merchant: '마트',
+      category: '식비',
+      paymentMethodId: 'cash',
+      memberId: 'member',
+      memo: '',
+    );
+    final retry = tracker.requestIdFor(first);
+    expect(tracker.requestIdFor(first), retry);
+    expect(tracker.requestIdFor(first.copyWith(merchant: '편의점')), isNot(retry));
+    tracker.markSucceeded();
+    expect(tracker.requestIdFor(first), isNot(retry));
   });
 
   testWidgets('English locale translates entry fields and date picker', (
