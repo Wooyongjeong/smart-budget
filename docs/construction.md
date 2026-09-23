@@ -1,5 +1,13 @@
 # Construction 진행
 
+## INV01 — 전체 초대 링크 붙여넣기
+
+구현 브랜치: `feat/invitation-link-paste`.
+
+초대 입력을 토큰·허용된 HTTPS 초대 링크·`smartbudget://invite/<token>` 모두 받을 수 있도록 `invitationTokenFromInput`으로 통합했다. 허용 호스트와 scheme/path를 엄격히 확인한 뒤 repository에는 48자리 소문자 토큰만 전달하며, 입력 컨트롤러는 URL 길이를 수용한다. 딥링크와 설정 화면이 같은 parser 계약을 사용한다.
+
+검증: 토큰/웹 링크/커스텀 링크 정규화 및 잘못된 호스트·scheme·길이 거부 단위 테스트, 전체 링크 수락 위젯 테스트, `flutter analyze`, `git diff --check` 통과.
+
 ## WAL02 — 지갑 카드 실적 기준 월 이동
 
 구현 브랜치: `feat/wal02-wallet-month-navigation`.
