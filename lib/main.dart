@@ -15,6 +15,7 @@ import 'auth/auth_service.dart';
 import 'auth/config_missing_screen.dart';
 import 'features/transactions/transaction_repository.dart';
 import 'features/transactions/transaction_detail_screen.dart';
+import 'features/transactions/transaction_history_screen.dart';
 import 'features/transactions/ai_review_screen.dart';
 import 'features/transactions/receipt_analysis.dart';
 import 'features/payment_methods/payment_methods_screen.dart';
@@ -1050,7 +1051,7 @@ class _BudgetAppState extends State<BudgetApp> {
                         ][tab],
                       ),
                       const SizedBox(height: 22),
-                      if (tab < 2)
+                      if (tab == 0)
                         FutureBuilder<TransactionQueryResult>(
                           future: overview,
                           builder: (context, snapshot) => _MonthlySummaryCard(
@@ -1083,7 +1084,13 @@ class _BudgetAppState extends State<BudgetApp> {
                             onRetry: refreshOverview,
                           ),
                         ),
-                      if (widget.transactionRepository == null)
+                      if (tab == 1 && widget.transactionRepository != null)
+                        TransactionHistoryScreen(
+                          repository: widget.transactionRepository!,
+                          initialDate: selectedDate,
+                          onTransactionTap: openTransaction,
+                        )
+                      else if (widget.transactionRepository == null)
                         Card(
                           child: Padding(
                             padding: const EdgeInsets.all(24),
@@ -1105,7 +1112,7 @@ class _BudgetAppState extends State<BudgetApp> {
                             ),
                           ),
                         )
-                      else
+                      else if (tab == 0)
                         FutureBuilder<TransactionQueryResult>(
                           future: overview,
                           builder: (context, snapshot) {

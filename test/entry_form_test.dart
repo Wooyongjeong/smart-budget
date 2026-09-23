@@ -18,7 +18,16 @@ class _Repository implements TransactionRepository {
   );
 
   @override
-  Future<TransactionQueryResult> query(String h, DateTime s, DateTime e) async {
+  Future<TransactionQueryResult> query(
+    String h,
+    DateTime s,
+    DateTime e, {
+    String? memberId,
+    String? paymentMethodId,
+    String? category,
+    TransactionQueryCursor? cursor,
+    int limit = 50,
+  }) async {
     lastQueryStart = s;
     return const TransactionQueryResult(
       items: [],

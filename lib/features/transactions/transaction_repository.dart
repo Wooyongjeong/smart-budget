@@ -39,10 +39,23 @@ class TransactionQueryResult {
     required this.items,
     required this.totalIncome,
     required this.totalExpense,
+    this.nextCursor,
   });
   final List<Map<String, dynamic>> items;
   final int totalIncome;
   final int totalExpense;
+  final TransactionQueryCursor? nextCursor;
+}
+
+class TransactionQueryCursor {
+  const TransactionQueryCursor({
+    required this.date,
+    required this.createdAt,
+    required this.id,
+  });
+  final String date;
+  final String createdAt;
+  final String id;
 }
 
 class TransactionRecord {
@@ -147,8 +160,13 @@ abstract interface class TransactionRepository {
   Future<TransactionQueryResult> query(
     String householdId,
     DateTime start,
-    DateTime end,
-  );
+    DateTime end, {
+    String? memberId,
+    String? paymentMethodId,
+    String? category,
+    TransactionQueryCursor? cursor,
+    int limit = 50,
+  });
 }
 
 class TransactionSaveException implements Exception {
@@ -469,23 +487,43 @@ class SupabaseTransactionRepository implements TransactionRepository {
   Future<TransactionQueryResult> query(
     String householdId,
     DateTime start,
-    DateTime end,
-  ) async {
+    DateTime end, {
+    String? memberId,
+    String? paymentMethodId,
+    String? category,
+    TransactionQueryCursor? cursor,
+    int limit = 50,
+  }) async {
     final result = await client.rpc(
       'query_transactions',
       params: {
         'p_household_id': householdId,
         'p_start_date': _dateOnly(start),
         'p_end_date': _dateOnly(end),
-        'p_limit': 100,
+        'p_member_id': memberId,
+        'p_payment_method_id': paymentMethodId,
+        'p_category': category,
+        'p_cursor_date': cursor?.date,
+        'p_cursor_created_at': cursor?.createdAt,
+        'p_cursor_id': cursor?.id,
+        'p_limit': limit,
       },
     );
     final data = result as Map<String, dynamic>;
+    final items = (data['items'] as List<dynamic>? ?? [])
+        .cast<Map<String, dynamic>>();
+    final nextCursor = items.length < limit
+        ? null
+        : TransactionQueryCursor(
+            date: items.last['occurred_on'] as String,
+            createdAt: items.last['created_at'] as String,
+            id: items.last['id'] as String,
+          );
     return TransactionQueryResult(
-      items: (data['items'] as List<dynamic>? ?? [])
-          .cast<Map<String, dynamic>>(),
+      items: items,
       totalIncome: (data['total_income'] as num? ?? 0).toInt(),
       totalExpense: (data['total_expense'] as num? ?? 0).toInt(),
+      nextCursor: nextCursor,
     );
   }
 }

@@ -97,8 +97,13 @@ class _Repository implements TransactionRepository {
   Future<TransactionQueryResult> query(
     String h,
     DateTime s,
-    DateTime e,
-  ) async =>
+    DateTime e, {
+    String? memberId,
+    String? paymentMethodId,
+    String? category,
+    TransactionQueryCursor? cursor,
+    int limit = 50,
+  }) async =>
       const TransactionQueryResult(items: [], totalIncome: 0, totalExpense: 0);
 }
 
