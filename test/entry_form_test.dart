@@ -36,6 +36,20 @@ class _Repository implements TransactionRepository {
     String? requestId,
   }) async {}
   @override
+  Future<void> edit(
+    String h,
+    String id,
+    int version,
+    TransactionDraft draft, {
+    String? requestId,
+  }) async {}
+  @override
+  Future<void> voidTransaction(
+    String id,
+    int version, {
+    String? requestId,
+  }) async {}
+  @override
   Future<PaymentMethodOption> addPaymentMethod(
     String h,
     String k,

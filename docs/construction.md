@@ -1,5 +1,13 @@
 # Construction 진행
 
+## TX01 — 거래 상세·수정·무효화 연결
+
+구현 브랜치: `feat/transaction-detail-edit-void`.
+
+거래 조회 행과 캘린더 선택 날짜의 거래를 누르면 상세 화면으로 이동하도록 연결했다. 일반 수입·지출은 기존 `EntryForm`에 초안을 주입해 `edit_transaction` RPC로 수정하고, 삭제는 확인 후 `void_transaction` RPC로 무효화한다. version 충돌은 덮어쓰지 않고 최신 내역 확인 안내로 매핑한다. 상품권·환불 등 현재 일반 입력 계약 밖의 유형은 읽기 전용으로 표시한다. `TransactionRecord`가 조회 결과의 ID/version과 화면 모델 변환을 담당하며, 저장·무효화 성공 후 상위 조회를 갱신한다.
+
+검증: 상세 수정·삭제 위젯 테스트, `flutter test`, `flutter analyze`, `git diff --check`, macOS debug build 통과. Supabase 원격 RPC의 실제 수정/무효화 데이터 시나리오는 이 환경에서 실행하지 않았다.
+
 ## UX01 — 조회 로딩·실패·재시도 상태 통일
 
 구현 브랜치: `fix/query-loading-error-states`.

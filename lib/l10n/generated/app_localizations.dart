@@ -308,6 +308,72 @@ abstract class AppLocalizations {
   /// **'거래를 저장하지 못했어요. 다시 시도해 주세요.'**
   String get transactionSaveFailed;
 
+  /// No description provided for @transactionDetail.
+  ///
+  /// In ko, this message translates to:
+  /// **'거래 상세'**
+  String get transactionDetail;
+
+  /// No description provided for @transactionType.
+  ///
+  /// In ko, this message translates to:
+  /// **'거래 유형'**
+  String get transactionType;
+
+  /// No description provided for @editTransaction.
+  ///
+  /// In ko, this message translates to:
+  /// **'거래 수정'**
+  String get editTransaction;
+
+  /// No description provided for @voidTransaction.
+  ///
+  /// In ko, this message translates to:
+  /// **'거래 삭제'**
+  String get voidTransaction;
+
+  /// No description provided for @voidTransactionTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'이 거래를 삭제할까요?'**
+  String get voidTransactionTitle;
+
+  /// No description provided for @voidTransactionBody.
+  ///
+  /// In ko, this message translates to:
+  /// **'거래는 기록에서 제외되며 공동 가계부 합계에도 반영되지 않아요.'**
+  String get voidTransactionBody;
+
+  /// No description provided for @transactionVoided.
+  ///
+  /// In ko, this message translates to:
+  /// **'거래를 삭제했어요.'**
+  String get transactionVoided;
+
+  /// No description provided for @transactionUpdated.
+  ///
+  /// In ko, this message translates to:
+  /// **'거래를 수정했어요.'**
+  String get transactionUpdated;
+
+  /// No description provided for @transactionVersionConflict.
+  ///
+  /// In ko, this message translates to:
+  /// **'다른 구성원이 먼저 변경했어요. 최신 내역을 확인해 주세요.'**
+  String get transactionVersionConflict;
+
+  /// No description provided for @transactionReadOnly.
+  ///
+  /// In ko, this message translates to:
+  /// **'이 거래 유형은 현재 상세 확인만 지원해요.'**
+  String get transactionReadOnly;
+
+  /// No description provided for @transactionDetailUnavailable.
+  ///
+  /// In ko, this message translates to:
+  /// **'거래 상세를 불러올 수 없어요.'**
+  String get transactionDetailUnavailable;
+
   /// No description provided for @householdLoadFailed.
   ///
   /// In ko, this message translates to:
