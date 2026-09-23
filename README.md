@@ -139,5 +139,6 @@ supabase test db
 - [작업별 구현 계약](docs/implementation-handoff.md)
 - [구현 및 검증 기록](docs/construction.md)
 - [문서 대비 코드 리뷰](docs/code-review.md)
+- [제품 완성도 개선 백로그](docs/product-improvement-backlog.md)
 
 기본 브랜치는 `main`입니다. 기능은 별도 브랜치에서 구현하고 테스트와 리뷰를 거쳐 PR로 병합합니다.
