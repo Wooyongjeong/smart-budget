@@ -1,5 +1,13 @@
 # Construction 진행
 
+## SYNC01 — 공동 데이터 수동 새로고침
+
+구현 브랜치: `feat/manual-data-refresh`.
+
+캘린더/월 요약, 내역, 결제 수단, 공동 가계부 화면에 수동 새로고침을 추가했다. 현재 선택 월과 내역 필터를 유지하고 가계부 컨텍스트부터 다시 읽는다. 갱신 중에는 기존 데이터를 유지하며, 실패 시 데이터는 보존하고 재시도 안내를 표시한다. 캘린더 월 조회가 진행 중 월 변경과 경합해 이전 월 결과를 현재 결과로 덮지 않도록 월 anchor를 확인한다.
+
+검증: 화면별 새로고침 성공/실패·선택 조건 유지 위젯 테스트, 전체 `flutter test`, `flutter analyze`, `git diff --check`, macOS debug build. 실 Supabase 계정 2개 간 변경 반영은 SYNC02 범위이며 별도 실기기 확인이 남아 있다.
+
 ## L10N01 — 사용자 노출 문구 현지화
 
 브랜치: `fix/complete-localization`.

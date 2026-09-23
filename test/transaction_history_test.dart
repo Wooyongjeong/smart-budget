@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:smart_budget/features/transactions/transaction_draft.dart';
 import 'package:smart_budget/features/transactions/transaction_history_screen.dart';
@@ -11,13 +12,20 @@ class _Repository implements TransactionRepository {
   String? memberId;
   String? paymentMethodId;
   String? category;
+  bool failNextQuery = false;
+  int contextLoads = 0;
 
   @override
-  Future<HouseholdContext> loadContext() async => const HouseholdContext(
-    householdId: 'household',
-    paymentMethods: [PaymentMethodOption(id: 'cash', name: '현금', kind: 'cash')],
-    members: [MemberOption(id: 'member', name: '나')],
-  );
+  Future<HouseholdContext> loadContext() async {
+    contextLoads++;
+    return const HouseholdContext(
+      householdId: 'household',
+      paymentMethods: [
+        PaymentMethodOption(id: 'cash', name: '현금', kind: 'cash'),
+      ],
+      members: [MemberOption(id: 'member', name: '나')],
+    );
+  }
 
   @override
   Future<TransactionQueryResult> query(
@@ -31,6 +39,10 @@ class _Repository implements TransactionRepository {
     int limit = 50,
   }) async {
     calls.add((start: start, end: end, cursor: cursor));
+    if (failNextQuery) {
+      failNextQuery = false;
+      throw Exception('network');
+    }
     this.memberId = memberId;
     this.paymentMethodId = paymentMethodId;
     this.category = category;
@@ -166,4 +178,46 @@ void main() {
     expect(find.text('동네 마트'), findsOneWidget);
     expect(find.text('편의점'), findsOneWidget);
   });
+
+  testWidgets(
+    'manual refresh keeps the selected period and old rows on error',
+    (tester) async {
+      final repository = _Repository();
+      await tester.pumpWidget(
+        localizedTestApp(
+          home: Scaffold(
+            body: TransactionHistoryScreen(
+              repository: repository,
+              initialDate: DateTime(2026, 9, 22),
+              onTransactionTap: (_) {},
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('필터'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byType(DropdownButtonFormField<String>).at(2));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('식비').last);
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('필터 적용'));
+      await tester.tap(find.text('필터 적용'));
+      await tester.pumpAndSettle();
+      expect(repository.category, '식비');
+      repository.failNextQuery = true;
+
+      await tester.tap(find.byKey(const ValueKey('history-refresh')));
+      await tester.pumpAndSettle();
+      expect(repository.calls.last.start, DateTime(2026, 9, 1));
+      expect(repository.category, '식비');
+      expect(find.text('동네 마트'), findsOneWidget);
+      expect(find.text('내역을 불러오지 못했어요. 다시 시도해 주세요.'), findsOneWidget);
+
+      await tester.tap(find.text('다시 시도').last);
+      await tester.pumpAndSettle();
+      expect(repository.calls.last.start, DateTime(2026, 9, 1));
+      expect(find.text('동네 마트'), findsOneWidget);
+    },
+  );
 }
