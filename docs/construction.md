@@ -1,5 +1,13 @@
 # Construction 진행
 
+## CAL01 — 캘린더 날짜별 수입·지출 표시
+
+구현 브랜치: `feat/cal01-calendar-day-summary`.
+
+현재 조회 월의 거래를 날짜별로 묶는 순수 집계 함수와 immutable 요약 모델을 추가했다. 캘린더 아래에 거래가 있는 날짜만 날짜·수입 합계·지출 합계를 표시해 월간 흐름을 빠르게 확인할 수 있도록 했으며, 기존 날짜 선택·오늘 이동·선택 날짜 거래 목록은 유지했다. 잘못된 날짜/금액 행은 집계에서 안전하게 제외한다.
+
+검증: 날짜·유형별 집계 단위 테스트, 캘린더 오늘 이동/월 이동 회귀 위젯 테스트, `flutter test test/widget_test.dart`, `flutter analyze`, `git diff --check` 통과. `flutter test` 전체와 macOS debug build는 각 PR 병합 전 추가 확인한다.
+
 ## TX03 — 거래 목록의 수입·지출 시각 구분
 
 구현 브랜치: `feat/transaction-list-visual-semantics`.
