@@ -27,8 +27,11 @@ class FakeRepository implements TransactionRepository {
     String? owner,
     int paid,
     int amount,
-    String? source,
-  ) => throw UnimplementedError();
+    String? source, {
+    required String mode,
+    required String actualMemberId,
+    String? requestId,
+  }) => throw UnimplementedError();
   @override
   Future<void> saveMany(
     String householdId,

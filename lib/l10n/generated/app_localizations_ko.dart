@@ -357,6 +357,18 @@ class AppLocalizationsKo extends AppLocalizations {
   String get voucher => '상품권';
 
   @override
+  String get voucherInitialBalance => '초기 보유 잔액';
+
+  @override
+  String get voucherPurchase => '유상 구매';
+
+  @override
+  String get actualUserRequired => '실제 사용자를 선택해 주세요.';
+
+  @override
+  String get sourcePaymentMethodRequired => '구매에 사용한 결제 수단을 선택해 주세요.';
+
+  @override
   String get paymentMethodManagement => '결제 수단 관리';
 
   @override

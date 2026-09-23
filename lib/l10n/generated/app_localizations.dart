@@ -782,6 +782,30 @@ abstract class AppLocalizations {
   /// **'상품권'**
   String get voucher;
 
+  /// No description provided for @voucherInitialBalance.
+  ///
+  /// In ko, this message translates to:
+  /// **'초기 보유 잔액'**
+  String get voucherInitialBalance;
+
+  /// No description provided for @voucherPurchase.
+  ///
+  /// In ko, this message translates to:
+  /// **'유상 구매'**
+  String get voucherPurchase;
+
+  /// No description provided for @actualUserRequired.
+  ///
+  /// In ko, this message translates to:
+  /// **'실제 사용자를 선택해 주세요.'**
+  String get actualUserRequired;
+
+  /// No description provided for @sourcePaymentMethodRequired.
+  ///
+  /// In ko, this message translates to:
+  /// **'구매에 사용한 결제 수단을 선택해 주세요.'**
+  String get sourcePaymentMethodRequired;
+
   /// No description provided for @paymentMethodManagement.
   ///
   /// In ko, this message translates to:

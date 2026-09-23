@@ -29,6 +29,8 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
   late Future<List<Map<String, dynamic>>> cardSummary = _loadCardSummary();
   DateTime summaryMonth = DateTime(DateTime.now().year, DateTime.now().month);
   bool saving = false;
+  String? voucherRequestId;
+  _PaymentMethodDraft? failedVoucherDraft;
 
   Future<List<Map<String, dynamic>>> _loadCardSummary() => widget.repository
       .cardPerformance(widget.contextData.householdId, summaryMonth);
@@ -76,6 +78,11 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
       ),
     );
     if (result == null || !mounted) return;
+    if (result.kind == 'voucher' &&
+        (failedVoucherDraft == null ||
+            !failedVoucherDraft!.hasSameVoucherPayload(result))) {
+      voucherRequestId = newTransactionRequestId();
+    }
     setState(() => saving = true);
     try {
       final method = result.kind == 'voucher'
@@ -86,6 +93,9 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
               result.paidAmountWon!,
               result.voucherAmountWon!,
               result.sourcePaymentMethodId,
+              mode: result.voucherMode!,
+              actualMemberId: result.actualMemberId!,
+              requestId: voucherRequestId,
             )
           : await widget.repository.addPaymentMethod(
               widget.contextData.householdId,
@@ -104,11 +114,16 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
         cardSummary = _loadCardSummary();
       }
       if (!mounted) return;
+      if (result.kind == 'voucher') {
+        voucherRequestId = null;
+        failedVoucherDraft = null;
+      }
       setState(() => methods.add(method));
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(AppLocalizations.of(context)!.paymentAdded)),
       );
     } catch (_) {
+      if (result.kind == 'voucher') failedVoucherDraft = result;
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -657,6 +672,8 @@ class _PaymentMethodDraft {
     this.voucherAmountWon,
     this.sourcePaymentMethodId,
     this.targetAmountWon,
+    this.voucherMode,
+    this.actualMemberId,
   });
   final String kind;
   final String name;
@@ -665,6 +682,17 @@ class _PaymentMethodDraft {
   final int? voucherAmountWon;
   final String? sourcePaymentMethodId;
   final int? targetAmountWon;
+  final String? voucherMode;
+  final String? actualMemberId;
+
+  bool hasSameVoucherPayload(_PaymentMethodDraft other) =>
+      name == other.name &&
+      ownerMemberId == other.ownerMemberId &&
+      paidAmountWon == other.paidAmountWon &&
+      voucherAmountWon == other.voucherAmountWon &&
+      sourcePaymentMethodId == other.sourcePaymentMethodId &&
+      voucherMode == other.voucherMode &&
+      actualMemberId == other.actualMemberId;
 }
 
 class _PaymentMethodDialog extends StatefulWidget {
@@ -689,6 +717,14 @@ class _PaymentMethodDialogState extends State<_PaymentMethodDialog> {
   late String kind = widget.initialKind;
   String? owner;
   String? sourcePaymentMethodId;
+  String voucherMode = 'initial_balance';
+  String? actualMemberId;
+
+  @override
+  void initState() {
+    super.initState();
+    actualMemberId = widget.members.firstOrNull?.id;
+  }
 
   @override
   void dispose() {
@@ -713,103 +749,141 @@ class _PaymentMethodDialogState extends State<_PaymentMethodDialog> {
       title: Text(l10n.registerPaymentMethod),
       content: Form(
         key: form,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            DropdownButtonFormField<String>(
-              initialValue: kind,
-              decoration: InputDecoration(labelText: l10n.kind),
-              items: kinds.entries
-                  .map(
-                    (entry) => DropdownMenuItem(
-                      value: entry.key,
-                      child: Text(entry.value),
-                    ),
-                  )
-                  .toList(),
-              onChanged: (value) => setState(() => kind = value!),
-            ),
-            TextFormField(
-              controller: name,
-              autofocus: true,
-              maxLength: 100,
-              decoration: InputDecoration(labelText: l10n.nameExample),
-              validator: (value) => value == null || value.trim().isEmpty
-                  ? l10n.nameRequired
-                  : null,
-            ),
-            if (kind == 'voucher') ...[
-              TextFormField(
-                controller: paidAmount,
-                keyboardType: TextInputType.number,
-                inputFormatters: const [WonInputFormatter()],
-                decoration: InputDecoration(
-                  labelText: l10n.actualPaidAmount,
-                  suffixText: l10n.won,
-                ),
-                validator: (value) => (parseWon(value ?? '') ?? 0) <= 0
-                    ? l10n.paidAmountRequired
-                    : null,
-              ),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
               DropdownButtonFormField<String>(
-                initialValue: sourcePaymentMethodId,
-                decoration: InputDecoration(labelText: l10n.paymentMethod),
-                items: [
-                  DropdownMenuItem(value: null, child: Text(l10n.none)),
-                  ...widget.paymentMethods
-                      .where((method) => method.kind != 'voucher')
-                      .map(
-                        (method) => DropdownMenuItem(
-                          value: method.id,
-                          child: Text(method.name),
-                        ),
+                initialValue: kind,
+                decoration: InputDecoration(labelText: l10n.kind),
+                items: kinds.entries
+                    .map(
+                      (entry) => DropdownMenuItem(
+                        value: entry.key,
+                        child: Text(entry.value),
                       ),
-                ],
-                onChanged: (value) =>
-                    setState(() => sourcePaymentMethodId = value),
+                    )
+                    .toList(),
+                onChanged: (value) => setState(() => kind = value!),
               ),
               TextFormField(
-                controller: voucherAmount,
-                keyboardType: TextInputType.number,
-                inputFormatters: const [WonInputFormatter()],
-                decoration: InputDecoration(
-                  labelText: l10n.voucherTopUpAmount,
-                  suffixText: l10n.won,
-                ),
-                validator: (value) => (parseWon(value ?? '') ?? 0) <= 0
-                    ? l10n.topUpAmountRequired
+                controller: name,
+                autofocus: true,
+                maxLength: 100,
+                decoration: InputDecoration(labelText: l10n.nameExample),
+                validator: (value) => value == null || value.trim().isEmpty
+                    ? l10n.nameRequired
                     : null,
               ),
-            ],
-            if (kind == 'debit_card' || kind == 'credit_card')
-              TextFormField(
-                controller: targetAmount,
-                keyboardType: TextInputType.number,
-                inputFormatters: const [WonInputFormatter()],
-                decoration: InputDecoration(
-                  labelText: l10n.monthlyPerformanceTarget,
-                  suffixText: l10n.won,
-                ),
-                validator: (value) => (parseWon(value ?? '') ?? 0) <= 0
-                    ? l10n.targetAmountRequired
-                    : null,
-              ),
-            if (widget.members.isNotEmpty)
-              DropdownButtonFormField<String>(
-                initialValue: owner,
-                decoration: InputDecoration(labelText: l10n.ownerOptional),
-                items: [
-                  DropdownMenuItem(value: null, child: Text(l10n.none)),
-                  ...widget.members.map(
-                    (member) => DropdownMenuItem(
-                      value: member.id,
-                      child: Text(member.name),
+              if (kind == 'voucher') ...[
+                SegmentedButton<String>(
+                  segments: [
+                    ButtonSegment(
+                      value: 'initial_balance',
+                      label: Text(l10n.voucherInitialBalance),
                     ),
+                    ButtonSegment(
+                      value: 'purchase',
+                      label: Text(l10n.voucherPurchase),
+                    ),
+                  ],
+                  selected: {voucherMode},
+                  onSelectionChanged: (value) =>
+                      setState(() => voucherMode = value.single),
+                ),
+                if (voucherMode == 'purchase') ...[
+                  TextFormField(
+                    controller: paidAmount,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: const [WonInputFormatter()],
+                    decoration: InputDecoration(
+                      labelText: l10n.actualPaidAmount,
+                      suffixText: l10n.won,
+                    ),
+                    validator: (value) => (parseWon(value ?? '') ?? 0) <= 0
+                        ? l10n.paidAmountRequired
+                        : null,
                   ),
+                  DropdownButtonFormField<String>(
+                    initialValue: sourcePaymentMethodId,
+                    decoration: InputDecoration(labelText: l10n.paymentMethod),
+                    items: [
+                      DropdownMenuItem(value: null, child: Text(l10n.none)),
+                      ...widget.paymentMethods
+                          .where((method) => method.kind != 'voucher')
+                          .map(
+                            (method) => DropdownMenuItem(
+                              value: method.id,
+                              child: Text(method.name),
+                            ),
+                          ),
+                    ],
+                    validator: (value) =>
+                        value == null ? l10n.sourcePaymentMethodRequired : null,
+                    onChanged: (value) =>
+                        setState(() => sourcePaymentMethodId = value),
+                  ),
+                  if (widget.members.isNotEmpty)
+                    DropdownButtonFormField<String>(
+                      initialValue: actualMemberId,
+                      decoration: InputDecoration(labelText: l10n.actualUser),
+                      items: widget.members
+                          .map(
+                            (member) => DropdownMenuItem(
+                              value: member.id,
+                              child: Text(member.name),
+                            ),
+                          )
+                          .toList(),
+                      validator: (value) =>
+                          value == null ? l10n.actualUserRequired : null,
+                      onChanged: (value) =>
+                          setState(() => actualMemberId = value),
+                    ),
                 ],
-                onChanged: (value) => setState(() => owner = value),
-              ),
-          ],
+                TextFormField(
+                  controller: voucherAmount,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: const [WonInputFormatter()],
+                  decoration: InputDecoration(
+                    labelText: l10n.voucherTopUpAmount,
+                    suffixText: l10n.won,
+                  ),
+                  validator: (value) => (parseWon(value ?? '') ?? 0) <= 0
+                      ? l10n.topUpAmountRequired
+                      : null,
+                ),
+              ],
+              if (kind == 'debit_card' || kind == 'credit_card')
+                TextFormField(
+                  controller: targetAmount,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: const [WonInputFormatter()],
+                  decoration: InputDecoration(
+                    labelText: l10n.monthlyPerformanceTarget,
+                    suffixText: l10n.won,
+                  ),
+                  validator: (value) => (parseWon(value ?? '') ?? 0) <= 0
+                      ? l10n.targetAmountRequired
+                      : null,
+                ),
+              if (widget.members.isNotEmpty)
+                DropdownButtonFormField<String>(
+                  initialValue: owner,
+                  decoration: InputDecoration(labelText: l10n.ownerOptional),
+                  items: [
+                    DropdownMenuItem(value: null, child: Text(l10n.none)),
+                    ...widget.members.map(
+                      (member) => DropdownMenuItem(
+                        value: member.id,
+                        child: Text(member.name),
+                      ),
+                    ),
+                  ],
+                  onChanged: (value) => setState(() => owner = value),
+                ),
+            ],
+          ),
         ),
       ),
       actions: [
@@ -826,10 +900,16 @@ class _PaymentMethodDialogState extends State<_PaymentMethodDialog> {
                   kind,
                   name.text.trim(),
                   owner,
-                  paidAmountWon: parseWon(paidAmount.text),
+                  paidAmountWon: voucherMode == 'purchase'
+                      ? parseWon(paidAmount.text)
+                      : 0,
                   voucherAmountWon: parseWon(voucherAmount.text),
-                  sourcePaymentMethodId: sourcePaymentMethodId,
+                  sourcePaymentMethodId: voucherMode == 'purchase'
+                      ? sourcePaymentMethodId
+                      : null,
                   targetAmountWon: parseWon(targetAmount.text),
+                  voucherMode: voucherMode,
+                  actualMemberId: actualMemberId,
                 ),
               );
             }
