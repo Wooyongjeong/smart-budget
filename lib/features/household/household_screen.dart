@@ -67,13 +67,17 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
   Future<void> acceptInvitation() async {
     if (busy) return;
     final token = tokenController.text.trim();
-    if (!isInvitationToken(token)) {
+    final parsedToken = invitationTokenFromInput(
+      token,
+      allowedWebHost: Uri.parse(widget.invitationLinkBaseUrl).host,
+    );
+    if (parsedToken == null) {
       _showError('invitation_invalid');
       return;
     }
     setState(() => busy = true);
     try {
-      final householdId = await widget.repository.acceptInvitation(token);
+      final householdId = await widget.repository.acceptInvitation(parsedToken);
       widget.onHouseholdChanged?.call(householdId);
       tokenController.clear();
       if (!mounted) return;
@@ -302,23 +306,25 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
                   ),
                 ),
               ],
-              const SizedBox(height: 28),
-              Text(
-                l10n.joinHousehold,
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                key: const ValueKey('invitation-token'),
-                controller: tokenController,
-                maxLength: 48,
-                autocorrect: false,
-                decoration: InputDecoration(labelText: l10n.invitationCode),
-              ),
-              FilledButton.tonal(
-                onPressed: busy ? null : acceptInvitation,
-                child: Text(l10n.acceptInvitation),
-              ),
+              if (!household.members.any((member) => member.isMe)) ...[
+                const SizedBox(height: 28),
+                Text(
+                  l10n.joinHousehold,
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  key: const ValueKey('invitation-token'),
+                  controller: tokenController,
+                  maxLength: 200,
+                  autocorrect: false,
+                  decoration: InputDecoration(labelText: l10n.invitationCode),
+                ),
+                FilledButton.tonal(
+                  onPressed: busy ? null : acceptInvitation,
+                  child: Text(l10n.acceptInvitation),
+                ),
+              ],
               const SizedBox(height: 36),
               const Divider(),
               TextButton(
