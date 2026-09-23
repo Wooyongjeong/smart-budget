@@ -16,6 +16,7 @@ import 'auth/config_missing_screen.dart';
 import 'features/transactions/transaction_repository.dart';
 import 'features/transactions/transaction_detail_screen.dart';
 import 'features/transactions/transaction_history_screen.dart';
+import 'features/transactions/calendar_summary.dart';
 import 'features/transactions/ai_review_screen.dart';
 import 'features/transactions/receipt_analysis.dart';
 import 'features/payment_methods/payment_methods_screen.dart';
@@ -109,6 +110,18 @@ class _CalendarOverviewState extends State<CalendarOverview> {
             .where((item) => item['occurred_on'] == _date(widget.selectedDate))
             .toList() ??
         [];
+    final summaries = groupCalendarTransactions(
+      widget.result?.items ?? const [],
+    );
+    final monthSummaries =
+        summaries.entries
+            .where(
+              (entry) =>
+                  entry.key.year == widget.selectedDate.year &&
+                  entry.key.month == widget.selectedDate.month,
+            )
+            .toList()
+          ..sort((a, b) => a.key.compareTo(b.key));
     return Column(
       children: [
         Align(
@@ -127,6 +140,65 @@ class _CalendarOverviewState extends State<CalendarOverview> {
           lastDate: DateTime(2100),
           onDateChanged: widget.onDateChanged,
         ),
+        if (monthSummaries.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Wrap(
+                spacing: 8,
+                runSpacing: 6,
+                children: monthSummaries.map((entry) {
+                  final summary = entry.value;
+                  final label = '${entry.key.day}일';
+                  return Container(
+                    key: ValueKey(
+                      'calendar-summary-${entry.key.toIso8601String()}',
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 9,
+                      vertical: 5,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.surfaceContainerHighest,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          label,
+                          style: const TextStyle(fontWeight: FontWeight.w700),
+                        ),
+                        if (summary.income > 0) ...[
+                          const SizedBox(width: 5),
+                          Text(
+                            '+${formatWon(summary.income)}',
+                            style: TextStyle(
+                              color: Colors.teal.shade700,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                        if (summary.expense > 0) ...[
+                          const SizedBox(width: 5),
+                          Text(
+                            '−${formatWon(summary.expense)}',
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.error,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+          ),
         const SizedBox(height: 8),
         if (widget.isLoading || widget.result == null)
           const Padding(

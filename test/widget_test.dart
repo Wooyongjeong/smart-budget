@@ -5,6 +5,7 @@ import 'package:smart_budget/themes.dart';
 import 'package:smart_budget/features/household/household_repository.dart';
 import 'package:smart_budget/features/household/household_screen.dart';
 import 'package:smart_budget/features/transactions/transaction_repository.dart';
+import 'package:smart_budget/features/transactions/calendar_summary.dart';
 import 'localized_test_app.dart';
 
 class _HouseholdRepository implements HouseholdRepository {
@@ -39,6 +40,17 @@ class _HouseholdRepository implements HouseholdRepository {
 }
 
 void main() {
+  test('calendar transactions are grouped by day and kind', () {
+    final result = groupCalendarTransactions([
+      {'occurred_on': '2026-09-18', 'kind': 'expense', 'amount_won': 1200},
+      {'occurred_on': '2026-09-18', 'kind': 'income', 'amount_won': 5000},
+      {'occurred_on': '2026-09-19', 'kind': 'expense', 'amount_won': 300},
+    ]);
+    expect(result[DateTime(2026, 9, 18)]?.income, 5000);
+    expect(result[DateTime(2026, 9, 18)]?.expense, 1200);
+    expect(result[DateTime(2026, 9, 19)]?.hasTransactions, isTrue);
+  });
+
   testWidgets('calendar today button selects today and resets the picker', (
     tester,
   ) async {
