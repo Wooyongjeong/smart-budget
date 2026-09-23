@@ -138,6 +138,14 @@ abstract interface class TransactionRepository {
     String name,
     String? ownerMemberId,
   );
+  Future<PaymentMethodOption> addVoucher(
+    String householdId,
+    String name,
+    String? ownerMemberId,
+    int paidAmountWon,
+    int voucherAmountWon,
+    String? sourcePaymentMethodId,
+  );
   Future<void> archivePaymentMethod(String householdId, String paymentMethodId);
   Future<void> recordVoucherEvent(
     String householdId,
@@ -281,6 +289,34 @@ class SupabaseTransactionRepository implements TransactionRepository {
       id: id as String,
       name: name.trim(),
       kind: kind,
+      ownerMemberId: ownerMemberId,
+    );
+  }
+
+  @override
+  Future<PaymentMethodOption> addVoucher(
+    String householdId,
+    String name,
+    String? ownerMemberId,
+    int paidAmountWon,
+    int voucherAmountWon,
+    String? sourcePaymentMethodId,
+  ) async {
+    final id = await client.rpc(
+      'add_voucher_with_initial_topup',
+      params: {
+        'p_household_id': householdId,
+        'p_name': name,
+        'p_owner_member_id': ownerMemberId,
+        'p_paid_amount_won': paidAmountWon,
+        'p_voucher_amount_won': voucherAmountWon,
+        'p_payment_method_id': sourcePaymentMethodId,
+      },
+    );
+    return PaymentMethodOption(
+      id: id as String,
+      name: name.trim(),
+      kind: 'voucher',
       ownerMemberId: ownerMemberId,
     );
   }

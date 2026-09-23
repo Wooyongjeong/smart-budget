@@ -1,5 +1,13 @@
 # Construction 진행
 
+## WAL01 — 상품권 등록과 초기 잔액 원자화
+
+구현 브랜치: `feat/wal01-atomic-voucher-onboarding`.
+
+상품권 결제 수단 생성과 초기 충전 이벤트를 `add_voucher_with_initial_topup` 단일 RPC로 묶었다. RPC가 가계부 잠금·구성원/소유자·출금 결제 수단·금액을 검증한 뒤 상품권 행을 만들고 기존 `record_voucher_event`를 같은 트랜잭션 안에서 호출하므로, 한 단계라도 실패하면 상품권과 잔액 이벤트가 함께 롤백된다. 앱의 상품권 등록 dialog는 실제 결제 금액, 상품권 금액, 초기 결제 수단을 수집하고 repository의 단일 메서드만 호출한다.
+
+검증: 상품권 원자 등록 위젯 테스트, 기존 상품권 사용/잔액 테스트, `flutter analyze`, `git diff --check` 통과. `supabase/tests/t12_vouchers_refunds.sql`에 신규 RPC 존재 회귀를 추가했다. 로컬/원격 PostgreSQL에서 실제 rollback 시나리오와 migration 적용은 Supabase CLI가 제공되는 환경에서 추가 실행해야 한다.
+
 ## DB01 — 직접 입력 재시도 request ID 보존
 
 구현 브랜치: `feat/db01-save-retry-request-id`.
