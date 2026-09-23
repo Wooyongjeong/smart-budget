@@ -3,6 +3,17 @@ const invitationTokenLength = 48;
 bool isInvitationToken(String value) =>
     RegExp(r'^[0-9a-f]{48}$').hasMatch(value);
 
+String? invitationTokenFromInput(
+  String value, {
+  required String allowedWebHost,
+}) {
+  final input = value.trim();
+  if (isInvitationToken(input)) return input;
+  final uri = Uri.tryParse(input);
+  if (uri == null) return null;
+  return invitationTokenFromUri(uri, allowedWebHost: allowedWebHost);
+}
+
 String? invitationTokenFromUri(Uri uri, {required String allowedWebHost}) {
   final isSupportedScheme = uri.scheme == 'smartbudget';
   final isSupportedWebLink =
