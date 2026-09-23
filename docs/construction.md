@@ -8,6 +8,14 @@
 
 검증: 화면별 새로고침 성공/실패·선택 조건 유지 위젯 테스트, 전체 `flutter test`, `flutter analyze`, `git diff --check`, macOS debug build. 실 Supabase 계정 2개 간 변경 반영은 SYNC02 범위이며 별도 실기기 확인이 남아 있다.
 
+## SYNC02 — 앱 재개 시 공동 데이터 동기화
+
+구현 브랜치: `feat/household-realtime-sync`.
+
+Supabase Realtime 대신 앱이 백그라운드에서 돌아올 때 활성 화면의 기존 repository 새로고침 경로를 호출한다. `resumed` 이벤트를 400ms debounce하고 알림/인증 복귀 중 연속 lifecycle 이벤트가 중복 조회를 만들지 않도록 한다. 캘린더·내역·결제 수단·공동 가계부 화면이 공유하는 수명 범위 내 신호를 구독하고, 위젯 dispose 또는 신호 교체 시 listener를 해제한다. 기존 선택 기간/필터를 유지한다. 로그아웃하면 BudgetApp과 notifier가 dispose되어 이전 세션의 화면 listener가 해제된다.
+
+검증: 가짜 refresh signal이 내역 재조회로 이어지는 위젯 테스트, 전체 `flutter test`, `flutter analyze`, `git diff --check`, macOS debug build. 두 계정 간 즉시 반영은 아니며, 다른 구성원의 변경은 앱 복귀 시점에 반영된다. 실기기 백그라운드/복귀 및 실제 두 세션 검증은 미실행이다.
+
 ## L10N01 — 사용자 노출 문구 현지화
 
 브랜치: `fix/complete-localization`.

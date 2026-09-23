@@ -608,7 +608,7 @@ class BudgetApp extends StatefulWidget {
   State<BudgetApp> createState() => _BudgetAppState();
 }
 
-class _BudgetAppState extends State<BudgetApp> {
+class _BudgetAppState extends State<BudgetApp> with WidgetsBindingObserver {
   late BudgetPalette palette = palettes.firstWhere(
     (p) => p.id == widget.initialTheme,
     orElse: () => palettes.first,
@@ -620,6 +620,8 @@ class _BudgetAppState extends State<BudgetApp> {
   bool refreshingOverview = false;
   bool overviewRefreshFailed = false;
   TransactionQueryResult? currentOverviewResult;
+  final ValueNotifier<int> refreshSignal = ValueNotifier(0);
+  Timer? resumeRefreshTimer;
   bool openingEntry = false;
   String displayName = '나';
   DateTime selectedDate = DateTime.now();
@@ -630,7 +632,27 @@ class _BudgetAppState extends State<BudgetApp> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _loadDisplayName();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed) return;
+    resumeRefreshTimer?.cancel();
+    resumeRefreshTimer = Timer(const Duration(milliseconds: 400), () {
+      if (!mounted) return;
+      refreshSignal.value++;
+      if (tab == 0) refreshOverview();
+    });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    resumeRefreshTimer?.cancel();
+    refreshSignal.dispose();
+    super.dispose();
   }
 
   Future<void> _loadDisplayName() async {
@@ -879,8 +901,11 @@ class _BudgetAppState extends State<BudgetApp> {
       if (!context.mounted) return;
       await Navigator.of(context).push(
         MaterialPageRoute<void>(
-          builder: (_) =>
-              PaymentMethodsScreen(repository: repository, contextData: data),
+          builder: (_) => PaymentMethodsScreen(
+            repository: repository,
+            contextData: data,
+            refreshSignal: refreshSignal,
+          ),
         ),
       );
     } catch (_) {
@@ -899,6 +924,7 @@ class _BudgetAppState extends State<BudgetApp> {
       MaterialPageRoute<void>(
         builder: (_) => HouseholdScreen(
           repository: repository,
+          refreshSignal: refreshSignal,
           invitationLinkBaseUrl: widget.invitationLinkBaseUrl,
           onHouseholdChanged: (householdId) {
             widget.onHouseholdChanged?.call(householdId);
@@ -1117,6 +1143,7 @@ class _BudgetAppState extends State<BudgetApp> {
                       repository: widget.transactionRepository!,
                       contextData: snapshot.data!,
                       embedded: true,
+                      refreshSignal: refreshSignal,
                     );
                   },
                 )
@@ -1196,6 +1223,7 @@ class _BudgetAppState extends State<BudgetApp> {
                           repository: widget.transactionRepository!,
                           initialDate: selectedDate,
                           onTransactionTap: openTransaction,
+                          refreshSignal: refreshSignal,
                         )
                       else if (widget.transactionRepository == null)
                         Card(

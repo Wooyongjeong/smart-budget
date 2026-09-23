@@ -179,6 +179,32 @@ void main() {
     expect(find.text('편의점'), findsOneWidget);
   });
 
+  testWidgets('app resume signal reloads history without losing filters', (
+    tester,
+  ) async {
+    final repository = _Repository();
+    final signal = ValueNotifier(0);
+    addTearDown(signal.dispose);
+    await tester.pumpWidget(
+      localizedTestApp(
+        home: Scaffold(
+          body: TransactionHistoryScreen(
+            repository: repository,
+            initialDate: DateTime(2026, 9, 22),
+            onTransactionTap: (_) {},
+            refreshSignal: signal,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    final queryCount = repository.calls.length;
+    signal.value++;
+    await tester.pumpAndSettle();
+    expect(repository.calls.length, queryCount + 1);
+    expect(repository.calls.last.start, DateTime(2026, 9, 1));
+  });
+
   testWidgets(
     'manual refresh keeps the selected period and old rows on error',
     (tester) async {
