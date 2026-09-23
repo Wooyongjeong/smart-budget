@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:smart_budget/features/payment_methods/payment_methods_screen.dart';
+import 'package:smart_budget/business_date.dart';
 import 'package:smart_budget/features/transactions/transaction_draft.dart';
 import 'package:smart_budget/features/transactions/transaction_repository.dart';
 import 'localized_test_app.dart';
@@ -10,6 +11,7 @@ class _Repository implements TransactionRepository {
   int target = 0;
   int voucherAmount = 0;
   DateTime? lastPerformanceMonth;
+  DateTime? lastVoucherDate;
   DateTime? lastTargetMonth;
   bool failNextPerformance = false;
   bool failNextContext = false;
@@ -60,8 +62,10 @@ class _Repository implements TransactionRepository {
     String k,
     String v,
     int p,
-    int a,
-  ) async {
+    int a, {
+    DateTime? occurredOn,
+  }) async {
+    lastVoucherDate = occurredOn;
     voucherAmount += k == 'voucher_use' ? -a : a;
   }
 
@@ -163,6 +167,26 @@ class _Repository implements TransactionRepository {
 }
 
 void main() {
+  testWidgets('wallet card month uses the shared business calendar', (
+    tester,
+  ) async {
+    final repository = _Repository();
+    await tester.pumpWidget(
+      localizedTestApp(
+        home: PaymentMethodsScreen(
+          repository: repository,
+          contextData: await repository.loadContext(),
+          businessDateProvider: BusinessDateProvider(
+            utcNow: () => DateTime.utc(2026, 12, 31, 15),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(repository.lastPerformanceMonth, DateTime(2027, 1));
+  });
+
   testWidgets('English locale translates the wallet management screen', (
     tester,
   ) async {
@@ -278,6 +302,9 @@ void main() {
         home: PaymentMethodsScreen(
           repository: repository,
           contextData: await repository.loadContext(),
+          businessDateProvider: BusinessDateProvider(
+            utcNow: () => DateTime.utc(2026, 12, 31, 15),
+          ),
         ),
       ),
     );
@@ -381,6 +408,9 @@ void main() {
         home: PaymentMethodsScreen(
           repository: repository,
           contextData: await repository.loadContext(),
+          businessDateProvider: BusinessDateProvider(
+            utcNow: () => DateTime.utc(2026, 12, 31, 15),
+          ),
         ),
       ),
     );
@@ -394,5 +424,6 @@ void main() {
     await tester.tap(find.text('확인'));
     await tester.pumpAndSettle();
     expect(find.textContaining('잔액 80,000원'), findsOneWidget);
+    expect(repository.lastVoucherDate, DateTime(2027, 1, 1));
   });
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../business_date.dart';
 
 @immutable
 class CalendarDaySummary {
@@ -16,11 +17,13 @@ class CalendarMonthPicker extends StatefulWidget {
     required this.selectedDate,
     required this.summaries,
     required this.onDateChanged,
+    this.businessDateProvider = const BusinessDateProvider(),
   });
 
   final DateTime selectedDate;
   final Map<DateTime, CalendarDaySummary> summaries;
   final ValueChanged<DateTime> onDateChanged;
+  final BusinessDateProvider businessDateProvider;
 
   @override
   State<CalendarMonthPicker> createState() => _CalendarMonthPickerState();
@@ -57,7 +60,7 @@ class _CalendarMonthPickerState extends State<CalendarMonthPicker> {
     final localizations = MaterialLocalizations.of(context);
     final first = DateTime(displayedMonth.year, displayedMonth.month);
     final gridStart = first.subtract(Duration(days: first.weekday % 7));
-    final today = DateUtils.dateOnly(DateTime.now());
+    final today = widget.businessDateProvider.today;
     final weekdays = localizations.narrowWeekdays;
     return Column(
       children: [

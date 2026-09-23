@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'business_date.dart';
 import 'features/transactions/transaction_draft.dart';
 import 'features/transactions/transaction_repository.dart';
 import 'money_input.dart';
@@ -10,6 +11,7 @@ class EntryForm extends StatefulWidget {
     super.key,
     this.initialDraft,
     this.initialDate,
+    this.businessDateProvider = const BusinessDateProvider(),
     this.paymentMethods = const [],
     this.members = const [],
     this.onConfirm,
@@ -17,6 +19,7 @@ class EntryForm extends StatefulWidget {
   });
   final TransactionDraft? initialDraft;
   final DateTime? initialDate;
+  final BusinessDateProvider businessDateProvider;
   final List<PaymentMethodOption> paymentMethods;
   final List<MemberOption> members;
   final Future<void> Function(TransactionDraft draft)? onConfirm;
@@ -33,7 +36,9 @@ class _EntryFormState extends State<EntryForm> {
   final memo = TextEditingController();
   late final date = TextEditingController(
     text: DateFormat('yyyy-MM-dd').format(
-      widget.initialDraft?.occurredOn ?? widget.initialDate ?? DateTime.now(),
+      widget.initialDraft?.occurredOn ??
+          widget.initialDate ??
+          widget.businessDateProvider.today,
     ),
   );
   late bool income = widget.initialDraft?.kind == TransactionKind.income;
@@ -140,11 +145,14 @@ class _EntryFormState extends State<EntryForm> {
     try {
       initialDate = DateFormat('yyyy-MM-dd').parseStrict(date.text.trim());
     } catch (_) {
-      initialDate = DateTime.now();
+      initialDate = widget.businessDateProvider.today;
     }
     final selected = await showDialog<DateTime>(
       context: context,
-      builder: (context) => _DatePickerWithToday(initialDate: initialDate),
+      builder: (context) => _DatePickerWithToday(
+        initialDate: initialDate,
+        businessDateProvider: widget.businessDateProvider,
+      ),
     );
     if (selected == null || !mounted) return;
     setState(() {
@@ -507,9 +515,13 @@ class _EntryFormState extends State<EntryForm> {
 }
 
 class _DatePickerWithToday extends StatefulWidget {
-  const _DatePickerWithToday({required this.initialDate});
+  const _DatePickerWithToday({
+    required this.initialDate,
+    required this.businessDateProvider,
+  });
 
   final DateTime initialDate;
+  final BusinessDateProvider businessDateProvider;
 
   @override
   State<_DatePickerWithToday> createState() => _DatePickerWithTodayState();
@@ -533,7 +545,7 @@ class _DatePickerWithTodayState extends State<_DatePickerWithToday>
 
   Future<void> moveToToday() async {
     if (movingToToday) return;
-    final today = DateUtils.dateOnly(DateTime.now());
+    final today = widget.businessDateProvider.today;
     if (MediaQuery.disableAnimationsOf(context)) {
       setState(() {
         selectedDate = today;
@@ -595,7 +607,7 @@ class _DatePickerWithTodayState extends State<_DatePickerWithToday>
             child: CalendarDatePicker(
               key: ValueKey((selectedDate, calendarRevision)),
               initialDate: selectedDate,
-              currentDate: DateTime.now(),
+              currentDate: widget.businessDateProvider.today,
               firstDate: DateTime(2000),
               lastDate: DateTime(2100),
               onDisplayedMonthChanged: (value) {

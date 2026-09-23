@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/intl.dart';
 import 'package:smart_budget/main.dart';
 import 'package:smart_budget/entry_form.dart';
+import 'package:smart_budget/business_date.dart';
 import 'package:smart_budget/features/transactions/calendar_summary.dart';
 import 'package:smart_budget/features/transactions/transaction_draft.dart';
 import 'package:smart_budget/features/transactions/transaction_repository.dart';
@@ -92,8 +93,14 @@ class _Repository implements TransactionRepository {
   @override
   Future<int> voucherBalance(String h, String v) => throw UnimplementedError();
   @override
-  Future<void> recordVoucherEvent(String h, String k, String v, int p, int a) =>
-      throw UnimplementedError();
+  Future<void> recordVoucherEvent(
+    String h,
+    String k,
+    String v,
+    int p,
+    int a, {
+    DateTime? occurredOn,
+  }) => throw UnimplementedError();
 }
 
 Future<void> openForm(WidgetTester tester) async {
@@ -134,6 +141,26 @@ Future<void> preview(WidgetTester tester) async {
 }
 
 void main() {
+  testWidgets('new entry defaults to the Seoul business date', (tester) async {
+    await tester.pumpWidget(
+      localizedTestApp(
+        home: EntryForm(
+          businessDateProvider: BusinessDateProvider(
+            utcNow: () => DateTime.utc(2026, 12, 31, 15),
+          ),
+        ),
+      ),
+    );
+
+    expect(
+      tester
+          .widget<TextFormField>(find.byKey(const Key('date')))
+          .controller!
+          .text,
+      '2027-01-01',
+    );
+  });
+
   testWidgets('income accepts only cash and bank payment methods', (
     tester,
   ) async {

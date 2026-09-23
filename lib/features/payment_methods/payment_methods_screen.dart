@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 
 import '../transactions/transaction_repository.dart';
 import '../../money_input.dart';
+import '../../business_date.dart';
 import '../../l10n/generated/app_localizations.dart';
 
 class PaymentMethodsScreen extends StatefulWidget {
@@ -13,6 +14,7 @@ class PaymentMethodsScreen extends StatefulWidget {
     this.onReturnToEntry,
     this.embedded = false,
     this.refreshSignal,
+    this.businessDateProvider = const BusinessDateProvider(),
   });
 
   final TransactionRepository repository;
@@ -20,6 +22,7 @@ class PaymentMethodsScreen extends StatefulWidget {
   final VoidCallback? onReturnToEntry;
   final bool embedded;
   final ValueListenable<int>? refreshSignal;
+  final BusinessDateProvider businessDateProvider;
 
   @override
   State<PaymentMethodsScreen> createState() => _PaymentMethodsScreenState();
@@ -31,7 +34,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
     ...widget.contextData.paymentMethods,
   ];
   late Future<List<Map<String, dynamic>>> cardSummary = _loadCardSummary();
-  DateTime summaryMonth = DateTime(DateTime.now().year, DateTime.now().month);
+  late DateTime summaryMonth = widget.businessDateProvider.currentMonth;
   bool saving = false;
   bool refreshing = false;
   bool refreshFailed = false;
@@ -72,9 +75,9 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
   }
 
   void _resetSummaryMonth() {
-    final now = DateTime.now();
+    final now = widget.businessDateProvider.currentMonth;
     setState(() {
-      summaryMonth = DateTime(now.year, now.month);
+      summaryMonth = now;
       cardSummary = _loadCardSummary();
     });
   }
@@ -305,6 +308,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
         method.id,
         amounts[0],
         amounts[1],
+        occurredOn: widget.businessDateProvider.today,
       );
       if (mounted) {
         setState(() {});
