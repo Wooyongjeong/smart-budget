@@ -278,8 +278,38 @@ class _AiReviewScreenState extends State<AiReviewScreen> {
         );
       }
     } finally {
-      if (mounted) setState(() => analyzing = false);
+      if (mounted) {
+        setState(() => analyzing = false);
+      }
     }
+  }
+
+  List<String> _errors(ReceiptFixtureItem item, AppLocalizations l10n) {
+    if (!item.selected) return const [];
+    final errors = <String>[];
+    final date = _parseAnalysisDate(item.date.text.trim());
+    if (date == null || date.year < 2000 || date.year > 2100) {
+      errors.add(l10n.receiptDateMissing);
+    }
+    final amount = parseWon(item.amount.text);
+    if (amount == null || amount <= 0) {
+      errors.add(l10n.receiptAmountMissing);
+    }
+    if (item.merchant.text.trim().isEmpty) {
+      errors.add(l10n.receiptMerchantMissing);
+    }
+    if (item.category == null) {
+      errors.add(l10n.receiptCategoryMissing);
+    }
+    if (widget.contextData.paymentMethods.isNotEmpty &&
+        item.paymentMethodId == null) {
+      errors.add(l10n.receiptPaymentMethodMissing);
+    }
+    if (widget.contextData.members.isNotEmpty && item.memberId == null) {
+      errors.add(l10n.receiptMemberMissing);
+    }
+    if (item.suggestedType != 'expense') errors.add(item.reason);
+    return errors;
   }
 
   Future<void> save() async {
@@ -365,27 +395,27 @@ class _AiReviewScreenState extends State<AiReviewScreen> {
                 ),
                 child: Center(
                   child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(
-                      Icons.document_scanner_rounded,
-                      color: Colors.white,
-                      size: 34,
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      fileName ?? '분석한 이용내역',
-                      style: const TextStyle(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.document_scanner_rounded,
                         color: Colors.white,
-                        fontWeight: FontWeight.w700,
+                        size: 34,
                       ),
-                    ),
-                    const SizedBox(height: 4),
-                    const Text(
-                      '탭하여 원본 확대',
-                      style: TextStyle(color: Colors.white60, fontSize: 13),
-                    ),
-                  ],
+                      const SizedBox(height: 12),
+                      Text(
+                        fileName ?? '분석한 이용내역',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      const Text(
+                        '탭하여 원본 확대',
+                        style: TextStyle(color: Colors.white60, fontSize: 13),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -418,6 +448,16 @@ class _AiReviewScreenState extends State<AiReviewScreen> {
             const Padding(
               padding: EdgeInsets.all(48),
               child: Center(child: CircularProgressIndicator()),
+            ),
+          if (items.any((item) => _errors(item, l10n).isNotEmpty))
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Text(
+                l10n.receiptRemainingErrors(
+                  items.where((item) => _errors(item, l10n).isNotEmpty).length,
+                ),
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
             ),
           ...items.map(
             (item) => Card(
@@ -488,6 +528,28 @@ class _AiReviewScreenState extends State<AiReviewScreen> {
                                 item.paymentMethodId = value;
                                 _markEdited();
                               },
+                      ),
+                    if (_errors(item, l10n).isNotEmpty)
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: _errors(item, l10n)
+                                .map(
+                                  (error) => Text(
+                                    error,
+                                    style: TextStyle(
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.error,
+                                    ),
+                                  ),
+                                )
+                                .toList(),
+                          ),
+                        ),
                       ),
                     if (widget.contextData.members.isNotEmpty)
                       DropdownButtonFormField<String>(
