@@ -575,6 +575,7 @@ class _AuthRootState extends State<AuthRoot> {
   Widget _invitationOnboarding() => InvitationOnboardingScreen(
     repository: householdRepository,
     initialToken: pendingInvitationToken,
+    invitationLinkBaseUrl: widget.config.invitationLinkBaseUrl,
     onAccepted: transactionRepository.useHousehold,
     onComplete: finishInvitation,
   );
@@ -783,7 +784,9 @@ class _BudgetAppState extends State<BudgetApp> {
                       messenger.currentState?.showSnackBar(
                         SnackBar(
                           content: Text(
-                            _l10n.transactionSaveFailedCode(error.code),
+                            error.code == 'idempotency_conflict'
+                                ? _l10n.transactionIdempotencyConflict
+                                : _l10n.transactionSaveFailedCode(error.code),
                           ),
                         ),
                       );

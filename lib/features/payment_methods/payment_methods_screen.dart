@@ -376,6 +376,30 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
         FutureBuilder<List<Map<String, dynamic>>>(
           future: cardSummary,
           builder: (context, snapshot) {
+            if (snapshot.hasError) {
+              return Card(
+                margin: const EdgeInsets.only(bottom: 20),
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    children: [
+                      Text(l10n.performanceLoadFailed),
+                      TextButton.icon(
+                        onPressed: refreshCardSummary,
+                        icon: const Icon(Icons.refresh_rounded),
+                        label: Text(l10n.retry),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }
+            if (!snapshot.hasData) {
+              return const Padding(
+                padding: EdgeInsets.all(24),
+                child: Center(child: CircularProgressIndicator(value: 0.35)),
+              );
+            }
             final rows = snapshot.data ?? const <Map<String, dynamic>>[];
             final actual = rows.fold<int>(
               0,

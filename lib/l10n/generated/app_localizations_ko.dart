@@ -531,6 +531,10 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
+  String get transactionIdempotencyConflict =>
+      '이전 저장 요청과 입력 내용이 달라 저장하지 못했어요. 내용을 다시 확인해 주세요.';
+
+  @override
   String get receiptSaveFailed => '선택 항목을 저장하지 못했어요. 값을 확인하고 다시 시도해 주세요.';
 
   @override

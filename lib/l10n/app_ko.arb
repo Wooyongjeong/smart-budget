@@ -169,6 +169,7 @@
   "backToEntry": "거래 입력으로 돌아가기",
   "paymentLoadFailed": "결제 수단을 불러오지 못했어요. 다시 시도해 주세요.",
   "transactionSaveFailedCode": "거래를 저장하지 못했어요. ({code})",
+  "transactionIdempotencyConflict": "이전 저장 요청과 입력 내용이 달라 저장하지 못했어요. 내용을 다시 확인해 주세요.",
   "@transactionSaveFailedCode": {"placeholders": {"code": {"type": "String"}}},
   "receiptSaveFailed": "선택 항목을 저장하지 못했어요. 값을 확인하고 다시 시도해 주세요.",
   "receiptAnalyzing": "분석 중…",

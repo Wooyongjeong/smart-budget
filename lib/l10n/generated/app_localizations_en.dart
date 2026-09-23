@@ -542,6 +542,10 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get transactionIdempotencyConflict =>
+      'This retry differs from the original save request. Review the entry and try again.';
+
+  @override
   String get receiptSaveFailed =>
       'Couldn\'t save the selected items. Check the values and try again.';
 

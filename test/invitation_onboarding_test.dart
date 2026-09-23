@@ -77,6 +77,18 @@ void main() {
     expect(completed, isTrue);
   });
 
+  testWidgets('accepts a pasted full invitation link', (tester) async {
+    final repository = _Repository();
+    await tester.pumpWidget(_app(repository, () {}));
+    await tester.enterText(
+      find.byKey(const ValueKey('onboarding-invitation-token')),
+      'https://smart-budget.app/invite/${'c' * 48}',
+    );
+    await tester.tap(find.text('공동 가계부 참여'));
+    await tester.pumpAndSettle();
+    expect(repository.accepted, 'c' * 48);
+  });
+
   testWidgets('updates the field when a warm invitation link arrives', (
     tester,
   ) async {

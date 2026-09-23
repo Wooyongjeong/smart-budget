@@ -24,15 +24,17 @@ Map<DateTime, CalendarDaySummary> groupCalendarTransactions(
     final day = DateTime(parsed.year, parsed.month, parsed.day);
     final previous = grouped[day] ?? const CalendarDaySummary();
     final amount = rawAmount.toInt();
-    grouped[day] = item['kind'] == 'income'
-        ? CalendarDaySummary(
-            income: previous.income + amount,
-            expense: previous.expense,
-          )
-        : CalendarDaySummary(
-            income: previous.income,
-            expense: previous.expense + amount,
-          );
+    if (item['kind'] == 'income') {
+      grouped[day] = CalendarDaySummary(
+        income: previous.income + amount,
+        expense: previous.expense,
+      );
+    } else if (item['kind'] == 'expense') {
+      grouped[day] = CalendarDaySummary(
+        income: previous.income,
+        expense: previous.expense + amount,
+      );
+    }
   }
   return grouped;
 }

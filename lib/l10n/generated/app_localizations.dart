@@ -1100,6 +1100,12 @@ abstract class AppLocalizations {
   /// **'거래를 저장하지 못했어요. ({code})'**
   String transactionSaveFailedCode(String code);
 
+  /// No description provided for @transactionIdempotencyConflict.
+  ///
+  /// In ko, this message translates to:
+  /// **'이전 저장 요청과 입력 내용이 달라 저장하지 못했어요. 내용을 다시 확인해 주세요.'**
+  String get transactionIdempotencyConflict;
+
   /// No description provided for @receiptSaveFailed.
   ///
   /// In ko, this message translates to:

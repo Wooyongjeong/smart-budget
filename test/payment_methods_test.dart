@@ -11,6 +11,7 @@ class _Repository implements TransactionRepository {
   int voucherAmount = 0;
   DateTime? lastPerformanceMonth;
   DateTime? lastTargetMonth;
+  bool failNextPerformance = false;
 
   @override
   Future<HouseholdContext> loadContext() async => HouseholdContext(
@@ -56,6 +57,10 @@ class _Repository implements TransactionRepository {
     DateTime m,
   ) async {
     lastPerformanceMonth = m;
+    if (failNextPerformance) {
+      failNextPerformance = false;
+      throw Exception('network');
+    }
     return methods
         .where(
           (method) =>
@@ -240,6 +245,28 @@ void main() {
     );
     expect(find.textContaining('목표 300,000원'), findsOneWidget);
   });
+
+  testWidgets(
+    'card summary error retries without changing the selected month',
+    (tester) async {
+      final repository = _Repository()..failNextPerformance = true;
+      await tester.pumpWidget(
+        localizedTestApp(
+          home: PaymentMethodsScreen(
+            repository: repository,
+            contextData: await repository.loadContext(),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final failedMonth = repository.lastPerformanceMonth;
+      expect(find.text('실적을 불러오지 못했어요.'), findsOneWidget);
+      await tester.tap(find.text('다시 시도').first);
+      await tester.pumpAndSettle();
+      expect(repository.lastPerformanceMonth, failedMonth);
+      expect(find.text('실적을 불러오지 못했어요.'), findsNothing);
+    },
+  );
 
   testWidgets('refreshes a voucher balance after use', (tester) async {
     final repository = _Repository()..voucherAmount = 100000;

@@ -160,6 +160,7 @@
   "backToEntry": "Back to transaction entry",
   "paymentLoadFailed": "Couldn't load payment methods. Try again.",
   "transactionSaveFailedCode": "Couldn't save the transaction. ({code})",
+  "transactionIdempotencyConflict": "This retry differs from the original save request. Review the entry and try again.",
   "receiptSaveFailed": "Couldn't save the selected items. Check the values and try again.",
   "receiptAnalyzing": "Analyzing…",
   "receiptChooseImage": "Choose statement image",
