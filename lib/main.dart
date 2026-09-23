@@ -9,7 +9,6 @@ import 'l10n/generated/app_localizations.dart';
 import 'business_date.dart';
 import 'themes.dart';
 import 'entry_form.dart';
-import 'money_input.dart';
 import 'auth/auth_config.dart';
 import 'auth/auth_screen.dart';
 import 'auth/auth_service.dart';
@@ -20,8 +19,6 @@ import 'features/transactions/transaction_detail_screen.dart';
 import 'features/transactions/transaction_history_screen.dart';
 import 'features/calendar/calendar_overview.dart';
 import 'features/transactions/monthly_summary_card.dart';
-import 'features/transactions/query_error_state.dart';
-import 'features/transactions/transaction_display.dart';
 import 'features/transactions/ai_review_screen.dart';
 import 'features/transactions/receipt_analysis.dart';
 import 'features/payment_methods/payment_methods_screen.dart';
@@ -32,6 +29,8 @@ import 'features/household/invitation_onboarding_screen.dart';
 import 'features/household/nickname_onboarding_screen.dart';
 import 'features/settings/settings_screen.dart';
 import 'features/shared/app_page_header.dart';
+
+export 'features/calendar/calendar_overview.dart' show CalendarOverview;
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -297,6 +296,7 @@ class _BudgetAppState extends State<BudgetApp> with WidgetsBindingObserver {
   String displayName = '나';
   late DateTime selectedDate = widget.businessDateProvider.today;
   late Future<TransactionQueryResult>? overview = _loadOverview(selectedDate);
+  Future<HouseholdContext>? walletContext;
   final messenger = GlobalKey<ScaffoldMessengerState>();
   AppLocalizations get _l10n => lookupAppLocalizations(locale);
 
@@ -314,6 +314,7 @@ class _BudgetAppState extends State<BudgetApp> with WidgetsBindingObserver {
     resumeRefreshTimer = Timer(const Duration(milliseconds: 400), () {
       if (!mounted) return;
       refreshSignal.value++;
+      _loadDisplayName();
       if (tab == 0) refreshOverview();
     });
   }
@@ -343,17 +344,11 @@ class _BudgetAppState extends State<BudgetApp> with WidgetsBindingObserver {
     return () async {
       final month = anchor ?? selectedDate;
       final context = await repository.loadContext();
-      final result = await repository.query(
+      return repository.query(
         context.householdId,
         DateTime(month.year, month.month),
         DateTime(month.year, month.month + 1),
       );
-      if (mounted &&
-          selectedDate.year == month.year &&
-          selectedDate.month == month.month) {
-        currentOverviewResult = result;
-      }
-      return result;
     }();
   }
 
@@ -602,6 +597,7 @@ class _BudgetAppState extends State<BudgetApp> with WidgetsBindingObserver {
           invitationLinkBaseUrl: widget.invitationLinkBaseUrl,
           onHouseholdChanged: (householdId) {
             widget.onHouseholdChanged?.call(householdId);
+            walletContext = null;
             refreshOverview();
           },
           onDisplayNameChanged: (value) {
@@ -800,12 +796,15 @@ class _BudgetAppState extends State<BudgetApp> with WidgetsBindingObserver {
         body: SafeArea(
           child: tab == 2 && widget.transactionRepository != null
               ? FutureBuilder<HouseholdContext>(
-                  future: widget.transactionRepository!.loadContext(),
+                  future: walletContext ??= widget.transactionRepository!
+                      .loadContext(),
                   builder: (context, snapshot) {
                     if (snapshot.hasError) {
                       return Center(
                         child: TextButton(
-                          onPressed: () => setState(() {}),
+                          onPressed: () => setState(() {
+                            walletContext = null;
+                          }),
                           child: Text(l10n.walletLoadFailedRetry),
                         ),
                       );
@@ -874,15 +873,6 @@ class _BudgetAppState extends State<BudgetApp> with WidgetsBindingObserver {
                         },
                       ),
                     if (tab < 2) const SizedBox(height: 24),
-                    if (tab == 2 && widget.transactionRepository != null)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 16),
-                        child: FilledButton.icon(
-                          onPressed: () => openPaymentMethods(context),
-                          icon: const Icon(Icons.manage_accounts_outlined),
-                          label: Text(l10n.paymentMethodsManage),
-                        ),
-                      ),
                     if (tab == 0 && widget.transactionRepository != null)
                       FutureBuilder<TransactionQueryResult>(
                         future: overview,
@@ -933,89 +923,6 @@ class _BudgetAppState extends State<BudgetApp> with WidgetsBindingObserver {
                             ],
                           ),
                         ),
-                      )
-                    else if (tab == 0)
-                      FutureBuilder<TransactionQueryResult>(
-                        future: overview,
-                        builder: (context, snapshot) {
-                          if (snapshot.hasError) {
-                            return QueryErrorState(
-                              message: l10n.loadHistoryFailed,
-                              onRetry: refreshOverview,
-                            );
-                          }
-                          if (!snapshot.hasData) {
-                            return const Center(
-                              child: Padding(
-                                padding: EdgeInsets.all(24),
-                                child: CircularProgressIndicator(),
-                              ),
-                            );
-                          }
-                          final result = snapshot.data!;
-                          if (tab == 0) return const SizedBox.shrink();
-                          return Card(
-                            child: Padding(
-                              padding: const EdgeInsets.all(24),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    l10n.monthIncome(
-                                      formatWon(result.totalIncome),
-                                    ),
-                                  ),
-                                  Text(
-                                    l10n.monthExpense(
-                                      formatWon(result.totalExpense),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 12),
-                                  if (result.items.isEmpty)
-                                    Text(l10n.noTransactions)
-                                  else
-                                    ...result.items
-                                        .take(10)
-                                        .map(
-                                          (item) => ListTile(
-                                            contentPadding: EdgeInsets.zero,
-                                            leading: CircleAvatar(
-                                              backgroundColor: palette.primary
-                                                  .withValues(alpha: 0.09),
-                                              foregroundColor: palette.primary,
-                                              child: const Icon(
-                                                Icons.receipt_long_rounded,
-                                                size: 19,
-                                              ),
-                                            ),
-                                            title: Text(
-                                              localizedMerchantName(
-                                                l10n,
-                                                item['merchant'] as String,
-                                              ),
-                                              style: const TextStyle(
-                                                fontWeight: FontWeight.w700,
-                                              ),
-                                            ),
-                                            subtitle: Text(
-                                              item['occurred_on'] as String,
-                                            ),
-                                            trailing: Text(
-                                              l10n.formattedAmount(
-                                                formatWon(
-                                                  (item['amount_won'] as num)
-                                                      .toInt(),
-                                                ),
-                                              ),
-                                            ),
-                                            onTap: () => openTransaction(item),
-                                          ),
-                                        ),
-                                ],
-                              ),
-                            ),
-                          );
-                        },
                       ),
                   ],
                 ),

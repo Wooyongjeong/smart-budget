@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:smart_budget/main.dart';
-import 'package:smart_budget/features/calendar/calendar_overview.dart';
+import 'package:smart_budget/business_date.dart';
 import 'package:smart_budget/themes.dart';
 import 'package:smart_budget/features/household/household_repository.dart';
 import 'package:smart_budget/features/household/household_screen.dart';
@@ -38,6 +38,39 @@ class _HouseholdRepository implements HouseholdRepository {
 
   @override
   Future<void> leave(String householdId) async {}
+}
+
+class _WalletRepository extends Fake implements TransactionRepository {
+  int contextLoads = 0;
+
+  @override
+  Future<HouseholdContext> loadContext() async {
+    contextLoads++;
+    return const HouseholdContext(
+      householdId: 'household',
+      paymentMethods: [],
+      members: [],
+    );
+  }
+
+  @override
+  Future<TransactionQueryResult> query(
+    String householdId,
+    DateTime start,
+    DateTime end, {
+    String? memberId,
+    String? paymentMethodId,
+    String? category,
+    TransactionQueryCursor? cursor,
+    int limit = 50,
+  }) async =>
+      const TransactionQueryResult(items: [], totalIncome: 0, totalExpense: 0);
+
+  @override
+  Future<List<Map<String, dynamic>>> cardPerformance(
+    String householdId,
+    DateTime month,
+  ) async => [];
 }
 
 void main() {
@@ -188,6 +221,61 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('우'), findsNothing);
+  });
+
+  testWidgets('resuming the app reloads the displayed profile name', (
+    tester,
+  ) async {
+    final repository = _HouseholdRepository('민지');
+    await tester.pumpWidget(
+      BudgetApp(saveTheme: (_) async {}, householdRepository: repository),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('민'), findsOneWidget);
+
+    repository.displayName = '수진';
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pump(const Duration(milliseconds: 450));
+    await tester.pump();
+
+    expect(find.text('수'), findsOneWidget);
+  });
+
+  testWidgets('profile reload keeps the selected wallet month', (tester) async {
+    final householdRepository = _HouseholdRepository('민지');
+    final transactionRepository = _WalletRepository();
+    await tester.pumpWidget(
+      BudgetApp(
+        saveTheme: (_) async {},
+        householdRepository: householdRepository,
+        transactionRepository: transactionRepository,
+        businessDateProvider: BusinessDateProvider(
+          utcNow: () => DateTime.utc(2026, 9, 23),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('지갑'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('wallet-previous-month')));
+    await tester.pumpAndSettle();
+    final selectedMonth = tester
+        .widget<Text>(find.byKey(const ValueKey('wallet-summary-month')))
+        .data;
+    final contextLoads = transactionRepository.contextLoads;
+
+    householdRepository.displayName = '수진';
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pump(const Duration(milliseconds: 450));
+    await tester.pumpAndSettle();
+
+    expect(
+      tester
+          .widget<Text>(find.byKey(const ValueKey('wallet-summary-month')))
+          .data,
+      selectedMonth,
+    );
+    expect(transactionRepository.contextLoads, contextLoads + 1);
   });
 
   testWidgets(

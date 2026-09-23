@@ -1,5 +1,13 @@
 # Construction 진행
 
+## 제품 개선 백로그 13~17 코드리뷰 보강
+
+구현 브랜치: `fix/review-improvements-13-17`.
+
+L10N01에서 누락된 월 잔액과 카드 실적의 영어 금액 표기를 기존 `formattedAmount` 번역 계약으로 통일했다. SYNC02의 앱 재개 시 표시 이름도 다시 읽고, 이로 인한 상위 화면 재빌드가 지갑의 선택 월을 초기화하지 않도록 가계부 컨텍스트 future를 보존했다. 가계부가 바뀌거나 컨텍스트 조회가 실패해 재시도할 때는 해당 future를 무효화한다. SYNC01의 캘린더 월 조회는 오래된 응답이 같은 월로 돌아온 후 현재 캐시를 덮을 수 있어, 조회 완료 시의 부수효과를 제거하고 명시적인 새로고침 성공 시에만 캐시를 교체한다. ARCH01 분리 후 `main.dart`에서 사라진 `CalendarOverview` import 호환성을 복구하고 도달할 수 없는 옛 탭 UI를 제거했다.
+
+검증: 영어 월 잔액·카드 실적, 재개 시 이름 갱신·지갑 선택 월 유지, 지연된 캘린더 응답, 기존 `main.dart` import 호환성을 위젯 테스트로 확인했다. 전체 `flutter test`(75개), `flutter analyze`, `git diff --check`, macOS debug build 통과. 원격 Supabase 두 계정 간 앱 복귀 동기화와 실기기 시간대 이동은 이번 코드리뷰에서 실행하지 않았다.
+
 ## TIME01 — 업무 날짜 기준 통일
 
 구현 브랜치: `fix/business-date-timezone`.
