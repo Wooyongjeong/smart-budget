@@ -14,6 +14,7 @@ import 'auth/auth_screen.dart';
 import 'auth/auth_service.dart';
 import 'auth/config_missing_screen.dart';
 import 'features/transactions/transaction_repository.dart';
+import 'features/transactions/transaction_detail_screen.dart';
 import 'features/transactions/ai_review_screen.dart';
 import 'features/transactions/receipt_analysis.dart';
 import 'features/payment_methods/payment_methods_screen.dart';
@@ -66,6 +67,7 @@ class CalendarOverview extends StatefulWidget {
     required this.selectedDate,
     required this.result,
     required this.onDateChanged,
+    this.onTransactionTap,
     this.isLoading = false,
     this.hasError = false,
     this.onRetry,
@@ -73,6 +75,7 @@ class CalendarOverview extends StatefulWidget {
   final DateTime selectedDate;
   final TransactionQueryResult? result;
   final ValueChanged<DateTime> onDateChanged;
+  final ValueChanged<Map<String, dynamic>>? onTransactionTap;
   final bool isLoading;
   final bool hasError;
   final VoidCallback? onRetry;
@@ -163,6 +166,9 @@ class _CalendarOverviewState extends State<CalendarOverview> {
                           fontFeatures: [FontFeature.tabularFigures()],
                         ),
                       ),
+                      onTap: widget.onTransactionTap == null
+                          ? null
+                          : () => widget.onTransactionTap!(item),
                     ),
                   )
                   .toList(),
@@ -719,6 +725,36 @@ class _BudgetAppState extends State<BudgetApp> {
     }
   }
 
+  Future<void> openTransaction(Map<String, dynamic> item) async {
+    final repository = widget.transactionRepository;
+    if (repository == null || openingEntry) return;
+    setState(() => openingEntry = true);
+    try {
+      final data = await repository.loadContext();
+      final transaction = TransactionRecord.fromMap(item);
+      if (!mounted) return;
+      await Navigator.of(context).push<bool>(
+        MaterialPageRoute(
+          builder: (_) => TransactionDetailScreen(
+            repository: repository,
+            householdId: data.householdId,
+            contextData: data,
+            transaction: transaction,
+            onChanged: refreshOverview,
+          ),
+        ),
+      );
+    } catch (_) {
+      if (mounted) {
+        messenger.currentState?.showSnackBar(
+          SnackBar(content: Text(_l10n.transactionDetailUnavailable)),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => openingEntry = false);
+    }
+  }
+
   Future<void> openAiReview(BuildContext context) async {
     final repository = widget.transactionRepository;
     if (repository == null) return;
@@ -1041,6 +1077,7 @@ class _BudgetAppState extends State<BudgetApp> {
                             selectedDate: selectedDate,
                             result: snapshot.data,
                             onDateChanged: selectCalendarDate,
+                            onTransactionTap: openTransaction,
                             isLoading: !snapshot.hasData && !snapshot.hasError,
                             hasError: snapshot.hasError,
                             onRetry: refreshOverview,
@@ -1140,6 +1177,8 @@ class _BudgetAppState extends State<BudgetApp> {
                                                   ),
                                                 ),
                                               ),
+                                              onTap: () =>
+                                                  openTransaction(item),
                                             ),
                                           ),
                                   ],
