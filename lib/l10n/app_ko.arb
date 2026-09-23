@@ -253,7 +253,8 @@
   "leaveHousehold": "공동 가계부 나가기",
   "leaveHouseholdTitle": "공동 가계부를 나갈까요?",
   "leaveHouseholdBody": "즉시 모든 공동 기록에 접근할 수 없게 되고 로그아웃돼요. 기존 기록은 남은 구성원에게 유지됩니다.",
-  "retry": "다시 시도"
+  "retry": "다시 시도",
+  "refresh": "새로고침"
   ,"shareInvitation": "카카오톡으로 초대하기",
   "invitationOnboardingTitle": "공동 가계부에 참여할까요?",
   "invitationOnboardingDescription": "배우자가 보낸 초대 링크예요. 코드를 확인한 뒤 함께 기록을 시작할 수 있어요.",

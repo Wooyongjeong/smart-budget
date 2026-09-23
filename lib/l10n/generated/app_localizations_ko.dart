@@ -812,6 +812,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get retry => '다시 시도';
 
   @override
+  String get refresh => '새로고침';
+
+  @override
   String get shareInvitation => '카카오톡으로 초대하기';
 
   @override

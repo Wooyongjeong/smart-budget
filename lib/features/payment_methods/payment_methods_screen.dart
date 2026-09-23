@@ -23,17 +23,20 @@ class PaymentMethodsScreen extends StatefulWidget {
 }
 
 class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
+  late HouseholdContext contextData = widget.contextData;
   late final List<PaymentMethodOption> methods = [
     ...widget.contextData.paymentMethods,
   ];
   late Future<List<Map<String, dynamic>>> cardSummary = _loadCardSummary();
   DateTime summaryMonth = DateTime(DateTime.now().year, DateTime.now().month);
   bool saving = false;
+  bool refreshing = false;
+  bool refreshFailed = false;
   String? voucherRequestId;
   _PaymentMethodDraft? failedVoucherDraft;
 
-  Future<List<Map<String, dynamic>>> _loadCardSummary() => widget.repository
-      .cardPerformance(widget.contextData.householdId, summaryMonth);
+  Future<List<Map<String, dynamic>>> _loadCardSummary() =>
+      widget.repository.cardPerformance(contextData.householdId, summaryMonth);
 
   void _moveSummaryMonth(int offset) {
     setState(() {
@@ -56,6 +59,36 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
     });
   }
 
+  Future<void> refreshAll() async {
+    if (refreshing || saving) return;
+    setState(() {
+      refreshing = true;
+      refreshFailed = false;
+    });
+    try {
+      final refreshedContext = await widget.repository.loadContext();
+      final refreshedSummary = await widget.repository.cardPerformance(
+        refreshedContext.householdId,
+        summaryMonth,
+      );
+      if (!mounted) return;
+      setState(() {
+        contextData = refreshedContext;
+        methods
+          ..clear()
+          ..addAll(refreshedContext.paymentMethods);
+        cardSummary = Future.value(refreshedSummary);
+        refreshing = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        refreshing = false;
+        refreshFailed = true;
+      });
+    }
+  }
+
   String kindLabel(BuildContext context, String kind) {
     final l10n = AppLocalizations.of(context)!;
     return switch (kind) {
@@ -72,8 +105,8 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
     final result = await showDialog<_PaymentMethodDraft>(
       context: context,
       builder: (context) => _PaymentMethodDialog(
-        members: widget.contextData.members,
-        paymentMethods: widget.contextData.paymentMethods,
+        members: contextData.members,
+        paymentMethods: contextData.paymentMethods,
         initialKind: initialKind,
       ),
     );
@@ -87,7 +120,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
     try {
       final method = result.kind == 'voucher'
           ? await widget.repository.addVoucher(
-              widget.contextData.householdId,
+              contextData.householdId,
               result.name,
               result.ownerMemberId,
               result.paidAmountWon!,
@@ -98,7 +131,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
               requestId: voucherRequestId,
             )
           : await widget.repository.addPaymentMethod(
-              widget.contextData.householdId,
+              contextData.householdId,
               result.kind,
               result.name,
               result.ownerMemberId,
@@ -106,7 +139,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
       if ((result.kind == 'debit_card' || result.kind == 'credit_card') &&
           result.targetAmountWon != null) {
         await widget.repository.setCardTarget(
-          widget.contextData.householdId,
+          contextData.householdId,
           method.id,
           summaryMonth,
           result.targetAmountWon!,
@@ -159,7 +192,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
     if (confirmed != true || !mounted) return;
     try {
       await widget.repository.archivePaymentMethod(
-        widget.contextData.householdId,
+        contextData.householdId,
         method.id,
       );
       if (mounted) {
@@ -241,7 +274,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
     if (amounts == null || !mounted) return;
     try {
       await widget.repository.recordVoucherEvent(
-        widget.contextData.householdId,
+        contextData.householdId,
         kind,
         method.id,
         amounts[0],
@@ -297,7 +330,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
     if (value == null || value <= 0 || !mounted) return;
     try {
       await widget.repository.setCardTarget(
-        widget.contextData.householdId,
+        contextData.householdId,
         method.id,
         summaryMonth,
         value,
@@ -353,14 +386,41 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
           ],
         ),
         const SizedBox(height: 8),
-        Text(l10n.paymentMethodsDescription),
+        Row(
+          children: [
+            Expanded(child: Text(l10n.paymentMethodsDescription)),
+            IconButton(
+              key: const ValueKey('wallet-refresh'),
+              tooltip: l10n.refresh,
+              onPressed: refreshing || saving ? null : refreshAll,
+              icon: refreshing
+                  ? const SizedBox.square(
+                      dimension: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.refresh_rounded),
+            ),
+          ],
+        ),
+        if (refreshFailed)
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Row(
+              children: [
+                Expanded(child: Text(l10n.walletLoadFailedRetry)),
+                TextButton(onPressed: refreshAll, child: Text(l10n.retry)),
+              ],
+            ),
+          ),
         const SizedBox(height: 20),
         Row(
           children: [
             IconButton(
               key: const ValueKey('wallet-previous-month'),
               tooltip: l10n.previousMonth,
-              onPressed: saving ? null : () => _moveSummaryMonth(-1),
+              onPressed: saving || refreshing
+                  ? null
+                  : () => _moveSummaryMonth(-1),
               icon: const Icon(Icons.chevron_left),
             ),
             Expanded(
@@ -379,11 +439,13 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
             IconButton(
               key: const ValueKey('wallet-next-month'),
               tooltip: l10n.nextMonth,
-              onPressed: saving ? null : () => _moveSummaryMonth(1),
+              onPressed: saving || refreshing
+                  ? null
+                  : () => _moveSummaryMonth(1),
               icon: const Icon(Icons.chevron_right),
             ),
             TextButton(
-              onPressed: saving ? null : _resetSummaryMonth,
+              onPressed: saving || refreshing ? null : _resetSummaryMonth,
               child: Text(l10n.currentMonth),
             ),
           ],
@@ -555,7 +617,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                     : method.kind == 'voucher'
                     ? FutureBuilder<int>(
                         future: widget.repository.voucherBalance(
-                          widget.contextData.householdId,
+                          contextData.householdId,
                           method.id,
                         ),
                         builder: (context, snapshot) {
@@ -649,7 +711,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
   String _ownerLabel(BuildContext context, PaymentMethodOption method) {
     final id = method.ownerMemberId;
     if (id == null) return '';
-    final member = widget.contextData.members.where((item) => item.id == id);
+    final member = contextData.members.where((item) => item.id == id);
     return member.isEmpty
         ? ''
         : AppLocalizations.of(context)!.usedBy(member.first.name);

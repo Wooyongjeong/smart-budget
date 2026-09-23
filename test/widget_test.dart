@@ -60,12 +60,16 @@ void main() {
     addTearDown(() => tester.binding.setSurfaceSize(null));
     final today = DateUtils.dateOnly(DateTime.now());
     var selectedDate = today;
+    var refreshes = 0;
     await tester.pumpWidget(
       localizedTestApp(
         home: StatefulBuilder(
           builder: (context, setState) => Scaffold(
             body: CalendarOverview(
               selectedDate: selectedDate,
+              onRefresh: () async {
+                refreshes++;
+              },
               result: const TransactionQueryResult(
                 items: [],
                 totalIncome: 0,
@@ -84,6 +88,9 @@ void main() {
     final todayMonth = MaterialLocalizations.of(
       pickerContext,
     ).formatMonthYear(today);
+    await tester.tap(find.byKey(const ValueKey('calendar-refresh')));
+    await tester.pumpAndSettle();
+    expect(refreshes, 1);
     await tester.tap(find.byIcon(Icons.chevron_right));
     await tester.pumpAndSettle();
     expect(find.text(todayMonth), findsNothing);

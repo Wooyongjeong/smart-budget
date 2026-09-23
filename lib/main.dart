@@ -73,16 +73,22 @@ class CalendarOverview extends StatefulWidget {
     required this.onDateChanged,
     this.onTransactionTap,
     this.isLoading = false,
+    this.isRefreshing = false,
     this.hasError = false,
+    this.hasRefreshError = false,
     this.onRetry,
+    this.onRefresh,
   });
   final DateTime selectedDate;
   final TransactionQueryResult? result;
   final ValueChanged<DateTime> onDateChanged;
   final ValueChanged<Map<String, dynamic>>? onTransactionTap;
   final bool isLoading;
+  final bool isRefreshing;
   final bool hasError;
+  final bool hasRefreshError;
   final VoidCallback? onRetry;
+  final Future<void> Function()? onRefresh;
 
   @override
   State<CalendarOverview> createState() => _CalendarOverviewState();
@@ -117,15 +123,44 @@ class _CalendarOverviewState extends State<CalendarOverview> {
     );
     return Column(
       children: [
-        Align(
-          alignment: Alignment.centerRight,
-          child: TextButton.icon(
-            key: const ValueKey('calendar-today'),
-            onPressed: _goToToday,
-            icon: const Icon(Icons.today_outlined, size: 18),
-            label: Text(l10n.today),
-          ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            if (widget.onRefresh != null)
+              IconButton(
+                key: const ValueKey('calendar-refresh'),
+                tooltip: l10n.refresh,
+                onPressed: widget.isRefreshing || widget.isLoading
+                    ? null
+                    : widget.onRefresh,
+                icon: widget.isRefreshing
+                    ? const SizedBox.square(
+                        dimension: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.refresh_rounded),
+              ),
+            TextButton.icon(
+              key: const ValueKey('calendar-today'),
+              onPressed: _goToToday,
+              icon: const Icon(Icons.today_outlined, size: 18),
+              label: Text(l10n.today),
+            ),
+          ],
         ),
+        if (widget.hasRefreshError)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Row(
+              children: [
+                Expanded(child: Text(l10n.loadHistoryFailed)),
+                TextButton(
+                  onPressed: widget.onRefresh,
+                  child: Text(l10n.retry),
+                ),
+              ],
+            ),
+          ),
         ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 520),
           child: CalendarMonthPicker(
@@ -582,6 +617,9 @@ class _BudgetAppState extends State<BudgetApp> {
   int tab = 0;
   bool saving = false;
   bool signingOut = false;
+  bool refreshingOverview = false;
+  bool overviewRefreshFailed = false;
+  TransactionQueryResult? currentOverviewResult;
   bool openingEntry = false;
   String displayName = '나';
   DateTime selectedDate = DateTime.now();
@@ -612,18 +650,47 @@ class _BudgetAppState extends State<BudgetApp> {
     return () async {
       final month = anchor ?? selectedDate;
       final context = await repository.loadContext();
-      return repository.query(
+      final result = await repository.query(
         context.householdId,
         DateTime(month.year, month.month),
         DateTime(month.year, month.month + 1),
       );
+      if (mounted &&
+          selectedDate.year == month.year &&
+          selectedDate.month == month.month) {
+        currentOverviewResult = result;
+      }
+      return result;
     }();
   }
 
-  void refreshOverview() {
+  Future<void> refreshOverview() async {
+    if (refreshingOverview || widget.transactionRepository == null) return;
+    final anchor = DateTime(selectedDate.year, selectedDate.month);
     setState(() {
-      overview = _loadOverview(selectedDate);
+      refreshingOverview = true;
+      overviewRefreshFailed = false;
     });
+    try {
+      final result = await _loadOverview(anchor);
+      if (!mounted || result == null) return;
+      if (selectedDate.year != anchor.year ||
+          selectedDate.month != anchor.month) {
+        return;
+      }
+      setState(() {
+        currentOverviewResult = result;
+        overview = Future.value(result);
+      });
+    } catch (_) {
+      if (mounted &&
+          selectedDate.year == anchor.year &&
+          selectedDate.month == anchor.month) {
+        setState(() => overviewRefreshFailed = true);
+      }
+    } finally {
+      if (mounted) setState(() => refreshingOverview = false);
+    }
   }
 
   void selectCalendarDate(DateTime date) {
@@ -631,7 +698,11 @@ class _BudgetAppState extends State<BudgetApp> {
         selectedDate.year != date.year || selectedDate.month != date.month;
     setState(() {
       selectedDate = date;
-      if (monthChanged) overview = _loadOverview(date);
+      if (monthChanged) {
+        currentOverviewResult = null;
+        overviewRefreshFailed = false;
+        overview = _loadOverview(date);
+      }
     });
   }
 
@@ -1073,12 +1144,19 @@ class _BudgetAppState extends State<BudgetApp> {
                       if (tab == 0)
                         FutureBuilder<TransactionQueryResult>(
                           future: overview,
-                          builder: (context, snapshot) => _MonthlySummaryCard(
-                            result: snapshot.data,
-                            isLoading: !snapshot.hasData && !snapshot.hasError,
-                            hasError: snapshot.hasError,
-                            onRetry: refreshOverview,
-                          ),
+                          builder: (context, snapshot) {
+                            final result =
+                                snapshot.connectionState ==
+                                    ConnectionState.waiting
+                                ? currentOverviewResult
+                                : snapshot.data ?? currentOverviewResult;
+                            return _MonthlySummaryCard(
+                              result: result,
+                              isLoading: result == null && !snapshot.hasError,
+                              hasError: snapshot.hasError && result == null,
+                              onRetry: refreshOverview,
+                            );
+                          },
                         ),
                       if (tab < 2) const SizedBox(height: 24),
                       if (tab == 2 && widget.transactionRepository != null)
@@ -1093,15 +1171,25 @@ class _BudgetAppState extends State<BudgetApp> {
                       if (tab == 0 && widget.transactionRepository != null)
                         FutureBuilder<TransactionQueryResult>(
                           future: overview,
-                          builder: (context, snapshot) => CalendarOverview(
-                            selectedDate: selectedDate,
-                            result: snapshot.data,
-                            onDateChanged: selectCalendarDate,
-                            onTransactionTap: openTransaction,
-                            isLoading: !snapshot.hasData && !snapshot.hasError,
-                            hasError: snapshot.hasError,
-                            onRetry: refreshOverview,
-                          ),
+                          builder: (context, snapshot) {
+                            final result =
+                                snapshot.connectionState ==
+                                    ConnectionState.waiting
+                                ? currentOverviewResult
+                                : snapshot.data ?? currentOverviewResult;
+                            return CalendarOverview(
+                              selectedDate: selectedDate,
+                              result: result,
+                              onDateChanged: selectCalendarDate,
+                              onTransactionTap: openTransaction,
+                              isLoading: result == null && !snapshot.hasError,
+                              isRefreshing: refreshingOverview,
+                              hasError: snapshot.hasError && result == null,
+                              hasRefreshError: overviewRefreshFailed,
+                              onRetry: refreshOverview,
+                              onRefresh: refreshOverview,
+                            );
+                          },
                         ),
                       if (tab == 1 && widget.transactionRepository != null)
                         TransactionHistoryScreen(

@@ -30,8 +30,11 @@ class HouseholdScreen extends StatefulWidget {
 class _HouseholdScreenState extends State<HouseholdScreen> {
   final tokenController = TextEditingController();
   late Future<HouseholdOverview> overview = widget.repository.load();
+  HouseholdOverview? lastOverview;
   String? invitation;
   bool busy = false;
+  bool refreshing = false;
+  bool refreshFailed = false;
 
   @override
   void dispose() {
@@ -43,6 +46,33 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
     setState(() {
       overview = widget.repository.load();
     });
+  }
+
+  Future<void> refresh() async {
+    if (refreshing || busy) return;
+    if (lastOverview == null) {
+      reload();
+      return;
+    }
+    setState(() {
+      refreshing = true;
+      refreshFailed = false;
+    });
+    try {
+      final result = await widget.repository.load();
+      if (!mounted) return;
+      setState(() {
+        lastOverview = result;
+        overview = Future.value(result);
+        refreshing = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        refreshing = false;
+        refreshFailed = true;
+      });
+    }
   }
 
   Future<void> createInvitation(HouseholdOverview household) async {
@@ -211,22 +241,48 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.sharedHousehold)),
+      appBar: AppBar(
+        title: Text(l10n.sharedHousehold),
+        actions: [
+          IconButton(
+            key: const ValueKey('household-refresh'),
+            tooltip: l10n.refresh,
+            onPressed: refreshing || busy ? null : refresh,
+            icon: refreshing
+                ? const SizedBox.square(
+                    dimension: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.refresh_rounded),
+          ),
+        ],
+      ),
       body: FutureBuilder<HouseholdOverview>(
         future: overview,
         builder: (context, snapshot) {
-          if (snapshot.hasError) {
+          if (snapshot.hasData) lastOverview = snapshot.data;
+          final household = snapshot.data ?? lastOverview;
+          if (household == null && snapshot.hasError) {
             return Center(
               child: TextButton(onPressed: reload, child: Text(l10n.retry)),
             );
           }
-          if (!snapshot.hasData) {
+          if (household == null) {
             return const Center(child: CircularProgressIndicator());
           }
-          final household = snapshot.data!;
           return ListView(
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
             children: [
+              if (refreshFailed || snapshot.hasError)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Row(
+                    children: [
+                      Expanded(child: Text(l10n.householdLoadFailed)),
+                      TextButton(onPressed: refresh, child: Text(l10n.retry)),
+                    ],
+                  ),
+                ),
               Text(
                 localizedHouseholdName(l10n, household.name),
                 style: Theme.of(context).textTheme.headlineSmall,

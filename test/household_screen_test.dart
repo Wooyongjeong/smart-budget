@@ -14,9 +14,18 @@ class _Repository implements HouseholdRepository {
   String? acceptedToken;
   bool left = false;
   String? createError;
+  bool failNextLoad = false;
+  int loadCalls = 0;
 
   @override
-  Future<HouseholdOverview> load() async => value;
+  Future<HouseholdOverview> load() async {
+    loadCalls++;
+    if (failNextLoad) {
+      failNextLoad = false;
+      throw const HouseholdException('unexpected');
+    }
+    return value;
+  }
 
   @override
   Future<String> loadCurrentDisplayName() async =>
@@ -84,6 +93,24 @@ Widget _app(
 }
 
 void main() {
+  testWidgets('household refresh keeps the last data when refresh fails', (
+    tester,
+  ) async {
+    final repository = _Repository();
+    await tester.pumpWidget(_app(repository));
+    await tester.pumpAndSettle();
+    final initialCalls = repository.loadCalls;
+    repository.failNextLoad = true;
+
+    await tester.tap(find.byKey(const ValueKey('household-refresh')));
+    await tester.pumpAndSettle();
+
+    expect(repository.loadCalls, initialCalls + 1);
+    expect(find.text('우영'), findsOneWidget);
+    expect(find.text('가계부 정보를 불러오지 못했어요. 다시 시도해 주세요.'), findsOneWidget);
+    expect(find.text('다시 시도'), findsOneWidget);
+  });
+
   testWidgets('creates and displays a one-time invitation code', (
     tester,
   ) async {

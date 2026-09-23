@@ -49,6 +49,8 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
   int totalExpense = 0;
   bool loading = true;
   bool loadingMore = false;
+  bool refreshing = false;
+  Object? refreshError;
   Object? error;
 
   @override
@@ -77,10 +79,13 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
     return DateTimeRange(start: start, end: start.add(const Duration(days: 7)));
   }
 
-  Future<TransactionQueryResult> _query(TransactionQueryCursor? next) {
+  Future<TransactionQueryResult> _query(
+    TransactionQueryCursor? next, {
+    HouseholdContext? withContext,
+  }) {
     final range = _range();
     return widget.repository.query(
-      contextData!.householdId,
+      (withContext ?? contextData!).householdId,
       range.start,
       range.end,
       memberId: filter.memberId,
@@ -96,6 +101,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
       setState(() {
         loading = true;
         error = null;
+        refreshError = null;
         items = [];
         cursor = null;
       });
@@ -139,6 +145,34 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
       setState(() {
         loadingMore = false;
         error = value;
+      });
+    }
+  }
+
+  Future<void> _refresh() async {
+    if (refreshing || loading || loadingMore) return;
+    setState(() {
+      refreshing = true;
+      refreshError = null;
+    });
+    try {
+      final refreshedContext = await widget.repository.loadContext();
+      final result = await _query(null, withContext: refreshedContext);
+      if (!mounted) return;
+      setState(() {
+        contextData = refreshedContext;
+        items = result.items;
+        totalIncome = result.totalIncome;
+        totalExpense = result.totalExpense;
+        cursor = result.nextCursor;
+        refreshing = false;
+        error = null;
+      });
+    } catch (value) {
+      if (!mounted) return;
+      setState(() {
+        refreshing = false;
+        refreshError = value;
       });
     }
   }
@@ -188,6 +222,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
       };
 
   Future<void> _chooseFilter() async {
+    if (loading || refreshing) return;
     final data = contextData;
     if (data == null) return;
     final result = await showModalBottomSheet<HistoryFilter>(
@@ -364,17 +399,19 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
             ),
           ],
           selected: {period},
-          onSelectionChanged: (value) {
-            setState(() => period = value.first);
-            _reload();
-          },
+          onSelectionChanged: loading || refreshing
+              ? null
+              : (value) {
+                  setState(() => period = value.first);
+                  _reload();
+                },
         ),
         const SizedBox(height: 12),
         Row(
           children: [
             IconButton(
               tooltip: l10n.previousPeriod,
-              onPressed: loading ? null : () => _move(-1),
+              onPressed: loading || refreshing ? null : () => _move(-1),
               icon: const Icon(Icons.chevron_left_rounded),
             ),
             Expanded(
@@ -386,16 +423,27 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
             ),
             IconButton(
               tooltip: l10n.nextPeriod,
-              onPressed: loading ? null : () => _move(1),
+              onPressed: loading || refreshing ? null : () => _move(1),
               icon: const Icon(Icons.chevron_right_rounded),
             ),
             IconButton(
               tooltip: l10n.historyFilters,
-              onPressed: loading ? null : _chooseFilter,
+              onPressed: loading || refreshing ? null : _chooseFilter,
               icon: Badge(
                 isLabelVisible: !filter.isEmpty,
                 child: const Icon(Icons.tune_rounded),
               ),
+            ),
+            IconButton(
+              key: const ValueKey('history-refresh'),
+              tooltip: l10n.refresh,
+              onPressed: refreshing || loading || loadingMore ? null : _refresh,
+              icon: refreshing
+                  ? const SizedBox.square(
+                      dimension: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.refresh_rounded),
             ),
           ],
         ),
@@ -406,45 +454,61 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
               if (filter.memberId != null)
                 InputChip(
                   label: Text(l10n.actualUser),
-                  onDeleted: () {
-                    setState(
-                      () => filter = HistoryFilter(
-                        paymentMethodId: filter.paymentMethodId,
-                        category: filter.category,
-                      ),
-                    );
-                    _reload();
-                  },
+                  onDeleted: refreshing
+                      ? null
+                      : () {
+                          setState(
+                            () => filter = HistoryFilter(
+                              paymentMethodId: filter.paymentMethodId,
+                              category: filter.category,
+                            ),
+                          );
+                          _reload();
+                        },
                 ),
               if (filter.paymentMethodId != null)
                 InputChip(
                   label: Text(l10n.paymentMethod),
-                  onDeleted: () {
-                    setState(
-                      () => filter = HistoryFilter(
-                        memberId: filter.memberId,
-                        category: filter.category,
-                      ),
-                    );
-                    _reload();
-                  },
+                  onDeleted: refreshing
+                      ? null
+                      : () {
+                          setState(
+                            () => filter = HistoryFilter(
+                              memberId: filter.memberId,
+                              category: filter.category,
+                            ),
+                          );
+                          _reload();
+                        },
                 ),
               if (filter.category != null)
                 InputChip(
                   label: Text(_categoryLabel(l10n, filter.category!)),
-                  onDeleted: () {
-                    setState(
-                      () => filter = HistoryFilter(
-                        memberId: filter.memberId,
-                        paymentMethodId: filter.paymentMethodId,
-                      ),
-                    );
-                    _reload();
-                  },
+                  onDeleted: refreshing
+                      ? null
+                      : () {
+                          setState(
+                            () => filter = HistoryFilter(
+                              memberId: filter.memberId,
+                              paymentMethodId: filter.paymentMethodId,
+                            ),
+                          );
+                          _reload();
+                        },
                 ),
             ],
           ),
         const SizedBox(height: 12),
+        if (refreshError != null && items.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Row(
+              children: [
+                Expanded(child: Text(l10n.loadHistoryFailed)),
+                TextButton(onPressed: _refresh, child: Text(l10n.retry)),
+              ],
+            ),
+          ),
         if (loading)
           const SizedBox(
             height: 180,

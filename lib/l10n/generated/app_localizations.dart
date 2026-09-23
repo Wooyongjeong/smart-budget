@@ -1628,6 +1628,12 @@ abstract class AppLocalizations {
   /// **'다시 시도'**
   String get retry;
 
+  /// No description provided for @refresh.
+  ///
+  /// In ko, this message translates to:
+  /// **'새로고침'**
+  String get refresh;
+
   /// No description provided for @shareInvitation.
   ///
   /// In ko, this message translates to:

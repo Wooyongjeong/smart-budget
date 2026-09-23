@@ -846,6 +846,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get retry => 'Try again';
 
   @override
+  String get refresh => 'Refresh';
+
+  @override
   String get shareInvitation => 'Invite via KakaoTalk';
 
   @override

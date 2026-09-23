@@ -12,6 +12,8 @@ class _Repository implements TransactionRepository {
   DateTime? lastPerformanceMonth;
   DateTime? lastTargetMonth;
   bool failNextPerformance = false;
+  bool failNextContext = false;
+  int contextLoads = 0;
   String? lastVoucherMode;
   String? lastVoucherMemberId;
   String? lastVoucherRequestId;
@@ -19,11 +21,18 @@ class _Repository implements TransactionRepository {
   String? lastVoucherSource;
 
   @override
-  Future<HouseholdContext> loadContext() async => HouseholdContext(
-    householdId: 'household',
-    paymentMethods: methods,
-    members: const [MemberOption(id: 'member', name: '나')],
-  );
+  Future<HouseholdContext> loadContext() async {
+    contextLoads++;
+    if (failNextContext) {
+      failNextContext = false;
+      throw Exception('network');
+    }
+    return HouseholdContext(
+      householdId: 'household',
+      paymentMethods: methods,
+      members: const [MemberOption(id: 'member', name: '나')],
+    );
+  }
 
   @override
   Future<PaymentMethodOption> addPaymentMethod(
@@ -194,6 +203,40 @@ void main() {
     await tester.tap(find.text('등록').last);
     await tester.pumpAndSettle();
     expect(find.text('생활비 현금'), findsOneWidget);
+  });
+
+  testWidgets('wallet refresh reloads shared data and preserves old content', (
+    tester,
+  ) async {
+    final repository = _Repository();
+    repository.methods.add(
+      const PaymentMethodOption(id: 'bank', name: '생활 계좌', kind: 'bank'),
+    );
+    final contextData = await repository.loadContext();
+    await tester.pumpWidget(
+      localizedTestApp(
+        home: PaymentMethodsScreen(
+          repository: repository,
+          contextData: contextData,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    final initialLoads = repository.contextLoads;
+
+    await tester.tap(find.byKey(const ValueKey('wallet-previous-month')));
+    await tester.pumpAndSettle();
+    final selectedMonth = repository.lastPerformanceMonth;
+    await tester.tap(find.byKey(const ValueKey('wallet-refresh')));
+    await tester.pumpAndSettle();
+    expect(repository.lastPerformanceMonth, selectedMonth);
+
+    repository.failNextContext = true;
+    await tester.tap(find.byKey(const ValueKey('wallet-refresh')));
+    await tester.pumpAndSettle();
+    expect(repository.contextLoads, initialLoads + 2);
+    expect(find.text('생활 계좌'), findsOneWidget);
+    expect(find.text('지갑을 불러오지 못했어요. 다시 시도'), findsOneWidget);
   });
 
   testWidgets('registers a voucher with its initial balance atomically', (

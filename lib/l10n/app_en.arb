@@ -238,7 +238,8 @@
   "leaveHousehold": "Leave shared budget",
   "leaveHouseholdTitle": "Leave the shared budget?",
   "leaveHouseholdBody": "You will immediately lose access to shared records and be signed out. Existing records remain available to the other member.",
-  "retry": "Try again"
+  "retry": "Try again",
+  "refresh": "Refresh"
   ,"shareInvitation": "Invite via KakaoTalk",
   "invitationOnboardingTitle": "Join the shared budget?",
   "invitationOnboardingDescription": "This is an invitation from your partner. Confirm the code to start recording together.",
