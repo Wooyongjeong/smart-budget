@@ -21,8 +21,7 @@ class AuthCancelled extends AuthResult {
 }
 
 class AuthFailed extends AuthResult {
-  const AuthFailed(this.message);
-  final String message;
+  const AuthFailed();
 }
 
 class SupabaseAuthService implements AuthService {
@@ -52,10 +51,10 @@ class SupabaseAuthService implements AuthService {
         redirectTo: redirectUrl,
       );
       return started ? const AuthStarted() : const AuthCancelled();
-    } on AuthException catch (error) {
-      return AuthFailed(error.message);
+    } on AuthException {
+      return const AuthFailed();
     } catch (_) {
-      return const AuthFailed('카카오 로그인 중 문제가 발생했어요. 잠시 후 다시 시도해 주세요.');
+      return const AuthFailed();
     }
   }
 

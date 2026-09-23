@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../../money_input.dart';
 import 'transaction_repository.dart';
+import 'transaction_display.dart';
 
 enum HistoryPeriod { day, week, month }
 
@@ -321,7 +322,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
         ),
       ),
       title: Text(
-        item['merchant'] as String,
+        localizedMerchantName(l10n, item['merchant'] as String),
         style: const TextStyle(fontWeight: FontWeight.w700),
       ),
       subtitle: Text(

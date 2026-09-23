@@ -359,7 +359,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
           children: [
             IconButton(
               key: const ValueKey('wallet-previous-month'),
-              tooltip: '이전 달',
+              tooltip: l10n.previousMonth,
               onPressed: saving ? null : () => _moveSummaryMonth(-1),
               icon: const Icon(Icons.chevron_left),
             ),
@@ -378,13 +378,13 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
             ),
             IconButton(
               key: const ValueKey('wallet-next-month'),
-              tooltip: '다음 달',
+              tooltip: l10n.nextMonth,
               onPressed: saving ? null : () => _moveSummaryMonth(1),
               icon: const Icon(Icons.chevron_right),
             ),
             TextButton(
               onPressed: saving ? null : _resetSummaryMonth,
-              child: const Text('이번 달'),
+              child: Text(l10n.currentMonth),
             ),
           ],
         ),
@@ -450,7 +450,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '이번 달 카드 실적',
+                    l10n.cardPerformanceMonth,
                     style: Theme.of(
                       context,
                     ).textTheme.labelLarge?.copyWith(color: Colors.white70),
@@ -478,8 +478,8 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                   const SizedBox(height: 8),
                   Text(
                     target == 0
-                        ? '카드별 목표를 설정해 보세요'
-                        : '예상 실적 ${(ratio * 100).round()}%',
+                        ? l10n.setCardTargetsPrompt
+                        : l10n.expectedPerformance((ratio * 100).round()),
                     style: const TextStyle(color: Colors.white70),
                   ),
                 ],

@@ -5,6 +5,7 @@ import '../../entry_form.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../../money_input.dart';
 import 'transaction_repository.dart';
+import 'transaction_display.dart';
 import 'transaction_request_tracker.dart';
 
 class TransactionDetailScreen extends StatefulWidget {
@@ -180,7 +181,7 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    transaction.merchant,
+                    localizedMerchantName(l10n, transaction.merchant),
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                 ],

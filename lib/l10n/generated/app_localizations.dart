@@ -302,6 +302,54 @@ abstract class AppLocalizations {
   /// **'이번 달 지출 {amount}원'**
   String monthExpense(String amount);
 
+  /// No description provided for @remainingBalance.
+  ///
+  /// In ko, this message translates to:
+  /// **'이번 달 남은 금액'**
+  String get remainingBalance;
+
+  /// No description provided for @recordPrompt.
+  ///
+  /// In ko, this message translates to:
+  /// **'어떻게 기록할까요?'**
+  String get recordPrompt;
+
+  /// No description provided for @previousMonth.
+  ///
+  /// In ko, this message translates to:
+  /// **'이전 달'**
+  String get previousMonth;
+
+  /// No description provided for @nextMonth.
+  ///
+  /// In ko, this message translates to:
+  /// **'다음 달'**
+  String get nextMonth;
+
+  /// No description provided for @currentMonth.
+  ///
+  /// In ko, this message translates to:
+  /// **'이번 달'**
+  String get currentMonth;
+
+  /// No description provided for @cardPerformanceMonth.
+  ///
+  /// In ko, this message translates to:
+  /// **'이번 달 카드 실적'**
+  String get cardPerformanceMonth;
+
+  /// No description provided for @setCardTargetsPrompt.
+  ///
+  /// In ko, this message translates to:
+  /// **'카드별 목표를 설정해 보세요'**
+  String get setCardTargetsPrompt;
+
+  /// No description provided for @expectedPerformance.
+  ///
+  /// In ko, this message translates to:
+  /// **'예상 실적 {percent}%'**
+  String expectedPerformance(int percent);
+
   /// No description provided for @noTransactions.
   ///
   /// In ko, this message translates to:
@@ -1195,6 +1243,60 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'수정이 필요한 항목 {count}개'**
   String receiptRemainingErrors(Object count);
+
+  /// No description provided for @receiptItemsFound.
+  ///
+  /// In ko, this message translates to:
+  /// **'{count}개 찾음'**
+  String receiptItemsFound(int count);
+
+  /// No description provided for @receiptTapToZoom.
+  ///
+  /// In ko, this message translates to:
+  /// **'탭하여 원본 확대'**
+  String get receiptTapToZoom;
+
+  /// No description provided for @receiptNeedsReview.
+  ///
+  /// In ko, this message translates to:
+  /// **'내용을 확인해 주세요'**
+  String get receiptNeedsReview;
+
+  /// No description provided for @receiptPaymentHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'결제 수단: {hint}'**
+  String receiptPaymentHint(String hint);
+
+  /// No description provided for @receiptCategoryHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'카테고리를 확인해 주세요'**
+  String get receiptCategoryHint;
+
+  /// No description provided for @receiptDateHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'날짜 확인: {date}'**
+  String receiptDateHint(String date);
+
+  /// No description provided for @receiptUnsupportedType.
+  ///
+  /// In ko, this message translates to:
+  /// **'지원하지 않는 유형: {type}'**
+  String receiptUnsupportedType(String type);
+
+  /// No description provided for @receiptRefundType.
+  ///
+  /// In ko, this message translates to:
+  /// **'환불'**
+  String get receiptRefundType;
+
+  /// No description provided for @receiptUnknownType.
+  ///
+  /// In ko, this message translates to:
+  /// **'확인 필요'**
+  String get receiptUnknownType;
 
   /// No description provided for @receiptImageSize.
   ///

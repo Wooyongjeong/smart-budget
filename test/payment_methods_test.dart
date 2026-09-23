@@ -170,6 +170,9 @@ void main() {
     expect(find.text('Payment methods'), findsOneWidget);
     expect(find.text('Add voucher'), findsOneWidget);
     expect(find.text('No payment methods yet.'), findsOneWidget);
+    await tester.pumpAndSettle();
+    expect(find.text('This month'), findsOneWidget);
+    expect(find.text('Card spending this month'), findsOneWidget);
   });
 
   testWidgets('registers a payment method from the management screen', (

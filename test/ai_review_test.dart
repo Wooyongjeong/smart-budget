@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/material.dart';
 import 'package:smart_budget/features/transactions/ai_review_screen.dart';
 import 'package:smart_budget/features/transactions/transaction_repository.dart';
+import 'package:smart_budget/l10n/generated/app_localizations.dart';
 import 'package:smart_budget/features/transactions/transaction_draft.dart';
 import 'package:smart_budget/features/transactions/receipt_analysis.dart';
 import 'localized_test_app.dart';
@@ -140,7 +141,8 @@ void main() {
     expect(result.items.single.amount, 9000);
   });
 
-  test('keeps invalid model hints editable instead of throwing', () {
+  test('keeps invalid model hints editable instead of throwing', () async {
+    final l10n = await AppLocalizations.delegate.load(const Locale('ko'));
     final item = ReceiptFixtureItem.fromAnalysis(
       const ReceiptAnalysisItem(
         date: '2026-02-31',
@@ -152,6 +154,7 @@ void main() {
         reviewReasons: [],
       ),
       context,
+      l10n,
     );
     addTearDown(item.dispose);
 

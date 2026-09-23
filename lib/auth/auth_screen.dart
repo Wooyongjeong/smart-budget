@@ -28,10 +28,7 @@ class _AuthScreenState extends State<AuthScreen> {
       error = switch (result) {
         AuthStarted() => null,
         AuthCancelled() => AppLocalizations.of(context)!.loginCancelled,
-        AuthFailed(:final message) =>
-          Localizations.localeOf(context).languageCode == 'ko'
-              ? message
-              : AppLocalizations.of(context)!.loginFailed,
+        AuthFailed() => AppLocalizations.of(context)!.loginFailed,
       };
     });
   }
