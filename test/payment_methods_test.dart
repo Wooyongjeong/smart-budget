@@ -9,6 +9,8 @@ class _Repository implements TransactionRepository {
   final methods = <PaymentMethodOption>[];
   int target = 0;
   int voucherAmount = 0;
+  DateTime? lastPerformanceMonth;
+  DateTime? lastTargetMonth;
 
   @override
   Future<HouseholdContext> loadContext() async => HouseholdContext(
@@ -52,20 +54,26 @@ class _Repository implements TransactionRepository {
   Future<List<Map<String, dynamic>>> cardPerformance(
     String h,
     DateTime m,
-  ) async => methods
-      .where(
-        (method) => method.kind == 'credit_card' || method.kind == 'debit_card',
-      )
-      .map(
-        (method) => <String, dynamic>{
-          'payment_method_id': method.id,
-          'actual_amount_won': 120000,
-          'target_amount_won': target,
-        },
-      )
-      .toList();
+  ) async {
+    lastPerformanceMonth = m;
+    return methods
+        .where(
+          (method) =>
+              method.kind == 'credit_card' || method.kind == 'debit_card',
+        )
+        .map(
+          (method) => <String, dynamic>{
+            'payment_method_id': method.id,
+            'actual_amount_won': 120000,
+            'target_amount_won': target,
+          },
+        )
+        .toList();
+  }
+
   @override
   Future<void> setCardTarget(String h, String p, DateTime m, int a) async {
+    lastTargetMonth = m;
     target = a;
   }
 
@@ -207,7 +215,16 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    final initialMonth = repository.lastPerformanceMonth!;
+    await tester.tap(find.byKey(const ValueKey('wallet-previous-month')));
+    await tester.pumpAndSettle();
+    expect(
+      repository.lastPerformanceMonth,
+      DateTime(initialMonth.year, initialMonth.month - 1),
+    );
     expect(find.textContaining('목표 0원'), findsOneWidget);
+    await tester.drag(find.byType(ListView).first, const Offset(0, -600));
+    await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('실적 목표 수정'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), '300000');
@@ -217,6 +234,10 @@ void main() {
     );
     await tester.tap(find.text('저장'));
     await tester.pumpAndSettle();
+    expect(
+      repository.lastTargetMonth,
+      DateTime(initialMonth.year, initialMonth.month - 1),
+    );
     expect(find.textContaining('목표 300,000원'), findsOneWidget);
   });
 
@@ -235,6 +256,8 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.textContaining('잔액 100,000원'), findsOneWidget);
+    await tester.drag(find.byType(ListView).first, const Offset(0, -600));
+    await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('사용'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), '20000');

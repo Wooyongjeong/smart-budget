@@ -1,5 +1,13 @@
 # Construction 진행
 
+## WAL02 — 지갑 카드 실적 기준 월 이동
+
+구현 브랜치: `feat/wal02-wallet-month-navigation`.
+
+지갑 화면에 선택 월 헤더와 이전 달·다음 달·이번 달 이동을 추가했다. 카드 실적 조회와 카드 목표 저장 모두 선택한 월의 1일을 기준으로 하며, 월을 이동하면 동일한 결제 수단 목록으로 summary RPC를 다시 호출한다. 기존 상품권 잔액·결제 수단 등록/보관 흐름은 유지한다.
+
+검증: 선택 월 이동 후 `cardPerformance`가 새 월을 받는지, 카드 목표 저장도 같은 월을 사용하는지 위젯 테스트, 상품권 등록/사용 회귀 테스트, `flutter analyze`, `git diff --check` 통과. 원격 카드 실적 RPC의 과거 월 실제 데이터는 Supabase 환경에서 추가 확인한다.
+
 ## WAL01 — 상품권 등록과 초기 잔액 원자화
 
 구현 브랜치: `feat/wal01-atomic-voucher-onboarding`.

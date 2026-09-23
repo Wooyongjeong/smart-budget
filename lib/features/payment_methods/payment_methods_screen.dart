@@ -27,10 +27,26 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
     ...widget.contextData.paymentMethods,
   ];
   late Future<List<Map<String, dynamic>>> cardSummary = _loadCardSummary();
+  DateTime summaryMonth = DateTime(DateTime.now().year, DateTime.now().month);
   bool saving = false;
 
   Future<List<Map<String, dynamic>>> _loadCardSummary() => widget.repository
-      .cardPerformance(widget.contextData.householdId, DateTime.now());
+      .cardPerformance(widget.contextData.householdId, summaryMonth);
+
+  void _moveSummaryMonth(int offset) {
+    setState(() {
+      summaryMonth = DateTime(summaryMonth.year, summaryMonth.month + offset);
+      cardSummary = _loadCardSummary();
+    });
+  }
+
+  void _resetSummaryMonth() {
+    final now = DateTime.now();
+    setState(() {
+      summaryMonth = DateTime(now.year, now.month);
+      cardSummary = _loadCardSummary();
+    });
+  }
 
   void refreshCardSummary() {
     setState(() {
@@ -82,7 +98,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
         await widget.repository.setCardTarget(
           widget.contextData.householdId,
           method.id,
-          DateTime.now(),
+          summaryMonth,
           result.targetAmountWon!,
         );
         cardSummary = _loadCardSummary();
@@ -268,7 +284,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
       await widget.repository.setCardTarget(
         widget.contextData.householdId,
         method.id,
-        DateTime.now(),
+        summaryMonth,
         value,
       );
       if (mounted) refreshCardSummary();
@@ -324,6 +340,39 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
         const SizedBox(height: 8),
         Text(l10n.paymentMethodsDescription),
         const SizedBox(height: 20),
+        Row(
+          children: [
+            IconButton(
+              key: const ValueKey('wallet-previous-month'),
+              tooltip: '이전 달',
+              onPressed: saving ? null : () => _moveSummaryMonth(-1),
+              icon: const Icon(Icons.chevron_left),
+            ),
+            Expanded(
+              child: Center(
+                child: Text(
+                  MaterialLocalizations.of(
+                    context,
+                  ).formatMonthYear(summaryMonth),
+                  key: const ValueKey('wallet-summary-month'),
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ),
+            IconButton(
+              key: const ValueKey('wallet-next-month'),
+              tooltip: '다음 달',
+              onPressed: saving ? null : () => _moveSummaryMonth(1),
+              icon: const Icon(Icons.chevron_right),
+            ),
+            TextButton(
+              onPressed: saving ? null : _resetSummaryMonth,
+              child: const Text('이번 달'),
+            ),
+          ],
+        ),
         FutureBuilder<List<Map<String, dynamic>>>(
           future: cardSummary,
           builder: (context, snapshot) {
