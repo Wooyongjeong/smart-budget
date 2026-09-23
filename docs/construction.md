@@ -10,6 +10,14 @@ MVP 업무 날짜 정책은 사용자가 승인한 `Asia/Seoul` 고정 오프셋
 
 검증: UTC 15:00의 서울 자정 전후, 연말 경계 단위 테스트와 직접 입력/지갑 월 주입 테스트, 전체 `flutter test`, `flutter analyze`, `git diff --check`, macOS debug build. 로컬 PostgreSQL에서 선행 migration과 TIME01 migration을 한 트랜잭션으로 적용해 함수 정의를 확인한 뒤 rollback했다. `supabase db test`는 현재 로컬 DB에 미적용인 T09/WAL01 선행 migration 때문에 실패했고, TIME01 pgTAP 자체 실행도 로컬 PostgreSQL에 pgTAP 함수가 없어 불가능했다. `supabase db lint --local`은 실행했고 기존 함수의 warning 2건만 보고했다. 원격 DB 적용 및 해외 이동/가계부별 시간대 선택은 미검증·MVP 범위 밖이다.
 
+## ARCH01 — main.dart 화면 단위 분리
+
+구현 브랜치: `refactor/split-main-screens`.
+
+`main.dart`는 `AuthRoot`와 `BudgetApp`의 앱 시작·의존성·탭 상태에 집중하도록 정리했다. 캘린더와 날짜별 거래 표현은 `features/calendar/`로 이동하고, 요약 카드와 재시도 오류 상태는 `features/transactions/`에 분리했다. 표시 이름 헤더는 공유 위젯으로, 설정 탭은 `features/settings/` 화면으로 이동했다. 기존 콜백과 repository 경계, 선택 날짜/테마/언어/로그아웃 동작은 그대로 유지한다.
+
+검증: 기존 전체 위젯 테스트를 유지한 채 import 경로만 조정하고 `flutter test`, `flutter analyze`, `git diff --check`, macOS debug build를 실행한다. 별도 DB/API 동작 변경은 없다.
+
 ## SYNC01 — 공동 데이터 수동 새로고침
 
 구현 브랜치: `feat/manual-data-refresh`.

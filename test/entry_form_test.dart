@@ -4,7 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:smart_budget/main.dart';
 import 'package:smart_budget/entry_form.dart';
 import 'package:smart_budget/business_date.dart';
-import 'package:smart_budget/features/transactions/calendar_summary.dart';
+import 'package:smart_budget/features/calendar/calendar_summary.dart';
 import 'package:smart_budget/features/transactions/transaction_draft.dart';
 import 'package:smart_budget/features/transactions/transaction_repository.dart';
 import 'package:smart_budget/features/transactions/transaction_request_tracker.dart';

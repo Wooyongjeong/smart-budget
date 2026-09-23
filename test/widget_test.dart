@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:smart_budget/main.dart';
+import 'package:smart_budget/features/calendar/calendar_overview.dart';
 import 'package:smart_budget/themes.dart';
 import 'package:smart_budget/features/household/household_repository.dart';
 import 'package:smart_budget/features/household/household_screen.dart';
 import 'package:smart_budget/features/transactions/transaction_repository.dart';
-import 'package:smart_budget/features/transactions/calendar_summary.dart';
+import 'package:smart_budget/features/calendar/calendar_summary.dart';
 import 'localized_test_app.dart';
 
 class _HouseholdRepository implements HouseholdRepository {
