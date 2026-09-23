@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 
 import '../../l10n/generated/app_localizations.dart';
@@ -25,11 +26,13 @@ class TransactionHistoryScreen extends StatefulWidget {
     required this.repository,
     required this.initialDate,
     required this.onTransactionTap,
+    this.refreshSignal,
   });
 
   final TransactionRepository repository;
   final DateTime initialDate;
   final ValueChanged<Map<String, dynamic>> onTransactionTap;
+  final ValueListenable<int>? refreshSignal;
 
   @override
   State<TransactionHistoryScreen> createState() =>
@@ -56,8 +59,26 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
   @override
   void initState() {
     super.initState();
+    widget.refreshSignal?.addListener(_onRefreshSignal);
     _reload();
   }
+
+  @override
+  void didUpdateWidget(covariant TransactionHistoryScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.refreshSignal != widget.refreshSignal) {
+      oldWidget.refreshSignal?.removeListener(_onRefreshSignal);
+      widget.refreshSignal?.addListener(_onRefreshSignal);
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.refreshSignal?.removeListener(_onRefreshSignal);
+    super.dispose();
+  }
+
+  void _onRefreshSignal() => _refresh();
 
   DateTimeRange _range() {
     return switch (period) {

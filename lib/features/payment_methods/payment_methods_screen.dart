@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 
 import '../transactions/transaction_repository.dart';
 import '../../money_input.dart';
@@ -11,12 +12,14 @@ class PaymentMethodsScreen extends StatefulWidget {
     required this.contextData,
     this.onReturnToEntry,
     this.embedded = false,
+    this.refreshSignal,
   });
 
   final TransactionRepository repository;
   final HouseholdContext contextData;
   final VoidCallback? onReturnToEntry;
   final bool embedded;
+  final ValueListenable<int>? refreshSignal;
 
   @override
   State<PaymentMethodsScreen> createState() => _PaymentMethodsScreenState();
@@ -34,6 +37,29 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
   bool refreshFailed = false;
   String? voucherRequestId;
   _PaymentMethodDraft? failedVoucherDraft;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.refreshSignal?.addListener(_onRefreshSignal);
+  }
+
+  @override
+  void didUpdateWidget(covariant PaymentMethodsScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.refreshSignal != widget.refreshSignal) {
+      oldWidget.refreshSignal?.removeListener(_onRefreshSignal);
+      widget.refreshSignal?.addListener(_onRefreshSignal);
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.refreshSignal?.removeListener(_onRefreshSignal);
+    super.dispose();
+  }
+
+  void _onRefreshSignal() => refreshAll();
 
   Future<List<Map<String, dynamic>>> _loadCardSummary() =>
       widget.repository.cardPerformance(contextData.householdId, summaryMonth);

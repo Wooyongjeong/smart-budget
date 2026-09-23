@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 
@@ -15,6 +16,7 @@ class HouseholdScreen extends StatefulWidget {
     this.onHouseholdChanged,
     this.onDisplayNameChanged,
     this.invitationLinkBaseUrl = 'https://smart-budget.app/invite',
+    this.refreshSignal,
   });
 
   final HouseholdRepository repository;
@@ -22,6 +24,7 @@ class HouseholdScreen extends StatefulWidget {
   final ValueChanged<String>? onHouseholdChanged;
   final ValueChanged<String>? onDisplayNameChanged;
   final String invitationLinkBaseUrl;
+  final ValueListenable<int>? refreshSignal;
 
   @override
   State<HouseholdScreen> createState() => _HouseholdScreenState();
@@ -37,10 +40,28 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
   bool refreshFailed = false;
 
   @override
+  void initState() {
+    super.initState();
+    widget.refreshSignal?.addListener(_onRefreshSignal);
+  }
+
+  @override
+  void didUpdateWidget(covariant HouseholdScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.refreshSignal != widget.refreshSignal) {
+      oldWidget.refreshSignal?.removeListener(_onRefreshSignal);
+      widget.refreshSignal?.addListener(_onRefreshSignal);
+    }
+  }
+
+  @override
   void dispose() {
+    widget.refreshSignal?.removeListener(_onRefreshSignal);
     tokenController.dispose();
     super.dispose();
   }
+
+  void _onRefreshSignal() => refresh();
 
   void reload() {
     setState(() {
