@@ -89,8 +89,13 @@ class FakeRepository implements TransactionRepository {
   Future<TransactionQueryResult> query(
     String householdId,
     DateTime start,
-    DateTime end,
-  ) async =>
+    DateTime end, {
+    String? memberId,
+    String? paymentMethodId,
+    String? category,
+    TransactionQueryCursor? cursor,
+    int limit = 50,
+  }) async =>
       const TransactionQueryResult(items: [], totalIncome: 0, totalExpense: 0);
 }
 

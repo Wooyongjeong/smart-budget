@@ -54,6 +54,51 @@ class AppLocalizationsKo extends AppLocalizations {
   String get historyDescription => '일·주·월별로 내역을 모아볼 공간이에요.';
 
   @override
+  String get historyDay => '일';
+
+  @override
+  String get historyWeek => '주';
+
+  @override
+  String get historyMonth => '월';
+
+  @override
+  String get previousPeriod => '이전 기간';
+
+  @override
+  String get nextPeriod => '다음 기간';
+
+  @override
+  String get historyFilters => '필터';
+
+  @override
+  String get historyFilterTitle => '내역 필터';
+
+  @override
+  String get allMembers => '모든 구성원';
+
+  @override
+  String get allPaymentMethods => '모든 결제 수단';
+
+  @override
+  String get allCategories => '모든 카테고리';
+
+  @override
+  String get clearFilters => '필터 초기화';
+
+  @override
+  String get applyFilters => '필터 적용';
+
+  @override
+  String get loadMore => '더 보기';
+
+  @override
+  String get noMoreTransactions => '더 불러올 내역이 없어요.';
+
+  @override
+  String get historyPeriodEmpty => '선택한 기간에 거래가 없어요.';
+
+  @override
   String get walletDescription => '카드 실적과 상품권 잔액을 관리할 공간이에요.';
 
   @override

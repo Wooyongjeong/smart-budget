@@ -188,6 +188,96 @@ abstract class AppLocalizations {
   /// **'일·주·월별로 내역을 모아볼 공간이에요.'**
   String get historyDescription;
 
+  /// No description provided for @historyDay.
+  ///
+  /// In ko, this message translates to:
+  /// **'일'**
+  String get historyDay;
+
+  /// No description provided for @historyWeek.
+  ///
+  /// In ko, this message translates to:
+  /// **'주'**
+  String get historyWeek;
+
+  /// No description provided for @historyMonth.
+  ///
+  /// In ko, this message translates to:
+  /// **'월'**
+  String get historyMonth;
+
+  /// No description provided for @previousPeriod.
+  ///
+  /// In ko, this message translates to:
+  /// **'이전 기간'**
+  String get previousPeriod;
+
+  /// No description provided for @nextPeriod.
+  ///
+  /// In ko, this message translates to:
+  /// **'다음 기간'**
+  String get nextPeriod;
+
+  /// No description provided for @historyFilters.
+  ///
+  /// In ko, this message translates to:
+  /// **'필터'**
+  String get historyFilters;
+
+  /// No description provided for @historyFilterTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'내역 필터'**
+  String get historyFilterTitle;
+
+  /// No description provided for @allMembers.
+  ///
+  /// In ko, this message translates to:
+  /// **'모든 구성원'**
+  String get allMembers;
+
+  /// No description provided for @allPaymentMethods.
+  ///
+  /// In ko, this message translates to:
+  /// **'모든 결제 수단'**
+  String get allPaymentMethods;
+
+  /// No description provided for @allCategories.
+  ///
+  /// In ko, this message translates to:
+  /// **'모든 카테고리'**
+  String get allCategories;
+
+  /// No description provided for @clearFilters.
+  ///
+  /// In ko, this message translates to:
+  /// **'필터 초기화'**
+  String get clearFilters;
+
+  /// No description provided for @applyFilters.
+  ///
+  /// In ko, this message translates to:
+  /// **'필터 적용'**
+  String get applyFilters;
+
+  /// No description provided for @loadMore.
+  ///
+  /// In ko, this message translates to:
+  /// **'더 보기'**
+  String get loadMore;
+
+  /// No description provided for @noMoreTransactions.
+  ///
+  /// In ko, this message translates to:
+  /// **'더 불러올 내역이 없어요.'**
+  String get noMoreTransactions;
+
+  /// No description provided for @historyPeriodEmpty.
+  ///
+  /// In ko, this message translates to:
+  /// **'선택한 기간에 거래가 없어요.'**
+  String get historyPeriodEmpty;
+
   /// No description provided for @walletDescription.
   ///
   /// In ko, this message translates to:

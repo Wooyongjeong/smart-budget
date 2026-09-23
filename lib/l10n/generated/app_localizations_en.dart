@@ -54,6 +54,51 @@ class AppLocalizationsEn extends AppLocalizations {
   String get historyDescription => 'Browse daily, weekly, and monthly records.';
 
   @override
+  String get historyDay => 'Day';
+
+  @override
+  String get historyWeek => 'Week';
+
+  @override
+  String get historyMonth => 'Month';
+
+  @override
+  String get previousPeriod => 'Previous period';
+
+  @override
+  String get nextPeriod => 'Next period';
+
+  @override
+  String get historyFilters => 'Filters';
+
+  @override
+  String get historyFilterTitle => 'Transaction filters';
+
+  @override
+  String get allMembers => 'All members';
+
+  @override
+  String get allPaymentMethods => 'All payment methods';
+
+  @override
+  String get allCategories => 'All categories';
+
+  @override
+  String get clearFilters => 'Clear filters';
+
+  @override
+  String get applyFilters => 'Apply filters';
+
+  @override
+  String get loadMore => 'Load more';
+
+  @override
+  String get noMoreTransactions => 'No more transactions.';
+
+  @override
+  String get historyPeriodEmpty => 'No transactions in this period.';
+
+  @override
   String get walletDescription => 'Track card spending and voucher balances.';
 
   @override

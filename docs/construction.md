@@ -1,5 +1,13 @@
 # Construction 진행
 
+## TX02 — 내역 기간·필터·페이지네이션
+
+구현 브랜치: `feat/transaction-history-filters`.
+
+내역 탭을 독립 상태 화면으로 분리해 일·주·월 기간 선택, 이전/다음 기간 이동, 구성원·결제 수단·카테고리 필터, cursor 기반 더 보기 pagination을 연결했다. 기간과 필터가 바뀌면 첫 페이지부터 다시 조회하며, 목록과 합계는 같은 query 조건을 사용한다. 기존 `query_transactions` RPC의 커서 인자를 repository에 노출하고 응답 마지막 행으로 다음 커서를 계산한다. 거래 행에는 수입/지출 부호와 유형을 표시하고 상세 화면 진입도 유지한다.
+
+검증: 내역 기간 이동·다음 페이지 위젯 테스트, `flutter test`, `flutter analyze`, `git diff --check`, macOS debug build를 커밋 전 실행한다. Supabase 원격에서 필터 조합과 2페이지 데이터의 실제 RPC 결과는 별도 확인이 필요하다.
+
 ## TX01 — 거래 상세·수정·무효화 연결
 
 구현 브랜치: `feat/transaction-detail-edit-void`.
