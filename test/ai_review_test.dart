@@ -86,8 +86,9 @@ class FakeRepository implements TransactionRepository {
     String k,
     String v,
     int p,
-    int a,
-  ) async {}
+    int a, {
+    DateTime? occurredOn,
+  }) async {}
   @override
   Future<List<Map<String, dynamic>>> cardPerformance(
     String h,

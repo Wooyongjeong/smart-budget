@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import '../../business_date.dart';
 import 'package:intl/intl.dart';
 import 'transaction_draft.dart';
 import 'transaction_repository.dart';
@@ -50,8 +51,9 @@ class ReceiptFixtureItem {
   factory ReceiptFixtureItem.fromAnalysis(
     ReceiptAnalysisItem item,
     HouseholdContext context,
-    AppLocalizations l10n,
-  ) {
+    AppLocalizations l10n, {
+    BusinessDateProvider businessDateProvider = const BusinessDateProvider(),
+  }) {
     final member = context.members.isEmpty ? null : context.members.first;
     final parsedDate = _parseAnalysisDate(item.date);
     final category = _categories.contains(item.categoryHint)
@@ -60,7 +62,7 @@ class ReceiptFixtureItem {
     final result = ReceiptFixtureItem(
       draft: TransactionDraft(
         kind: TransactionKind.expense,
-        occurredOn: parsedDate ?? DateTime.now(),
+        occurredOn: parsedDate ?? businessDateProvider.today,
         amountWon: item.amount,
         merchant: item.merchant ?? '',
         category: category,
@@ -120,10 +122,12 @@ class AiReviewScreen extends StatefulWidget {
     required this.repository,
     required this.contextData,
     this.analysisClient,
+    this.businessDateProvider = const BusinessDateProvider(),
   });
   final TransactionRepository repository;
   final HouseholdContext contextData;
   final ReceiptAnalysisClient? analysisClient;
+  final BusinessDateProvider businessDateProvider;
   @override
   State<AiReviewScreen> createState() => _AiReviewScreenState();
 }
@@ -284,6 +288,7 @@ class _AiReviewScreenState extends State<AiReviewScreen> {
                 item,
                 widget.contextData,
                 AppLocalizations.of(context)!,
+                businessDateProvider: widget.businessDateProvider,
               ),
             )
             .toList();

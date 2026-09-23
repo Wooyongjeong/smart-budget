@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'l10n/generated/app_localizations.dart';
 
+import 'business_date.dart';
 import 'themes.dart';
 import 'entry_form.dart';
 import 'money_input.dart';
@@ -78,6 +79,7 @@ class CalendarOverview extends StatefulWidget {
     this.hasRefreshError = false,
     this.onRetry,
     this.onRefresh,
+    this.businessDateProvider = const BusinessDateProvider(),
   });
   final DateTime selectedDate;
   final TransactionQueryResult? result;
@@ -89,6 +91,7 @@ class CalendarOverview extends StatefulWidget {
   final bool hasRefreshError;
   final VoidCallback? onRetry;
   final Future<void> Function()? onRefresh;
+  final BusinessDateProvider businessDateProvider;
 
   @override
   State<CalendarOverview> createState() => _CalendarOverviewState();
@@ -98,8 +101,7 @@ class _CalendarOverviewState extends State<CalendarOverview> {
   int _pickerRevision = 0;
 
   void _goToToday() {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
+    final today = widget.businessDateProvider.today;
     setState(() => _pickerRevision++);
     widget.onDateChanged(today);
   }
@@ -168,6 +170,7 @@ class _CalendarOverviewState extends State<CalendarOverview> {
             selectedDate: widget.selectedDate,
             summaries: summaries,
             onDateChanged: widget.onDateChanged,
+            businessDateProvider: widget.businessDateProvider,
           ),
         ),
         const SizedBox(height: 8),
@@ -591,6 +594,7 @@ class BudgetApp extends StatefulWidget {
     this.invitationLinkBaseUrl = 'https://smart-budget.app/invite',
     this.entryPaymentMethods = const [],
     this.entryMembers = const [],
+    this.businessDateProvider = const BusinessDateProvider(),
   });
   final String? initialTheme;
   final String? initialLocale;
@@ -603,6 +607,7 @@ class BudgetApp extends StatefulWidget {
   final String invitationLinkBaseUrl;
   final List<PaymentMethodOption> entryPaymentMethods;
   final List<MemberOption> entryMembers;
+  final BusinessDateProvider businessDateProvider;
 
   @override
   State<BudgetApp> createState() => _BudgetAppState();
@@ -624,7 +629,7 @@ class _BudgetAppState extends State<BudgetApp> with WidgetsBindingObserver {
   Timer? resumeRefreshTimer;
   bool openingEntry = false;
   String displayName = '나';
-  DateTime selectedDate = DateTime.now();
+  late DateTime selectedDate = widget.businessDateProvider.today;
   late Future<TransactionQueryResult>? overview = _loadOverview(selectedDate);
   final messenger = GlobalKey<ScaffoldMessengerState>();
   AppLocalizations get _l10n => lookupAppLocalizations(locale);
@@ -781,6 +786,7 @@ class _BudgetAppState extends State<BudgetApp> with WidgetsBindingObserver {
         MaterialPageRoute<void>(
           builder: (_) => EntryForm(
             initialDate: initialDate,
+            businessDateProvider: widget.businessDateProvider,
             paymentMethods: data.paymentMethods,
             members: data.members,
             onManagePaymentMethods: data.paymentMethods.isEmpty
@@ -880,6 +886,7 @@ class _BudgetAppState extends State<BudgetApp> with WidgetsBindingObserver {
             repository: repository,
             contextData: data,
             analysisClient: SupabaseReceiptAnalysisClient(),
+            businessDateProvider: widget.businessDateProvider,
           ),
         ),
       );
@@ -905,6 +912,7 @@ class _BudgetAppState extends State<BudgetApp> with WidgetsBindingObserver {
             repository: repository,
             contextData: data,
             refreshSignal: refreshSignal,
+            businessDateProvider: widget.businessDateProvider,
           ),
         ),
       );
@@ -1144,6 +1152,7 @@ class _BudgetAppState extends State<BudgetApp> with WidgetsBindingObserver {
                       contextData: snapshot.data!,
                       embedded: true,
                       refreshSignal: refreshSignal,
+                      businessDateProvider: widget.businessDateProvider,
                     );
                   },
                 )
@@ -1206,6 +1215,7 @@ class _BudgetAppState extends State<BudgetApp> with WidgetsBindingObserver {
                                 : snapshot.data ?? currentOverviewResult;
                             return CalendarOverview(
                               selectedDate: selectedDate,
+                              businessDateProvider: widget.businessDateProvider,
                               result: result,
                               onDateChanged: selectCalendarDate,
                               onTransactionTap: openTransaction,

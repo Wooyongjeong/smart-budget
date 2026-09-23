@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../business_date.dart';
 import 'transaction_draft.dart';
 
 class PaymentMethodOption {
@@ -155,8 +156,9 @@ abstract interface class TransactionRepository {
     String kind,
     String voucherId,
     int paidAmountWon,
-    int voucherAmountWon,
-  );
+    int voucherAmountWon, {
+    DateTime? occurredOn,
+  });
   Future<List<Map<String, dynamic>>> cardPerformance(
     String householdId,
     DateTime month,
@@ -350,8 +352,9 @@ class SupabaseTransactionRepository implements TransactionRepository {
     String kind,
     String voucherId,
     int paidAmountWon,
-    int voucherAmountWon,
-  ) async {
+    int voucherAmountWon, {
+    DateTime? occurredOn,
+  }) async {
     await client.rpc(
       'record_voucher_event',
       params: {
@@ -360,7 +363,9 @@ class SupabaseTransactionRepository implements TransactionRepository {
         'p_voucher_id': voucherId,
         'p_paid_amount_won': paidAmountWon,
         'p_voucher_amount_won': voucherAmountWon,
-        'p_occurred_on': _dateOnly(DateTime.now()),
+        'p_occurred_on': _dateOnly(
+          occurredOn ?? BusinessDateProvider.current.today,
+        ),
         'p_merchant': kind == 'voucher_topup' ? '상품권 충전' : '상품권 사용',
       },
     );
