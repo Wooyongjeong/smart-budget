@@ -221,4 +221,22 @@ void main() {
     expect(repository.requestIds.last, repository.requestIds.first);
     expect(repository.savedCount, 2);
   });
+
+  testWidgets('shows item validation guidance and disables saving', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      localizedTestApp(
+        home: AiReviewScreen(
+          repository: FakeRepository(),
+          contextData: await FakeRepository().loadContext(),
+        ),
+      ),
+    );
+    await tester.enterText(find.byType(TextField).at(1), '');
+    await tester.pump();
+    expect(find.text('사용처 미입력'), findsAtLeastNWidgets(1));
+    final save = tester.widget<FilledButton>(find.byType(FilledButton).last);
+    expect(save.onPressed, isNull);
+  });
 }
