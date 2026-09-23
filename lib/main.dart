@@ -1278,8 +1278,32 @@ class _BudgetAppState extends State<BudgetApp> {
                     ] else ...[
                       _TopHeader(
                         eyebrow: l10n.settings,
-                        title: l10n.themeTitle,
+                        title: l10n.settings,
                         displayName: displayName,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        l10n.profileSection,
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                      const SizedBox(height: 8),
+                      Card(
+                        child: ListTile(
+                          leading: const Icon(Icons.person_outline_rounded),
+                          title: Text(displayName),
+                          subtitle: Text(l10n.displayName),
+                          trailing: widget.householdRepository == null
+                              ? null
+                              : const Icon(Icons.chevron_right_rounded),
+                          onTap: widget.householdRepository == null
+                              ? null
+                              : () => openHousehold(context),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      Text(
+                        l10n.screenSection,
+                        style: Theme.of(context).textTheme.titleLarge,
                       ),
                       const SizedBox(height: 8),
                       Text(l10n.themeDescription),

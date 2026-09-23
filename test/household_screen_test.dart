@@ -103,7 +103,12 @@ void main() {
   });
 
   testWidgets('accepts a valid code and refreshes members', (tester) async {
-    final repository = _Repository();
+    final repository = _Repository()
+      ..value = const HouseholdOverview(
+        id: 'household-1',
+        name: '초대 대기 가계부',
+        members: [HouseholdMember(id: 'member-1', name: '초대자')],
+      );
     String? selectedHousehold;
     await tester.pumpWidget(
       _app(
@@ -124,6 +129,14 @@ void main() {
     expect(selectedHousehold, 'household-2');
     expect(find.text('구성원 2/2명'), findsOneWidget);
     expect(find.text('배우자'), findsOneWidget);
+  });
+
+  testWidgets('hides invitation acceptance for an active member', (tester) async {
+    final repository = _Repository();
+    await tester.pumpWidget(_app(repository));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('invitation-token')), findsNothing);
+    expect(find.text('공동 가계부 참여'), findsNothing);
   });
 
   testWidgets('uses 나 as the fallback and lets me edit my display name', (
