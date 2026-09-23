@@ -127,6 +127,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('동네 마트'), findsOneWidget);
+    expect(find.text('−12,000원'), findsOneWidget);
     expect(repository.calls.single.start, DateTime(2026, 9, 1));
     await tester.tap(find.byTooltip('다음 기간'));
     await tester.pumpAndSettle();

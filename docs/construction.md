@@ -1,5 +1,13 @@
 # Construction 진행
 
+## TX03 — 거래 목록의 수입·지출 시각 구분
+
+구현 브랜치: `feat/transaction-list-visual-semantics`.
+
+캘린더 날짜별 거래와 거래 상세 금액에 수입 `+`/지출 `−` 부호를 추가하고, 목록 아이콘·색상·유형 라벨을 함께 표시했다. 색상만으로 의미를 전달하지 않으며 기존 내역 탭과 같은 표현을 사용한다. 상세 화면에서도 동일한 부호를 유지한다.
+
+검증: 내역 위젯에서 지출 부호 회귀 확인, `flutter test` 50개, `flutter analyze`, `git diff --check`, macOS debug build 통과.
+
 ## TX02 — 내역 기간·필터·페이지네이션
 
 구현 브랜치: `feat/transaction-history-filters`.
