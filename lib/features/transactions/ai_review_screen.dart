@@ -120,6 +120,7 @@ class _AiReviewScreenState extends State<AiReviewScreen> {
   bool saving = false;
   bool analyzing = false;
   String? fileName;
+  Uint8List? sourceBytes;
   String? saveRequestId;
 
   bool _isComplete(ReceiptFixtureItem item) {
@@ -245,6 +246,7 @@ class _AiReviewScreenState extends State<AiReviewScreen> {
     setState(() {
       analyzing = true;
       fileName = file.name;
+      sourceBytes = Uint8List.fromList(bytes);
     });
     try {
       final analysis = await client.analyze(
@@ -341,16 +343,28 @@ class _AiReviewScreenState extends State<AiReviewScreen> {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 120),
         children: [
-          if (items.isNotEmpty)
-            Container(
-              height: 152,
-              margin: const EdgeInsets.only(bottom: 16),
-              decoration: BoxDecoration(
-                color: const Color(0xff232928),
-                borderRadius: BorderRadius.circular(28),
+          if (items.isNotEmpty && sourceBytes != null)
+            GestureDetector(
+              key: const ValueKey('receipt-source-preview'),
+              onTap: () => showDialog<void>(
+                context: context,
+                builder: (_) => Dialog(
+                  child: InteractiveViewer(
+                    minScale: 1,
+                    maxScale: 4,
+                    child: Image.memory(sourceBytes!, fit: BoxFit.contain),
+                  ),
+                ),
               ),
-              child: Center(
-                child: Column(
+              child: Container(
+                height: 152,
+                margin: const EdgeInsets.only(bottom: 16),
+                decoration: BoxDecoration(
+                  color: const Color(0xff232928),
+                  borderRadius: BorderRadius.circular(28),
+                ),
+                child: Center(
+                  child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     const Icon(
@@ -372,6 +386,7 @@ class _AiReviewScreenState extends State<AiReviewScreen> {
                       style: TextStyle(color: Colors.white60, fontSize: 13),
                     ),
                   ],
+                  ),
                 ),
               ),
             ),

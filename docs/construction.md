@@ -1,5 +1,13 @@
 # Construction 진행
 
+## AI01 — AI 원본 미리보기와 확대
+
+구현 브랜치: `feat/receipt-source-preview`.
+
+이미지 분석 세션에서 선택한 바이트를 메모리에만 유지하고, 이미지가 분석된 경우 실제 원본 미리보기 카드를 표시한다. 카드를 누르면 `InteractiveViewer` dialog에서 확대·축소·pan을 지원하며 fixture 모드처럼 이미지 바이트가 없는 상태에서는 원본 확대 UI를 표시하지 않는다. 분석 재시도 시 새 바이트로 교체되고 파일 시스템 원본은 변경하지 않는다.
+
+검증: 이미지 바이트가 없는 fixture에서 확대 UI를 숨기는 기존 회귀와 analyze를 확인했다. 실제 file_picker를 통한 이미지 선택·확대 동작은 macOS/iOS 실기기에서 추가 확인한다.
+
 ## INV01 — 전체 초대 링크 붙여넣기
 
 구현 브랜치: `feat/invitation-link-paste`.
