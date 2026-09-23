@@ -74,6 +74,26 @@ class _Repository implements TransactionRepository {
   @override
   Future<void> save(String h, TransactionDraft d) async {}
   @override
+  Future<PaymentMethodOption> addVoucher(
+    String h,
+    String name,
+    String? owner,
+    int paid,
+    int amount,
+    String? source,
+  ) async {
+    final method = PaymentMethodOption(
+      id: 'new-voucher',
+      name: name,
+      kind: 'voucher',
+      ownerMemberId: owner,
+    );
+    methods.add(method);
+    voucherAmount += amount;
+    return method;
+  }
+
+  @override
   Future<void> saveMany(
     String h,
     List<TransactionDraft> d, {
@@ -145,6 +165,30 @@ void main() {
     await tester.tap(find.text('등록').last);
     await tester.pumpAndSettle();
     expect(find.text('생활비 현금'), findsOneWidget);
+  });
+
+  testWidgets('registers a voucher with its initial balance atomically', (
+    tester,
+  ) async {
+    final repository = _Repository();
+    await tester.pumpWidget(
+      localizedTestApp(
+        home: PaymentMethodsScreen(
+          repository: repository,
+          contextData: await repository.loadContext(),
+        ),
+      ),
+    );
+    await tester.tap(find.text('상품권 등록'));
+    await tester.pumpAndSettle();
+    final fields = find.byType(TextFormField);
+    await tester.enterText(fields.at(0), '온누리');
+    await tester.enterText(fields.at(1), '90000');
+    await tester.enterText(fields.at(2), '100000');
+    await tester.tap(find.text('등록').last);
+    await tester.pumpAndSettle();
+    expect(find.text('온누리'), findsOneWidget);
+    expect(find.textContaining('잔액 100,000원'), findsOneWidget);
   });
 
   testWidgets('updates a card target and refreshes the summary', (

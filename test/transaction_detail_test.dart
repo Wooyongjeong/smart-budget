@@ -39,6 +39,15 @@ class _Repository implements TransactionRepository {
 
   @override
   Future<void> save(String h, TransactionDraft d) async {}
+  @override
+  Future<PaymentMethodOption> addVoucher(
+    String h,
+    String name,
+    String? owner,
+    int paid,
+    int amount,
+    String? source,
+  ) => throw UnimplementedError();
 
   @override
   Future<void> saveMany(

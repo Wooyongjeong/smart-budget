@@ -55,27 +55,28 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
       context: context,
       builder: (context) => _PaymentMethodDialog(
         members: widget.contextData.members,
+        paymentMethods: widget.contextData.paymentMethods,
         initialKind: initialKind,
       ),
     );
     if (result == null || !mounted) return;
     setState(() => saving = true);
     try {
-      final method = await widget.repository.addPaymentMethod(
-        widget.contextData.householdId,
-        result.kind,
-        result.name,
-        result.ownerMemberId,
-      );
-      if (result.kind == 'voucher' && result.paidAmountWon != null) {
-        await widget.repository.recordVoucherEvent(
-          widget.contextData.householdId,
-          'voucher_topup',
-          method.id,
-          result.paidAmountWon!,
-          result.voucherAmountWon!,
-        );
-      }
+      final method = result.kind == 'voucher'
+          ? await widget.repository.addVoucher(
+              widget.contextData.householdId,
+              result.name,
+              result.ownerMemberId,
+              result.paidAmountWon!,
+              result.voucherAmountWon!,
+              result.sourcePaymentMethodId,
+            )
+          : await widget.repository.addPaymentMethod(
+              widget.contextData.householdId,
+              result.kind,
+              result.name,
+              result.ownerMemberId,
+            );
       if ((result.kind == 'debit_card' || result.kind == 'credit_card') &&
           result.targetAmountWon != null) {
         await widget.repository.setCardTarget(
@@ -581,6 +582,7 @@ class _PaymentMethodDraft {
     this.ownerMemberId, {
     this.paidAmountWon,
     this.voucherAmountWon,
+    this.sourcePaymentMethodId,
     this.targetAmountWon,
   });
   final String kind;
@@ -588,15 +590,18 @@ class _PaymentMethodDraft {
   final String? ownerMemberId;
   final int? paidAmountWon;
   final int? voucherAmountWon;
+  final String? sourcePaymentMethodId;
   final int? targetAmountWon;
 }
 
 class _PaymentMethodDialog extends StatefulWidget {
   const _PaymentMethodDialog({
     required this.members,
+    required this.paymentMethods,
     this.initialKind = 'cash',
   });
   final List<MemberOption> members;
+  final List<PaymentMethodOption> paymentMethods;
   final String initialKind;
   @override
   State<_PaymentMethodDialog> createState() => _PaymentMethodDialogState();
@@ -610,6 +615,7 @@ class _PaymentMethodDialogState extends State<_PaymentMethodDialog> {
   final targetAmount = TextEditingController();
   late String kind = widget.initialKind;
   String? owner;
+  String? sourcePaymentMethodId;
 
   @override
   void dispose() {
@@ -672,6 +678,23 @@ class _PaymentMethodDialogState extends State<_PaymentMethodDialog> {
                     ? l10n.paidAmountRequired
                     : null,
               ),
+              DropdownButtonFormField<String>(
+                initialValue: sourcePaymentMethodId,
+                decoration: InputDecoration(labelText: l10n.paymentMethod),
+                items: [
+                  DropdownMenuItem(value: null, child: Text(l10n.none)),
+                  ...widget.paymentMethods
+                      .where((method) => method.kind != 'voucher')
+                      .map(
+                        (method) => DropdownMenuItem(
+                          value: method.id,
+                          child: Text(method.name),
+                        ),
+                      ),
+                ],
+                onChanged: (value) =>
+                    setState(() => sourcePaymentMethodId = value),
+              ),
               TextFormField(
                 controller: voucherAmount,
                 keyboardType: TextInputType.number,
@@ -732,6 +755,7 @@ class _PaymentMethodDialogState extends State<_PaymentMethodDialog> {
                   owner,
                   paidAmountWon: parseWon(paidAmount.text),
                   voucherAmountWon: parseWon(voucherAmount.text),
+                  sourcePaymentMethodId: sourcePaymentMethodId,
                   targetAmountWon: parseWon(targetAmount.text),
                 ),
               );

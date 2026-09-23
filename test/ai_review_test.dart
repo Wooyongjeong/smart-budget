@@ -21,6 +21,15 @@ class FakeRepository implements TransactionRepository {
   @override
   Future<void> save(String householdId, TransactionDraft draft) async {}
   @override
+  Future<PaymentMethodOption> addVoucher(
+    String h,
+    String name,
+    String? owner,
+    int paid,
+    int amount,
+    String? source,
+  ) => throw UnimplementedError();
+  @override
   Future<void> saveMany(
     String householdId,
     List<TransactionDraft> drafts, {
