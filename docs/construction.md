@@ -8,7 +8,7 @@ MVP 업무 날짜 정책은 사용자가 승인한 `Asia/Seoul` 고정 오프셋
 
 새 migration은 상품권 최초 등록일과 AI 분석 일일 한도의 데이터베이스 날짜도 `Asia/Seoul`로 고정한다. 기존 데이터는 변경하지 않는다. 날짜 계산을 여러 기기 로컬 시간대에 의존하지 않도록 했다.
 
-검증: UTC 15:00의 서울 자정 전후, 연말 경계 단위 테스트와 직접 입력/지갑 월 주입 테스트, 전체 `flutter test`, `flutter analyze`, `git diff --check`, macOS debug build. 로컬 PostgreSQL에서 선행 migration과 TIME01 migration을 한 트랜잭션으로 적용해 함수 정의를 확인한 뒤 rollback했다. 로컬 DB에 pgTAP extension이 없어 `supabase db test`는 실행하지 않았다. `supabase db lint --local`은 실행했고 기존 함수의 warning 2건만 보고했다. 원격 DB 적용 및 해외 이동/가계부별 시간대 선택은 미검증·MVP 범위 밖이다.
+검증: UTC 15:00의 서울 자정 전후, 연말 경계 단위 테스트와 직접 입력/지갑 월 주입 테스트, 전체 `flutter test`, `flutter analyze`, `git diff --check`, macOS debug build. 로컬 PostgreSQL에서 선행 migration과 TIME01 migration을 한 트랜잭션으로 적용해 함수 정의를 확인한 뒤 rollback했다. `supabase db test`는 현재 로컬 DB에 미적용인 T09/WAL01 선행 migration 때문에 실패했고, TIME01 pgTAP 자체 실행도 로컬 PostgreSQL에 pgTAP 함수가 없어 불가능했다. `supabase db lint --local`은 실행했고 기존 함수의 warning 2건만 보고했다. 원격 DB 적용 및 해외 이동/가계부별 시간대 선택은 미검증·MVP 범위 밖이다.
 
 ## SYNC01 — 공동 데이터 수동 새로고침
 
