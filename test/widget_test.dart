@@ -4,6 +4,7 @@ import 'package:smart_budget/main.dart';
 import 'package:smart_budget/themes.dart';
 import 'package:smart_budget/features/household/household_repository.dart';
 import 'package:smart_budget/features/household/household_screen.dart';
+import 'package:smart_budget/features/transactions/transaction_repository.dart';
 import 'localized_test_app.dart';
 
 class _HouseholdRepository implements HouseholdRepository {
@@ -38,6 +39,52 @@ class _HouseholdRepository implements HouseholdRepository {
 }
 
 void main() {
+  testWidgets('calendar today button selects today and resets the picker', (
+    tester,
+  ) async {
+    final today = DateUtils.dateOnly(DateTime.now());
+    var selectedDate = today;
+    await tester.pumpWidget(
+      localizedTestApp(
+        home: StatefulBuilder(
+          builder: (context, setState) => Scaffold(
+            body: CalendarOverview(
+              selectedDate: selectedDate,
+              result: const TransactionQueryResult(
+                items: [],
+                totalIncome: 0,
+                totalExpense: 0,
+              ),
+              onDateChanged: (value) {
+                setState(() => selectedDate = value);
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+
+    final pickerContext = tester.element(find.byType(CalendarDatePicker));
+    final todayMonth = MaterialLocalizations.of(
+      pickerContext,
+    ).formatMonthYear(today);
+    await tester.tap(find.byIcon(Icons.chevron_right));
+    await tester.pumpAndSettle();
+    expect(find.text(todayMonth), findsNothing);
+
+    await tester.tap(find.byKey(const ValueKey('calendar-today')));
+    await tester.pumpAndSettle();
+
+    expect(selectedDate, today);
+    expect(find.text(todayMonth), findsOneWidget);
+    expect(
+      tester
+          .widget<CalendarDatePicker>(find.byType(CalendarDatePicker))
+          .initialDate,
+      selectedDate,
+    );
+  });
+
   testWidgets('profile avatar uses the saved display name initial', (
     tester,
   ) async {

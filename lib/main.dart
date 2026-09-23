@@ -60,7 +60,7 @@ Future<void> main() async {
   );
 }
 
-class CalendarOverview extends StatelessWidget {
+class CalendarOverview extends StatefulWidget {
   const CalendarOverview({
     super.key,
     required this.selectedDate,
@@ -72,23 +72,47 @@ class CalendarOverview extends StatelessWidget {
   final ValueChanged<DateTime> onDateChanged;
 
   @override
+  State<CalendarOverview> createState() => _CalendarOverviewState();
+}
+
+class _CalendarOverviewState extends State<CalendarOverview> {
+  int _pickerRevision = 0;
+
+  void _goToToday() {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    setState(() => _pickerRevision++);
+    widget.onDateChanged(today);
+  }
+
+  @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final items =
-        result?.items
-            .where((item) => item['occurred_on'] == _date(selectedDate))
+        widget.result?.items
+            .where((item) => item['occurred_on'] == _date(widget.selectedDate))
             .toList() ??
         [];
     return Column(
       children: [
+        Align(
+          alignment: Alignment.centerRight,
+          child: TextButton.icon(
+            key: const ValueKey('calendar-today'),
+            onPressed: _goToToday,
+            icon: const Icon(Icons.today_outlined, size: 18),
+            label: Text(l10n.today),
+          ),
+        ),
         CalendarDatePicker(
-          initialDate: selectedDate,
+          key: ValueKey(_pickerRevision),
+          initialDate: widget.selectedDate,
           firstDate: DateTime(2000),
           lastDate: DateTime(2100),
-          onDateChanged: onDateChanged,
+          onDateChanged: widget.onDateChanged,
         ),
         const SizedBox(height: 8),
-        if (result == null)
+        if (widget.result == null)
           const Padding(
             padding: EdgeInsets.all(16),
             child: CircularProgressIndicator(),
