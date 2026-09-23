@@ -128,6 +128,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get themeTitle => 'App theme';
 
   @override
+  String get profileSection => 'Profile';
+
+  @override
+  String get screenSection => 'Screen';
+
+  @override
   String get themeDescription =>
       'Choose colors for your budget.\nThe theme is saved only on this device.';
 
@@ -550,6 +556,26 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get receiptMerchantMissing => 'Merchant required';
+
+  @override
+  String get receiptDateMissing => 'Check the date';
+
+  @override
+  String get receiptAmountMissing => 'Check the amount';
+
+  @override
+  String get receiptCategoryMissing => 'Select a category';
+
+  @override
+  String get receiptPaymentMethodMissing => 'Select a payment method';
+
+  @override
+  String get receiptMemberMissing => 'Select the actual user';
+
+  @override
+  String receiptRemainingErrors(Object count) {
+    return '$count item(s) need attention';
+  }
 
   @override
   String get receiptImageSize => 'Choose an image no larger than 10 MB.';

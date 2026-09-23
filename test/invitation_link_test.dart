@@ -72,4 +72,18 @@ void main() {
       'https://smart-budget.app/invite/$token',
     );
   });
+
+  test('normalizes pasted tokens and full links to the token', () {
+    expect(
+      invitationTokenFromInput(
+        ' https://smart-budget.app/invite/$token ',
+        allowedWebHost: 'smart-budget.app',
+      ),
+      token,
+    );
+    expect(
+      invitationTokenFromInput(token, allowedWebHost: 'smart-budget.app'),
+      token,
+    );
+  });
 }

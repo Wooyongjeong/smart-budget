@@ -326,6 +326,18 @@ abstract class AppLocalizations {
   /// **'앱 테마'**
   String get themeTitle;
 
+  /// No description provided for @profileSection.
+  ///
+  /// In ko, this message translates to:
+  /// **'프로필'**
+  String get profileSection;
+
+  /// No description provided for @screenSection.
+  ///
+  /// In ko, this message translates to:
+  /// **'화면'**
+  String get screenSection;
+
   /// No description provided for @themeDescription.
   ///
   /// In ko, this message translates to:
@@ -1117,6 +1129,42 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'사용처 미입력'**
   String get receiptMerchantMissing;
+
+  /// No description provided for @receiptDateMissing.
+  ///
+  /// In ko, this message translates to:
+  /// **'날짜를 확인해 주세요'**
+  String get receiptDateMissing;
+
+  /// No description provided for @receiptAmountMissing.
+  ///
+  /// In ko, this message translates to:
+  /// **'금액을 확인해 주세요'**
+  String get receiptAmountMissing;
+
+  /// No description provided for @receiptCategoryMissing.
+  ///
+  /// In ko, this message translates to:
+  /// **'카테고리를 선택해 주세요'**
+  String get receiptCategoryMissing;
+
+  /// No description provided for @receiptPaymentMethodMissing.
+  ///
+  /// In ko, this message translates to:
+  /// **'결제 수단을 선택해 주세요'**
+  String get receiptPaymentMethodMissing;
+
+  /// No description provided for @receiptMemberMissing.
+  ///
+  /// In ko, this message translates to:
+  /// **'실제 사용자를 선택해 주세요'**
+  String get receiptMemberMissing;
+
+  /// No description provided for @receiptRemainingErrors.
+  ///
+  /// In ko, this message translates to:
+  /// **'수정이 필요한 항목 {count}개'**
+  String receiptRemainingErrors(Object count);
 
   /// No description provided for @receiptImageSize.
   ///

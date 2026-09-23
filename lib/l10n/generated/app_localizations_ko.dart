@@ -127,6 +127,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get themeTitle => '앱 테마';
 
   @override
+  String get profileSection => '프로필';
+
+  @override
+  String get screenSection => '화면';
+
+  @override
   String get themeDescription => '우리 가계부를 나만의 색으로\n선택한 테마는 이 기기에만 적용돼요.';
 
   @override
@@ -538,6 +544,26 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get receiptMerchantMissing => '사용처 미입력';
+
+  @override
+  String get receiptDateMissing => '날짜를 확인해 주세요';
+
+  @override
+  String get receiptAmountMissing => '금액을 확인해 주세요';
+
+  @override
+  String get receiptCategoryMissing => '카테고리를 선택해 주세요';
+
+  @override
+  String get receiptPaymentMethodMissing => '결제 수단을 선택해 주세요';
+
+  @override
+  String get receiptMemberMissing => '실제 사용자를 선택해 주세요';
+
+  @override
+  String receiptRemainingErrors(Object count) {
+    return '수정이 필요한 항목 $count개';
+  }
 
   @override
   String get receiptImageSize => '10MB 이하의 이미지를 선택해 주세요.';
