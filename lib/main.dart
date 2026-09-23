@@ -18,7 +18,9 @@ import 'features/transactions/transaction_repository.dart';
 import 'features/transactions/transaction_request_tracker.dart';
 import 'features/transactions/transaction_detail_screen.dart';
 import 'features/transactions/transaction_history_screen.dart';
-import 'features/transactions/calendar_summary.dart';
+import 'features/calendar/calendar_overview.dart';
+import 'features/transactions/monthly_summary_card.dart';
+import 'features/transactions/query_error_state.dart';
 import 'features/transactions/transaction_display.dart';
 import 'features/transactions/ai_review_screen.dart';
 import 'features/transactions/receipt_analysis.dart';
@@ -28,6 +30,8 @@ import 'features/household/household_screen.dart';
 import 'features/household/invitation_link.dart';
 import 'features/household/invitation_onboarding_screen.dart';
 import 'features/household/nickname_onboarding_screen.dart';
+import 'features/settings/settings_screen.dart';
+import 'features/shared/app_page_header.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -64,344 +68,6 @@ Future<void> main() async {
       saveLocale: (code) => preferences.setString('locale_code', code),
     ),
   );
-}
-
-class CalendarOverview extends StatefulWidget {
-  const CalendarOverview({
-    super.key,
-    required this.selectedDate,
-    required this.result,
-    required this.onDateChanged,
-    this.onTransactionTap,
-    this.isLoading = false,
-    this.isRefreshing = false,
-    this.hasError = false,
-    this.hasRefreshError = false,
-    this.onRetry,
-    this.onRefresh,
-    this.businessDateProvider = const BusinessDateProvider(),
-  });
-  final DateTime selectedDate;
-  final TransactionQueryResult? result;
-  final ValueChanged<DateTime> onDateChanged;
-  final ValueChanged<Map<String, dynamic>>? onTransactionTap;
-  final bool isLoading;
-  final bool isRefreshing;
-  final bool hasError;
-  final bool hasRefreshError;
-  final VoidCallback? onRetry;
-  final Future<void> Function()? onRefresh;
-  final BusinessDateProvider businessDateProvider;
-
-  @override
-  State<CalendarOverview> createState() => _CalendarOverviewState();
-}
-
-class _CalendarOverviewState extends State<CalendarOverview> {
-  int _pickerRevision = 0;
-
-  void _goToToday() {
-    final today = widget.businessDateProvider.today;
-    setState(() => _pickerRevision++);
-    widget.onDateChanged(today);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    if (widget.hasError) {
-      return _QueryErrorState(
-        message: l10n.loadHistoryFailed,
-        onRetry: widget.onRetry,
-      );
-    }
-    final items =
-        widget.result?.items
-            .where((item) => item['occurred_on'] == _date(widget.selectedDate))
-            .toList() ??
-        [];
-    final summaries = groupCalendarTransactions(
-      widget.result?.items ?? const [],
-    );
-    return Column(
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            if (widget.onRefresh != null)
-              IconButton(
-                key: const ValueKey('calendar-refresh'),
-                tooltip: l10n.refresh,
-                onPressed: widget.isRefreshing || widget.isLoading
-                    ? null
-                    : widget.onRefresh,
-                icon: widget.isRefreshing
-                    ? const SizedBox.square(
-                        dimension: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.refresh_rounded),
-              ),
-            TextButton.icon(
-              key: const ValueKey('calendar-today'),
-              onPressed: _goToToday,
-              icon: const Icon(Icons.today_outlined, size: 18),
-              label: Text(l10n.today),
-            ),
-          ],
-        ),
-        if (widget.hasRefreshError)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Row(
-              children: [
-                Expanded(child: Text(l10n.loadHistoryFailed)),
-                TextButton(
-                  onPressed: widget.onRefresh,
-                  child: Text(l10n.retry),
-                ),
-              ],
-            ),
-          ),
-        ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 520),
-          child: CalendarMonthPicker(
-            key: ValueKey(_pickerRevision),
-            selectedDate: widget.selectedDate,
-            summaries: summaries,
-            onDateChanged: widget.onDateChanged,
-            businessDateProvider: widget.businessDateProvider,
-          ),
-        ),
-        const SizedBox(height: 8),
-        if (widget.isLoading || widget.result == null)
-          const Padding(
-            padding: EdgeInsets.all(16),
-            child: CircularProgressIndicator(value: 0.35),
-          )
-        else if (items.isEmpty)
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Text(l10n.noTransactionsForDate),
-          )
-        else
-          Card(
-            child: Column(
-              children: items.map((item) {
-                final isIncome = item['kind'] == 'income';
-                final color = isIncome
-                    ? Colors.teal.shade700
-                    : Theme.of(context).colorScheme.error;
-                return ListTile(
-                  leading: CircleAvatar(
-                    backgroundColor: color.withValues(alpha: 0.1),
-                    child: Icon(
-                      isIncome
-                          ? Icons.south_west_rounded
-                          : Icons.north_east_rounded,
-                      color: color,
-                      size: 19,
-                    ),
-                  ),
-                  title: Text(
-                    localizedMerchantName(l10n, item['merchant'] as String),
-                    style: const TextStyle(fontWeight: FontWeight.w700),
-                  ),
-                  subtitle: Text(isIncome ? l10n.income : l10n.expense),
-                  trailing: Text(
-                    '${isIncome ? '+' : '−'}${l10n.formattedAmount(formatWon((item['amount_won'] as num).toInt()))}',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      color: color,
-                      fontFeatures: const [FontFeature.tabularFigures()],
-                    ),
-                  ),
-                  onTap: widget.onTransactionTap == null
-                      ? null
-                      : () => widget.onTransactionTap!(item),
-                );
-              }).toList(),
-            ),
-          ),
-      ],
-    );
-  }
-
-  String _date(DateTime value) =>
-      '${value.year.toString().padLeft(4, '0')}-${value.month.toString().padLeft(2, '0')}-${value.day.toString().padLeft(2, '0')}';
-}
-
-class _TopHeader extends StatelessWidget {
-  const _TopHeader({
-    required this.eyebrow,
-    required this.title,
-    required this.displayName,
-  });
-  final String eyebrow;
-  final String title;
-  final String displayName;
-
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.fromLTRB(4, 8, 4, 4),
-    child: Row(
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                eyebrow,
-                style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.primary,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 5),
-              Text(title, style: Theme.of(context).textTheme.headlineMedium),
-            ],
-          ),
-        ),
-        CircleAvatar(
-          key: const ValueKey('profile-avatar'),
-          radius: 24,
-          backgroundColor: Theme.of(
-            context,
-          ).colorScheme.primary.withValues(alpha: 0.11),
-          child: Text(
-            _avatarInitial(displayName),
-            style: TextStyle(
-              color: Theme.of(context).colorScheme.primary,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-        ),
-      ],
-    ),
-  );
-
-  String _avatarInitial(String value) {
-    final name = value.trim();
-    return name.isEmpty ? '나' : String.fromCharCode(name.runes.first);
-  }
-}
-
-class _QueryErrorState extends StatelessWidget {
-  const _QueryErrorState({required this.message, required this.onRetry});
-
-  final String message;
-  final VoidCallback? onRetry;
-
-  @override
-  Widget build(BuildContext context) => Card(
-    child: Padding(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.cloud_off_outlined,
-            color: Theme.of(context).colorScheme.error,
-          ),
-          const SizedBox(height: 12),
-          Text(message, textAlign: TextAlign.center),
-          const SizedBox(height: 8),
-          TextButton.icon(
-            onPressed: onRetry,
-            icon: const Icon(Icons.refresh_rounded),
-            label: Text(AppLocalizations.of(context)!.retry),
-          ),
-        ],
-      ),
-    ),
-  );
-}
-
-class _MonthlySummaryCard extends StatelessWidget {
-  const _MonthlySummaryCard({
-    required this.result,
-    required this.isLoading,
-    required this.hasError,
-    required this.onRetry,
-  });
-  final TransactionQueryResult? result;
-  final bool isLoading;
-  final bool hasError;
-  final VoidCallback onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    if (hasError) {
-      return _QueryErrorState(
-        message: l10n.loadHistoryFailed,
-        onRetry: onRetry,
-      );
-    }
-    if (isLoading || result == null) {
-      return const SizedBox(
-        height: 150,
-        child: Center(child: CircularProgressIndicator(value: 0.35)),
-      );
-    }
-    final data = result!;
-    final primary = Theme.of(context).colorScheme.primary;
-    final expense = data.totalExpense;
-    final income = data.totalIncome;
-    final balance = income - expense;
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(30),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [primary, Color.lerp(primary, Colors.black, 0.34)!],
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: primary.withValues(alpha: 0.18),
-            blurRadius: 30,
-            offset: const Offset(0, 16),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            AppLocalizations.of(context)!.remainingBalance,
-            style: Theme.of(
-              context,
-            ).textTheme.labelLarge?.copyWith(color: Colors.white70),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            '${formatWon(balance)}원',
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              color: Colors.white,
-              fontFeatures: const [FontFeature.tabularFigures()],
-            ),
-          ),
-          const SizedBox(height: 20),
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  AppLocalizations.of(context)!.monthIncome(formatWon(income)),
-                  style: const TextStyle(color: Colors.white70),
-                ),
-              ),
-              Text(
-                AppLocalizations.of(context)!.monthExpense(formatWon(expense)),
-                style: const TextStyle(color: Colors.white70),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 class AuthRoot extends StatefulWidget {
@@ -1156,363 +822,205 @@ class _BudgetAppState extends State<BudgetApp> with WidgetsBindingObserver {
                     );
                   },
                 )
+              : tab == 3
+              ? SettingsScreen(
+                  displayName: displayName,
+                  palettes: palettes,
+                  selectedPalette: palette,
+                  saving: saving,
+                  onPaletteSelected: select,
+                  localeCode: locale.languageCode,
+                  onLocaleSelected: selectLocale,
+                  hasHouseholdRepository: widget.householdRepository != null,
+                  onOpenHousehold: openHousehold,
+                  canSignOut: widget.onSignOut != null,
+                  signingOut: signingOut,
+                  onSignOut: confirmSignOut,
+                )
               : ListView(
                   padding: const EdgeInsets.fromLTRB(20, 18, 20, 124),
                   children: [
-                    if (tab != 3) ...[
-                      _TopHeader(
-                        eyebrow: l10n.appTitle,
-                        displayName: displayName,
-                        title: tab == 0
-                            ? l10n.calendarHeading
-                            : [l10n.historyHeading, l10n.walletHeading][tab -
-                                  1],
+                    AppPageHeader(
+                      eyebrow: l10n.appTitle,
+                      displayName: displayName,
+                      title: tab == 0
+                          ? l10n.calendarHeading
+                          : [l10n.historyHeading, l10n.walletHeading][tab - 1],
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      [
+                        l10n.calendarDescription,
+                        l10n.historyDescription,
+                        l10n.walletDescription,
+                      ][tab],
+                    ),
+                    const SizedBox(height: 22),
+                    if (tab == 0)
+                      FutureBuilder<TransactionQueryResult>(
+                        future: overview,
+                        builder: (context, snapshot) {
+                          final result =
+                              snapshot.connectionState ==
+                                  ConnectionState.waiting
+                              ? currentOverviewResult
+                              : snapshot.data ?? currentOverviewResult;
+                          return MonthlySummaryCard(
+                            result: result,
+                            isLoading: result == null && !snapshot.hasError,
+                            hasError: snapshot.hasError && result == null,
+                            onRetry: refreshOverview,
+                          );
+                        },
                       ),
-                      const SizedBox(height: 16),
-                      Text(
-                        [
-                          l10n.calendarDescription,
-                          l10n.historyDescription,
-                          l10n.walletDescription,
-                        ][tab],
-                      ),
-                      const SizedBox(height: 22),
-                      if (tab == 0)
-                        FutureBuilder<TransactionQueryResult>(
-                          future: overview,
-                          builder: (context, snapshot) {
-                            final result =
-                                snapshot.connectionState ==
-                                    ConnectionState.waiting
-                                ? currentOverviewResult
-                                : snapshot.data ?? currentOverviewResult;
-                            return _MonthlySummaryCard(
-                              result: result,
-                              isLoading: result == null && !snapshot.hasError,
-                              hasError: snapshot.hasError && result == null,
-                              onRetry: refreshOverview,
-                            );
-                          },
+                    if (tab < 2) const SizedBox(height: 24),
+                    if (tab == 2 && widget.transactionRepository != null)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: FilledButton.icon(
+                          onPressed: () => openPaymentMethods(context),
+                          icon: const Icon(Icons.manage_accounts_outlined),
+                          label: Text(l10n.paymentMethodsManage),
                         ),
-                      if (tab < 2) const SizedBox(height: 24),
-                      if (tab == 2 && widget.transactionRepository != null)
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 16),
-                          child: FilledButton.icon(
-                            onPressed: () => openPaymentMethods(context),
-                            icon: const Icon(Icons.manage_accounts_outlined),
-                            label: Text(l10n.paymentMethodsManage),
+                      ),
+                    if (tab == 0 && widget.transactionRepository != null)
+                      FutureBuilder<TransactionQueryResult>(
+                        future: overview,
+                        builder: (context, snapshot) {
+                          final result =
+                              snapshot.connectionState ==
+                                  ConnectionState.waiting
+                              ? currentOverviewResult
+                              : snapshot.data ?? currentOverviewResult;
+                          return CalendarOverview(
+                            selectedDate: selectedDate,
+                            businessDateProvider: widget.businessDateProvider,
+                            result: result,
+                            onDateChanged: selectCalendarDate,
+                            onTransactionTap: openTransaction,
+                            isLoading: result == null && !snapshot.hasError,
+                            isRefreshing: refreshingOverview,
+                            hasError: snapshot.hasError && result == null,
+                            hasRefreshError: overviewRefreshFailed,
+                            onRetry: refreshOverview,
+                            onRefresh: refreshOverview,
+                          );
+                        },
+                      ),
+                    if (tab == 1 && widget.transactionRepository != null)
+                      TransactionHistoryScreen(
+                        repository: widget.transactionRepository!,
+                        initialDate: selectedDate,
+                        onTransactionTap: openTransaction,
+                        refreshSignal: refreshSignal,
+                      )
+                    else if (widget.transactionRepository == null)
+                      Card(
+                        child: Padding(
+                          padding: const EdgeInsets.all(24),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Icon(
+                                Icons.insights_rounded,
+                                color: palette.primary,
+                              ),
+                              const SizedBox(height: 14),
+                              Text(
+                                l10n.previewUnavailable,
+                                style: Theme.of(context).textTheme.titleMedium,
+                              ),
+                            ],
                           ),
                         ),
-                      if (tab == 0 && widget.transactionRepository != null)
-                        FutureBuilder<TransactionQueryResult>(
-                          future: overview,
-                          builder: (context, snapshot) {
-                            final result =
-                                snapshot.connectionState ==
-                                    ConnectionState.waiting
-                                ? currentOverviewResult
-                                : snapshot.data ?? currentOverviewResult;
-                            return CalendarOverview(
-                              selectedDate: selectedDate,
-                              businessDateProvider: widget.businessDateProvider,
-                              result: result,
-                              onDateChanged: selectCalendarDate,
-                              onTransactionTap: openTransaction,
-                              isLoading: result == null && !snapshot.hasError,
-                              isRefreshing: refreshingOverview,
-                              hasError: snapshot.hasError && result == null,
-                              hasRefreshError: overviewRefreshFailed,
+                      )
+                    else if (tab == 0)
+                      FutureBuilder<TransactionQueryResult>(
+                        future: overview,
+                        builder: (context, snapshot) {
+                          if (snapshot.hasError) {
+                            return QueryErrorState(
+                              message: l10n.loadHistoryFailed,
                               onRetry: refreshOverview,
-                              onRefresh: refreshOverview,
                             );
-                          },
-                        ),
-                      if (tab == 1 && widget.transactionRepository != null)
-                        TransactionHistoryScreen(
-                          repository: widget.transactionRepository!,
-                          initialDate: selectedDate,
-                          onTransactionTap: openTransaction,
-                          refreshSignal: refreshSignal,
-                        )
-                      else if (widget.transactionRepository == null)
-                        Card(
-                          child: Padding(
-                            padding: const EdgeInsets.all(24),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Icon(
-                                  Icons.insights_rounded,
-                                  color: palette.primary,
-                                ),
-                                const SizedBox(height: 14),
-                                Text(
-                                  l10n.previewUnavailable,
-                                  style: Theme.of(
-                                    context,
-                                  ).textTheme.titleMedium,
-                                ),
-                              ],
-                            ),
-                          ),
-                        )
-                      else if (tab == 0)
-                        FutureBuilder<TransactionQueryResult>(
-                          future: overview,
-                          builder: (context, snapshot) {
-                            if (snapshot.hasError) {
-                              return _QueryErrorState(
-                                message: l10n.loadHistoryFailed,
-                                onRetry: refreshOverview,
-                              );
-                            }
-                            if (!snapshot.hasData) {
-                              return const Center(
-                                child: Padding(
-                                  padding: EdgeInsets.all(24),
-                                  child: CircularProgressIndicator(),
-                                ),
-                              );
-                            }
-                            final result = snapshot.data!;
-                            if (tab == 0) return const SizedBox.shrink();
-                            return Card(
+                          }
+                          if (!snapshot.hasData) {
+                            return const Center(
                               child: Padding(
-                                padding: const EdgeInsets.all(24),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      l10n.monthIncome(
-                                        formatWon(result.totalIncome),
-                                      ),
-                                    ),
-                                    Text(
-                                      l10n.monthExpense(
-                                        formatWon(result.totalExpense),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 12),
-                                    if (result.items.isEmpty)
-                                      Text(l10n.noTransactions)
-                                    else
-                                      ...result.items
-                                          .take(10)
-                                          .map(
-                                            (item) => ListTile(
-                                              contentPadding: EdgeInsets.zero,
-                                              leading: CircleAvatar(
-                                                backgroundColor: palette.primary
-                                                    .withValues(alpha: 0.09),
-                                                foregroundColor:
-                                                    palette.primary,
-                                                child: const Icon(
-                                                  Icons.receipt_long_rounded,
-                                                  size: 19,
-                                                ),
-                                              ),
-                                              title: Text(
-                                                localizedMerchantName(
-                                                  l10n,
-                                                  item['merchant'] as String,
-                                                ),
-                                                style: const TextStyle(
-                                                  fontWeight: FontWeight.w700,
-                                                ),
-                                              ),
-                                              subtitle: Text(
-                                                item['occurred_on'] as String,
-                                              ),
-                                              trailing: Text(
-                                                l10n.formattedAmount(
-                                                  formatWon(
-                                                    (item['amount_won'] as num)
-                                                        .toInt(),
-                                                  ),
-                                                ),
-                                              ),
-                                              onTap: () =>
-                                                  openTransaction(item),
-                                            ),
-                                          ),
-                                  ],
-                                ),
+                                padding: EdgeInsets.all(24),
+                                child: CircularProgressIndicator(),
                               ),
                             );
-                          },
-                        ),
-                    ] else ...[
-                      _TopHeader(
-                        eyebrow: l10n.settings,
-                        title: l10n.settings,
-                        displayName: displayName,
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        l10n.profileSection,
-                        style: Theme.of(context).textTheme.titleLarge,
-                      ),
-                      const SizedBox(height: 8),
-                      Card(
-                        child: ListTile(
-                          leading: const Icon(Icons.person_outline_rounded),
-                          title: Text(displayName),
-                          subtitle: Text(l10n.displayName),
-                          trailing: widget.householdRepository == null
-                              ? null
-                              : const Icon(Icons.chevron_right_rounded),
-                          onTap: widget.householdRepository == null
-                              ? null
-                              : () => openHousehold(context),
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      Text(
-                        l10n.screenSection,
-                        style: Theme.of(context).textTheme.titleLarge,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(l10n.themeDescription),
-                      const SizedBox(height: 20),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: palettes
-                            .map(
-                              (option) => Semantics(
-                                selected: option == palette,
-                                child: ChoiceChip(
-                                  key: ValueKey('theme-${option.id}'),
-                                  selected: option == palette,
-                                  showCheckmark: false,
-                                  onSelected: saving
-                                      ? null
-                                      : (_) => select(option),
-                                  visualDensity: VisualDensity.compact,
-                                  labelPadding: const EdgeInsets.symmetric(
-                                    horizontal: 4,
+                          }
+                          final result = snapshot.data!;
+                          if (tab == 0) return const SizedBox.shrink();
+                          return Card(
+                            child: Padding(
+                              padding: const EdgeInsets.all(24),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    l10n.monthIncome(
+                                      formatWon(result.totalIncome),
+                                    ),
                                   ),
-                                  label: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      ...[
-                                        option.primary,
-                                        option.secondary,
-                                        option.background,
-                                      ].map(
-                                        (color) => Container(
-                                          width: 10,
-                                          height: 10,
-                                          margin: const EdgeInsets.only(
-                                            right: 2,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: color,
-                                            shape: BoxShape.circle,
-                                            border: Border.all(
-                                              color: Colors.black12,
+                                  Text(
+                                    l10n.monthExpense(
+                                      formatWon(result.totalExpense),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  if (result.items.isEmpty)
+                                    Text(l10n.noTransactions)
+                                  else
+                                    ...result.items
+                                        .take(10)
+                                        .map(
+                                          (item) => ListTile(
+                                            contentPadding: EdgeInsets.zero,
+                                            leading: CircleAvatar(
+                                              backgroundColor: palette.primary
+                                                  .withValues(alpha: 0.09),
+                                              foregroundColor: palette.primary,
+                                              child: const Icon(
+                                                Icons.receipt_long_rounded,
+                                                size: 19,
+                                              ),
                                             ),
+                                            title: Text(
+                                              localizedMerchantName(
+                                                l10n,
+                                                item['merchant'] as String,
+                                              ),
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.w700,
+                                              ),
+                                            ),
+                                            subtitle: Text(
+                                              item['occurred_on'] as String,
+                                            ),
+                                            trailing: Text(
+                                              l10n.formattedAmount(
+                                                formatWon(
+                                                  (item['amount_won'] as num)
+                                                      .toInt(),
+                                                ),
+                                              ),
+                                            ),
+                                            onTap: () => openTransaction(item),
                                           ),
                                         ),
-                                      ),
-                                      const SizedBox(width: 4),
-                                      Text(_paletteName(l10n, option.id)),
-                                    ],
-                                  ),
-                                ),
+                                ],
                               ),
-                            )
-                            .toList(),
-                      ),
-                      const SizedBox(height: 24),
-                      Text(
-                        l10n.languageTitle,
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(l10n.languageDescription),
-                      const SizedBox(height: 12),
-                      SegmentedButton<String>(
-                        segments: [
-                          ButtonSegment(value: 'ko', label: Text(l10n.korean)),
-                          ButtonSegment(value: 'en', label: Text(l10n.english)),
-                        ],
-                        selected: {locale.languageCode},
-                        onSelectionChanged: (value) =>
-                            selectLocale(value.first),
-                      ),
-                      const SizedBox(height: 28),
-                      Text(
-                        l10n.accountHousehold,
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      if (widget.householdRepository == null)
-                        Text(l10n.accountComingSoon)
-                      else
-                        Card(
-                          child: ListTile(
-                            leading: const Icon(Icons.people_outline_rounded),
-                            title: Text(l10n.sharedHousehold),
-                            subtitle: Text(l10n.manageHouseholdDescription),
-                            trailing: const Icon(Icons.chevron_right_rounded),
-                            onTap: () => openHousehold(context),
-                          ),
-                        ),
-                      if (widget.onSignOut != null) ...[
-                        const SizedBox(height: 8),
-                        Card(
-                          child: Builder(
-                            builder: (itemContext) => ListTile(
-                              key: const ValueKey('sign-out'),
-                              leading: Icon(
-                                Icons.logout_rounded,
-                                color: Theme.of(itemContext).colorScheme.error,
-                              ),
-                              title: Text(l10n.signOut),
-                              subtitle: Text(l10n.signOutDescription),
-                              trailing: signingOut
-                                  ? const SizedBox.square(
-                                      dimension: 20,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                      ),
-                                    )
-                                  : const Icon(Icons.chevron_right_rounded),
-                              enabled: !signingOut,
-                              onTap: () => confirmSignOut(itemContext),
                             ),
-                          ),
-                        ),
-                      ],
-                    ],
+                          );
+                        },
+                      ),
                   ],
                 ),
         ),
       ),
     );
   }
-
-  String _paletteName(AppLocalizations l10n, String id) => switch (id) {
-    'forest' => l10n.themeForest,
-    'ocean' => l10n.themeOcean,
-    'lavender' => l10n.themeLavender,
-    'rose' => l10n.themeRose,
-    'olive' => l10n.themeOlive,
-    'terracotta' => l10n.themeTerracotta,
-    'lemon' => l10n.themeLemon,
-    'mint' => l10n.themeMint,
-    'cocoa' => l10n.themeCocoa,
-    'indigo' => l10n.themeIndigo,
-    'plum' => l10n.themePlum,
-    'sky' => l10n.themeSky,
-    _ => id,
-  };
 }
