@@ -80,6 +80,20 @@ class _Repository implements TransactionRepository {
     String? requestId,
   }) async {}
   @override
+  Future<void> edit(
+    String h,
+    String id,
+    int version,
+    TransactionDraft draft, {
+    String? requestId,
+  }) async {}
+  @override
+  Future<void> voidTransaction(
+    String id,
+    int version, {
+    String? requestId,
+  }) async {}
+  @override
   Future<TransactionQueryResult> query(
     String h,
     DateTime s,

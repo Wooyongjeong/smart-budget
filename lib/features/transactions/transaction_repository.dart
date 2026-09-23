@@ -45,12 +45,78 @@ class TransactionQueryResult {
   final int totalExpense;
 }
 
+class TransactionRecord {
+  const TransactionRecord({
+    required this.id,
+    required this.kind,
+    required this.occurredOn,
+    required this.amountWon,
+    required this.merchant,
+    required this.category,
+    required this.paymentMethodId,
+    required this.memberId,
+    required this.memo,
+    required this.version,
+  });
+
+  factory TransactionRecord.fromMap(Map<String, dynamic> row) {
+    return TransactionRecord(
+      id: row['id'] as String,
+      kind: row['kind'] as String,
+      occurredOn: DateTime.parse(row['occurred_on'] as String),
+      amountWon: (row['amount_won'] as num).toInt(),
+      merchant: row['merchant'] as String,
+      category: row['category'] as String?,
+      paymentMethodId: row['payment_method_id'] as String?,
+      memberId: row['member_id'] as String?,
+      memo: row['memo'] as String? ?? '',
+      version: (row['version'] as num?)?.toInt() ?? 1,
+    );
+  }
+
+  final String id;
+  final String kind;
+  final DateTime occurredOn;
+  final int amountWon;
+  final String merchant;
+  final String? category;
+  final String? paymentMethodId;
+  final String? memberId;
+  final String memo;
+  final int version;
+
+  bool get isEditable => kind == 'income' || kind == 'expense';
+
+  TransactionDraft toDraft() => TransactionDraft(
+    kind: kind == 'income' ? TransactionKind.income : TransactionKind.expense,
+    occurredOn: occurredOn,
+    amountWon: amountWon,
+    merchant: merchant,
+    category: category,
+    paymentMethodId: paymentMethodId,
+    memberId: memberId,
+    memo: memo,
+  );
+}
+
 abstract interface class TransactionRepository {
   Future<HouseholdContext> loadContext();
   Future<void> save(String householdId, TransactionDraft draft);
   Future<void> saveMany(
     String householdId,
     List<TransactionDraft> drafts, {
+    String? requestId,
+  });
+  Future<void> edit(
+    String householdId,
+    String transactionId,
+    int expectedVersion,
+    TransactionDraft draft, {
+    String? requestId,
+  });
+  Future<void> voidTransaction(
+    String transactionId,
+    int expectedVersion, {
     String? requestId,
   });
   Future<PaymentMethodOption> addPaymentMethod(
@@ -321,6 +387,77 @@ class SupabaseTransactionRepository implements TransactionRepository {
         'version_conflict',
         'idempotency_conflict',
         'insufficient_balance',
+      };
+      throw TransactionSaveException(
+        expected.contains(error.message) ? error.message : 'unexpected',
+      );
+    }
+  }
+
+  @override
+  Future<void> edit(
+    String householdId,
+    String transactionId,
+    int expectedVersion,
+    TransactionDraft draft, {
+    String? requestId,
+  }) async {
+    final resolvedRequestId = requestId ?? newTransactionRequestId();
+    try {
+      await client.rpc(
+        'edit_transaction',
+        params: {
+          'p_id': transactionId,
+          'p_expected_version': expectedVersion,
+          'p_request_id': resolvedRequestId,
+          'p_values': {
+            'kind': draft.kind.name,
+            'occurred_on': _dateOnly(draft.occurredOn),
+            'amount_won': draft.amountWon,
+            'merchant': draft.merchant,
+            'category': draft.category,
+            'payment_method_id': draft.paymentMethodId,
+            'member_id': draft.memberId,
+            'memo': draft.memo.isEmpty ? null : draft.memo,
+          },
+        },
+      );
+    } on PostgrestException catch (error) {
+      const expected = {
+        'validation_failed',
+        'forbidden',
+        'version_conflict',
+        'idempotency_conflict',
+        'insufficient_balance',
+      };
+      throw TransactionSaveException(
+        expected.contains(error.message) ? error.message : 'unexpected',
+      );
+    }
+  }
+
+  @override
+  Future<void> voidTransaction(
+    String transactionId,
+    int expectedVersion, {
+    String? requestId,
+  }) async {
+    final resolvedRequestId = requestId ?? newTransactionRequestId();
+    try {
+      await client.rpc(
+        'void_transaction',
+        params: {
+          'p_id': transactionId,
+          'p_expected_version': expectedVersion,
+          'p_request_id': resolvedRequestId,
+        },
+      );
+    } on PostgrestException catch (error) {
+      const expected = {
+        'validation_failed',
+        'forbidden',
+        'version_conflict',
+        'idempotency_conflict',
       };
       throw TransactionSaveException(
         expected.contains(error.message) ? error.message : 'unexpected',

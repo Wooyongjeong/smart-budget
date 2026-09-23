@@ -118,6 +118,39 @@ class AppLocalizationsKo extends AppLocalizations {
   String get transactionSaveFailed => '거래를 저장하지 못했어요. 다시 시도해 주세요.';
 
   @override
+  String get transactionDetail => '거래 상세';
+
+  @override
+  String get transactionType => '거래 유형';
+
+  @override
+  String get editTransaction => '거래 수정';
+
+  @override
+  String get voidTransaction => '거래 삭제';
+
+  @override
+  String get voidTransactionTitle => '이 거래를 삭제할까요?';
+
+  @override
+  String get voidTransactionBody => '거래는 기록에서 제외되며 공동 가계부 합계에도 반영되지 않아요.';
+
+  @override
+  String get transactionVoided => '거래를 삭제했어요.';
+
+  @override
+  String get transactionUpdated => '거래를 수정했어요.';
+
+  @override
+  String get transactionVersionConflict => '다른 구성원이 먼저 변경했어요. 최신 내역을 확인해 주세요.';
+
+  @override
+  String get transactionReadOnly => '이 거래 유형은 현재 상세 확인만 지원해요.';
+
+  @override
+  String get transactionDetailUnavailable => '거래 상세를 불러올 수 없어요.';
+
+  @override
   String get householdLoadFailed => '가계부 정보를 불러오지 못했어요. 다시 시도해 주세요.';
 
   @override

@@ -122,6 +122,43 @@ class AppLocalizationsEn extends AppLocalizations {
       'Couldn\'t save the transaction. Try again.';
 
   @override
+  String get transactionDetail => 'Transaction details';
+
+  @override
+  String get transactionType => 'Transaction type';
+
+  @override
+  String get editTransaction => 'Edit transaction';
+
+  @override
+  String get voidTransaction => 'Delete transaction';
+
+  @override
+  String get voidTransactionTitle => 'Delete this transaction?';
+
+  @override
+  String get voidTransactionBody =>
+      'It will be excluded from the records and household totals.';
+
+  @override
+  String get transactionVoided => 'Transaction deleted.';
+
+  @override
+  String get transactionUpdated => 'Transaction updated.';
+
+  @override
+  String get transactionVersionConflict =>
+      'Another member changed it first. Review the latest record.';
+
+  @override
+  String get transactionReadOnly =>
+      'This transaction type can only be viewed right now.';
+
+  @override
+  String get transactionDetailUnavailable =>
+      'Couldn\'t load transaction details.';
+
+  @override
   String get householdLoadFailed => 'Couldn\'t load the budget. Try again.';
 
   @override

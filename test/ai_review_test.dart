@@ -35,6 +35,21 @@ class FakeRepository implements TransactionRepository {
   }
 
   @override
+  Future<void> edit(
+    String h,
+    String id,
+    int version,
+    TransactionDraft draft, {
+    String? requestId,
+  }) async {}
+  @override
+  Future<void> voidTransaction(
+    String id,
+    int version, {
+    String? requestId,
+  }) async {}
+
+  @override
   Future<PaymentMethodOption> addPaymentMethod(
     String householdId,
     String kind,
