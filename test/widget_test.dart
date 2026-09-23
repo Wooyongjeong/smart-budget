@@ -45,15 +45,19 @@ void main() {
       {'occurred_on': '2026-09-18', 'kind': 'expense', 'amount_won': 1200},
       {'occurred_on': '2026-09-18', 'kind': 'income', 'amount_won': 5000},
       {'occurred_on': '2026-09-19', 'kind': 'expense', 'amount_won': 300},
+      {'occurred_on': '2026-09-19', 'kind': 'refund', 'amount_won': 100},
     ]);
     expect(result[DateTime(2026, 9, 18)]?.income, 5000);
     expect(result[DateTime(2026, 9, 18)]?.expense, 1200);
     expect(result[DateTime(2026, 9, 19)]?.hasTransactions, isTrue);
+    expect(result[DateTime(2026, 9, 19)]?.expense, 300);
   });
 
   testWidgets('calendar today button selects today and resets the picker', (
     tester,
   ) async {
+    await tester.binding.setSurfaceSize(const Size(800, 900));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
     final today = DateUtils.dateOnly(DateTime.now());
     var selectedDate = today;
     await tester.pumpWidget(
@@ -76,7 +80,7 @@ void main() {
       ),
     );
 
-    final pickerContext = tester.element(find.byType(CalendarDatePicker));
+    final pickerContext = tester.element(find.byType(CalendarMonthPicker));
     final todayMonth = MaterialLocalizations.of(
       pickerContext,
     ).formatMonthYear(today);
@@ -91,10 +95,49 @@ void main() {
     expect(find.text(todayMonth), findsOneWidget);
     expect(
       tester
-          .widget<CalendarDatePicker>(find.byType(CalendarDatePicker))
-          .initialDate,
+          .widget<CalendarMonthPicker>(find.byType(CalendarMonthPicker))
+          .selectedDate,
       selectedDate,
     );
+  });
+
+  testWidgets('calendar renders income and expense indicators in day cell', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(800, 900));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      localizedTestApp(
+        home: Scaffold(
+          body: CalendarOverview(
+            selectedDate: DateTime(2026, 9, 18),
+            result: const TransactionQueryResult(
+              items: [
+                {
+                  'occurred_on': '2026-09-18',
+                  'kind': 'income',
+                  'amount_won': 10,
+                  'merchant': '입금',
+                },
+                {
+                  'occurred_on': '2026-09-18',
+                  'kind': 'expense',
+                  'amount_won': 5,
+                  'merchant': '지출',
+                },
+              ],
+              totalIncome: 10,
+              totalExpense: 5,
+            ),
+            onDateChanged: (_) {},
+          ),
+        ),
+      ),
+    );
+
+    final day = find.byKey(const ValueKey('calendar-day-2026-9-18'));
+    expect(find.descendant(of: day, matching: find.text('+')), findsOneWidget);
+    expect(find.descendant(of: day, matching: find.text('−')), findsOneWidget);
   });
 
   testWidgets('calendar query error offers retry instead of endless loading', (
@@ -113,7 +156,7 @@ void main() {
       ),
     );
 
-    expect(find.byType(CalendarDatePicker), findsNothing);
+    expect(find.byType(CalendarMonthPicker), findsNothing);
     expect(find.text('내역을 불러오지 못했어요. 다시 시도해 주세요.'), findsOneWidget);
 
     await tester.tap(find.text('다시 시도'));

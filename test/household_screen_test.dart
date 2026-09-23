@@ -131,7 +131,9 @@ void main() {
     expect(find.text('배우자'), findsOneWidget);
   });
 
-  testWidgets('hides invitation acceptance for an active member', (tester) async {
+  testWidgets('hides invitation acceptance for an active member', (
+    tester,
+  ) async {
     final repository = _Repository();
     await tester.pumpWidget(_app(repository));
     await tester.pumpAndSettle();

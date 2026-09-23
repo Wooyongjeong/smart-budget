@@ -367,6 +367,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get voucher => 'Voucher';
 
   @override
+  String get voucherInitialBalance => 'Existing balance';
+
+  @override
+  String get voucherPurchase => 'Paid purchase';
+
+  @override
+  String get actualUserRequired => 'Select who made the purchase.';
+
+  @override
+  String get sourcePaymentMethodRequired =>
+      'Select how the voucher was purchased.';
+
+  @override
   String get paymentMethodManagement => 'Manage payment methods';
 
   @override
@@ -540,6 +553,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String transactionSaveFailedCode(String code) {
     return 'Couldn\'t save the transaction. ($code)';
   }
+
+  @override
+  String get transactionIdempotencyConflict =>
+      'This retry differs from the original save request. Review the entry and try again.';
 
   @override
   String get receiptSaveFailed =>

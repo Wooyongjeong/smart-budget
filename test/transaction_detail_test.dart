@@ -9,6 +9,7 @@ import 'localized_test_app.dart';
 class _Repository implements TransactionRepository {
   bool edited = false;
   bool voided = false;
+  String? editRequestId;
 
   @override
   Future<HouseholdContext> loadContext() async => const HouseholdContext(
@@ -26,6 +27,7 @@ class _Repository implements TransactionRepository {
     String? requestId,
   }) async {
     edited = true;
+    editRequestId = requestId;
   }
 
   @override
@@ -46,8 +48,11 @@ class _Repository implements TransactionRepository {
     String? owner,
     int paid,
     int amount,
-    String? source,
-  ) => throw UnimplementedError();
+    String? source, {
+    required String mode,
+    required String actualMemberId,
+    String? requestId,
+  }) => throw UnimplementedError();
 
   @override
   Future<void> saveMany(
@@ -147,6 +152,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(repository.edited, isTrue);
+    expect(repository.editRequestId, isNotNull);
     expect(changed, isTrue);
   });
 

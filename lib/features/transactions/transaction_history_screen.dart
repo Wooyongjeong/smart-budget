@@ -127,9 +127,11 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
       final result = await _query(next);
       if (!mounted) return;
       setState(() {
-        items.addAll(result.items);
+        final existingIds = items.map((item) => item['id']).toSet();
+        items.addAll(result.items.where((item) => existingIds.add(item['id'])));
         cursor = result.nextCursor;
         loadingMore = false;
+        error = null;
       });
     } catch (value) {
       if (!mounted) return;
@@ -496,7 +498,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                 ),
               ),
             ),
-          if (cursor != null)
+          if (cursor != null && error == null)
             Padding(
               padding: const EdgeInsets.only(top: 12),
               child: OutlinedButton.icon(
@@ -511,6 +513,20 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                       )
                     : const Icon(Icons.expand_more_rounded),
                 label: Text(l10n.loadMore),
+              ),
+            )
+          else if (error != null && items.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 12),
+              child: Column(
+                children: [
+                  Text(l10n.loadHistoryFailed),
+                  TextButton.icon(
+                    onPressed: loadingMore ? null : _loadMore,
+                    icon: const Icon(Icons.refresh_rounded),
+                    label: Text(l10n.retry),
+                  ),
+                ],
               ),
             )
           else if (items.isNotEmpty)

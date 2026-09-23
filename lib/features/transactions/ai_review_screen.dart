@@ -243,10 +243,15 @@ class _AiReviewScreenState extends State<AiReviewScreen> {
     }
     final bytes = await file.xFile.readAsBytes();
     if (!mounted) return;
+    for (final item in items) {
+      item.dispose();
+    }
     setState(() {
       analyzing = true;
       fileName = file.name;
       sourceBytes = Uint8List.fromList(bytes);
+      saveRequestId = null;
+      items = [];
     });
     try {
       final analysis = await client.analyze(
@@ -254,9 +259,6 @@ class _AiReviewScreenState extends State<AiReviewScreen> {
         bytes: Uint8List.fromList(bytes),
         contentType: contentType,
       );
-      for (final item in items) {
-        item.dispose();
-      }
       if (!mounted) return;
       setState(() {
         saveRequestId = analysis.draftId.isEmpty ? null : analysis.draftId;
@@ -310,6 +312,42 @@ class _AiReviewScreenState extends State<AiReviewScreen> {
     }
     if (item.suggestedType != 'expense') errors.add(item.reason);
     return errors;
+  }
+
+  String? _fieldError(
+    ReceiptFixtureItem item,
+    AppLocalizations l10n,
+    String field,
+  ) {
+    if (!item.selected) return null;
+    if (field == 'date') {
+      final date = _parseAnalysisDate(item.date.text.trim());
+      return date != null && date.year >= 2000 && date.year <= 2100
+          ? null
+          : l10n.receiptDateMissing;
+    }
+    if (field == 'amount') {
+      return (parseWon(item.amount.text) ?? 0) > 0
+          ? null
+          : l10n.receiptAmountMissing;
+    }
+    if (field == 'merchant') {
+      return item.merchant.text.trim().isNotEmpty
+          ? null
+          : l10n.receiptMerchantMissing;
+    }
+    if (field == 'category') {
+      return item.category != null ? null : l10n.receiptCategoryMissing;
+    }
+    if (field == 'payment') {
+      return item.paymentMethodId != null
+          ? null
+          : l10n.receiptPaymentMethodMissing;
+    }
+    if (field == 'member') {
+      return item.memberId != null ? null : l10n.receiptMemberMissing;
+    }
+    return null;
   }
 
   Future<void> save() async {
@@ -393,30 +431,30 @@ class _AiReviewScreenState extends State<AiReviewScreen> {
                   color: const Color(0xff232928),
                   borderRadius: BorderRadius.circular(28),
                 ),
-                child: Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(
-                        Icons.document_scanner_rounded,
-                        color: Colors.white,
-                        size: 34,
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        fileName ?? '분석한 이용내역',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w700,
+                clipBehavior: Clip.antiAlias,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    Image.memory(sourceBytes!, fit: BoxFit.cover),
+                    const DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [Colors.transparent, Color(0xaa000000)],
                         ),
                       ),
-                      const SizedBox(height: 4),
-                      const Text(
+                    ),
+                    const Positioned(
+                      left: 16,
+                      right: 16,
+                      bottom: 12,
+                      child: Text(
                         '탭하여 원본 확대',
-                        style: TextStyle(color: Colors.white60, fontSize: 13),
+                        style: TextStyle(color: Colors.white, fontSize: 13),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -491,12 +529,18 @@ class _AiReviewScreenState extends State<AiReviewScreen> {
                     TextField(
                       controller: item.date,
                       onChanged: (_) => _markEdited(),
-                      decoration: InputDecoration(labelText: l10n.date),
+                      decoration: InputDecoration(
+                        labelText: l10n.date,
+                        errorText: _fieldError(item, l10n, 'date'),
+                      ),
                     ),
                     TextField(
                       controller: item.merchant,
                       onChanged: (_) => _markEdited(),
-                      decoration: InputDecoration(labelText: l10n.merchant),
+                      decoration: InputDecoration(
+                        labelText: l10n.merchant,
+                        errorText: _fieldError(item, l10n, 'merchant'),
+                      ),
                     ),
                     TextField(
                       controller: item.amount,
@@ -506,6 +550,7 @@ class _AiReviewScreenState extends State<AiReviewScreen> {
                       decoration: InputDecoration(
                         labelText: l10n.amount,
                         suffixText: l10n.won,
+                        errorText: _fieldError(item, l10n, 'amount'),
                       ),
                     ),
                     if (widget.contextData.paymentMethods.isNotEmpty)
@@ -513,6 +558,7 @@ class _AiReviewScreenState extends State<AiReviewScreen> {
                         initialValue: item.paymentMethodId,
                         decoration: InputDecoration(
                           labelText: l10n.paymentMethod,
+                          errorText: _fieldError(item, l10n, 'payment'),
                         ),
                         items: widget.contextData.paymentMethods
                             .map(
@@ -529,32 +575,13 @@ class _AiReviewScreenState extends State<AiReviewScreen> {
                                 _markEdited();
                               },
                       ),
-                    if (_errors(item, l10n).isNotEmpty)
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: Padding(
-                          padding: const EdgeInsets.only(bottom: 8),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: _errors(item, l10n)
-                                .map(
-                                  (error) => Text(
-                                    error,
-                                    style: TextStyle(
-                                      color: Theme.of(
-                                        context,
-                                      ).colorScheme.error,
-                                    ),
-                                  ),
-                                )
-                                .toList(),
-                          ),
-                        ),
-                      ),
                     if (widget.contextData.members.isNotEmpty)
                       DropdownButtonFormField<String>(
                         initialValue: item.memberId,
-                        decoration: InputDecoration(labelText: l10n.actualUser),
+                        decoration: InputDecoration(
+                          labelText: l10n.actualUser,
+                          errorText: _fieldError(item, l10n, 'member'),
+                        ),
                         items: widget.contextData.members
                             .map(
                               (member) => DropdownMenuItem(
@@ -572,7 +599,10 @@ class _AiReviewScreenState extends State<AiReviewScreen> {
                       ),
                     DropdownButtonFormField<String>(
                       initialValue: item.category,
-                      decoration: InputDecoration(labelText: l10n.category),
+                      decoration: InputDecoration(
+                        labelText: l10n.category,
+                        errorText: _fieldError(item, l10n, 'category'),
+                      ),
                       items: _categories
                           .map(
                             (category) => DropdownMenuItem(

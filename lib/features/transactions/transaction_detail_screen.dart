@@ -5,6 +5,7 @@ import '../../entry_form.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../../money_input.dart';
 import 'transaction_repository.dart';
+import 'transaction_request_tracker.dart';
 
 class TransactionDetailScreen extends StatefulWidget {
   const TransactionDetailScreen({
@@ -59,6 +60,7 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
 
   Future<void> _edit() async {
     if (busy || !widget.transaction.isEditable) return;
+    final requestTracker = TransactionRequestTracker();
     final updated = await Navigator.of(context).push<bool>(
       MaterialPageRoute(
         builder: (entryContext) => EntryForm(
@@ -72,7 +74,9 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
                 widget.transaction.id,
                 widget.transaction.version,
                 draft,
+                requestId: requestTracker.requestIdFor(draft),
               );
+              requestTracker.markSucceeded();
               if (entryContext.mounted) {
                 Navigator.of(entryContext).pop(true);
               }

@@ -144,8 +144,11 @@ abstract interface class TransactionRepository {
     String? ownerMemberId,
     int paidAmountWon,
     int voucherAmountWon,
-    String? sourcePaymentMethodId,
-  );
+    String? sourcePaymentMethodId, {
+    required String mode,
+    required String actualMemberId,
+    String? requestId,
+  });
   Future<void> archivePaymentMethod(String householdId, String paymentMethodId);
   Future<void> recordVoucherEvent(
     String householdId,
@@ -300,8 +303,11 @@ class SupabaseTransactionRepository implements TransactionRepository {
     String? ownerMemberId,
     int paidAmountWon,
     int voucherAmountWon,
-    String? sourcePaymentMethodId,
-  ) async {
+    String? sourcePaymentMethodId, {
+    required String mode,
+    required String actualMemberId,
+    String? requestId,
+  }) async {
     final id = await client.rpc(
       'add_voucher_with_initial_topup',
       params: {
@@ -311,6 +317,9 @@ class SupabaseTransactionRepository implements TransactionRepository {
         'p_paid_amount_won': paidAmountWon,
         'p_voucher_amount_won': voucherAmountWon,
         'p_payment_method_id': sourcePaymentMethodId,
+        'p_mode': mode,
+        'p_actual_member_id': actualMemberId,
+        'p_request_id': requestId ?? newTransactionRequestId(),
       },
     );
     return PaymentMethodOption(

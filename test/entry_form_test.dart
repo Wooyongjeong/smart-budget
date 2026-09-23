@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/intl.dart';
 import 'package:smart_budget/main.dart';
 import 'package:smart_budget/entry_form.dart';
+import 'package:smart_budget/features/transactions/calendar_summary.dart';
 import 'package:smart_budget/features/transactions/transaction_draft.dart';
 import 'package:smart_budget/features/transactions/transaction_repository.dart';
 import 'package:smart_budget/features/transactions/transaction_request_tracker.dart';
@@ -46,8 +47,11 @@ class _Repository implements TransactionRepository {
     String? owner,
     int paid,
     int amount,
-    String? source,
-  ) => throw UnimplementedError();
+    String? source, {
+    required String mode,
+    required String actualMemberId,
+    String? requestId,
+  }) => throw UnimplementedError();
   @override
   Future<void> saveMany(
     String h,
@@ -218,7 +222,7 @@ void main() {
     await tester.pumpAndSettle();
     final selected = DateTime(2025, 2, 7);
     tester
-        .widget<CalendarDatePicker>(find.byType(CalendarDatePicker))
+        .widget<CalendarMonthPicker>(find.byType(CalendarMonthPicker))
         .onDateChanged(selected);
     await tester.pump();
     await tester.tap(find.text('기록하기'));

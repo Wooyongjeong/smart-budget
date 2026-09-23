@@ -11,6 +11,12 @@ class _Repository implements TransactionRepository {
   int voucherAmount = 0;
   DateTime? lastPerformanceMonth;
   DateTime? lastTargetMonth;
+  bool failNextPerformance = false;
+  String? lastVoucherMode;
+  String? lastVoucherMemberId;
+  String? lastVoucherRequestId;
+  int? lastVoucherPaidAmount;
+  String? lastVoucherSource;
 
   @override
   Future<HouseholdContext> loadContext() async => HouseholdContext(
@@ -56,6 +62,10 @@ class _Repository implements TransactionRepository {
     DateTime m,
   ) async {
     lastPerformanceMonth = m;
+    if (failNextPerformance) {
+      failNextPerformance = false;
+      throw Exception('network');
+    }
     return methods
         .where(
           (method) =>
@@ -88,8 +98,16 @@ class _Repository implements TransactionRepository {
     String? owner,
     int paid,
     int amount,
-    String? source,
-  ) async {
+    String? source, {
+    required String mode,
+    required String actualMemberId,
+    String? requestId,
+  }) async {
+    lastVoucherMode = mode;
+    lastVoucherMemberId = actualMemberId;
+    lastVoucherRequestId = requestId;
+    lastVoucherPaidAmount = paid;
+    lastVoucherSource = source;
     final method = PaymentMethodOption(
       id: 'new-voucher',
       name: name,
@@ -191,12 +209,15 @@ void main() {
     await tester.pumpAndSettle();
     final fields = find.byType(TextFormField);
     await tester.enterText(fields.at(0), '온누리');
-    await tester.enterText(fields.at(1), '90000');
-    await tester.enterText(fields.at(2), '100000');
+    await tester.enterText(fields.at(1), '100000');
     await tester.tap(find.text('등록').last);
     await tester.pumpAndSettle();
     expect(find.text('온누리'), findsOneWidget);
     expect(find.textContaining('잔액 100,000원'), findsOneWidget);
+    expect(repository.lastVoucherMode, 'initial_balance');
+    expect(repository.lastVoucherPaidAmount, 0);
+    expect(repository.lastVoucherMemberId, 'member');
+    expect(repository.lastVoucherRequestId, isNotEmpty);
   });
 
   testWidgets('updates a card target and refreshes the summary', (
@@ -240,6 +261,69 @@ void main() {
     );
     expect(find.textContaining('목표 300,000원'), findsOneWidget);
   });
+
+  testWidgets('registers a paid voucher purchase with source and user', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(800, 900));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final repository = _Repository();
+    repository.methods.add(
+      const PaymentMethodOption(id: 'cash', name: '현금', kind: 'cash'),
+    );
+    await tester.pumpWidget(
+      localizedTestApp(
+        home: PaymentMethodsScreen(
+          repository: repository,
+          contextData: await repository.loadContext(),
+        ),
+      ),
+    );
+    await tester.tap(find.text('상품권 등록'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('유상 구매'));
+    await tester.pumpAndSettle();
+    final fields = find.byType(TextFormField);
+    await tester.enterText(fields.at(0), '온누리');
+    await tester.enterText(fields.at(1), '93000');
+    await tester.enterText(fields.at(2), '100000');
+    final sourceDropdown = find.byType(DropdownButtonFormField<String>).at(1);
+    await tester.ensureVisible(sourceDropdown);
+    await tester.tap(sourceDropdown);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('현금').last);
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('등록').last);
+    await tester.tap(find.text('등록').last);
+    await tester.pumpAndSettle();
+
+    expect(repository.lastVoucherMode, 'purchase');
+    expect(repository.lastVoucherPaidAmount, 93000);
+    expect(repository.lastVoucherSource, 'cash');
+    expect(repository.lastVoucherMemberId, 'member');
+  });
+
+  testWidgets(
+    'card summary error retries without changing the selected month',
+    (tester) async {
+      final repository = _Repository()..failNextPerformance = true;
+      await tester.pumpWidget(
+        localizedTestApp(
+          home: PaymentMethodsScreen(
+            repository: repository,
+            contextData: await repository.loadContext(),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final failedMonth = repository.lastPerformanceMonth;
+      expect(find.text('실적을 불러오지 못했어요.'), findsOneWidget);
+      await tester.tap(find.text('다시 시도').first);
+      await tester.pumpAndSettle();
+      expect(repository.lastPerformanceMonth, failedMonth);
+      expect(find.text('실적을 불러오지 못했어요.'), findsNothing);
+    },
+  );
 
   testWidgets('refreshes a voucher balance after use', (tester) async {
     final repository = _Repository()..voucherAmount = 100000;

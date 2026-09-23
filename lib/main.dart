@@ -114,15 +114,6 @@ class _CalendarOverviewState extends State<CalendarOverview> {
     final summaries = groupCalendarTransactions(
       widget.result?.items ?? const [],
     );
-    final monthSummaries =
-        summaries.entries
-            .where(
-              (entry) =>
-                  entry.key.year == widget.selectedDate.year &&
-                  entry.key.month == widget.selectedDate.month,
-            )
-            .toList()
-          ..sort((a, b) => a.key.compareTo(b.key));
     return Column(
       children: [
         Align(
@@ -134,72 +125,15 @@ class _CalendarOverviewState extends State<CalendarOverview> {
             label: Text(l10n.today),
           ),
         ),
-        CalendarDatePicker(
-          key: ValueKey(_pickerRevision),
-          initialDate: widget.selectedDate,
-          firstDate: DateTime(2000),
-          lastDate: DateTime(2100),
-          onDateChanged: widget.onDateChanged,
-        ),
-        if (monthSummaries.isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Wrap(
-                spacing: 8,
-                runSpacing: 6,
-                children: monthSummaries.map((entry) {
-                  final summary = entry.value;
-                  final label = '${entry.key.day}일';
-                  return Container(
-                    key: ValueKey(
-                      'calendar-summary-${entry.key.toIso8601String()}',
-                    ),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 9,
-                      vertical: 5,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.surfaceContainerHighest,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          label,
-                          style: const TextStyle(fontWeight: FontWeight.w700),
-                        ),
-                        if (summary.income > 0) ...[
-                          const SizedBox(width: 5),
-                          Text(
-                            '+${formatWon(summary.income)}',
-                            style: TextStyle(
-                              color: Colors.teal.shade700,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ],
-                        if (summary.expense > 0) ...[
-                          const SizedBox(width: 5),
-                          Text(
-                            '−${formatWon(summary.expense)}',
-                            style: TextStyle(
-                              color: Theme.of(context).colorScheme.error,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  );
-                }).toList(),
-              ),
-            ),
+        ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 520),
+          child: CalendarMonthPicker(
+            key: ValueKey(_pickerRevision),
+            selectedDate: widget.selectedDate,
+            summaries: summaries,
+            onDateChanged: widget.onDateChanged,
           ),
+        ),
         const SizedBox(height: 8),
         if (widget.isLoading || widget.result == null)
           const Padding(
@@ -575,6 +509,7 @@ class _AuthRootState extends State<AuthRoot> {
   Widget _invitationOnboarding() => InvitationOnboardingScreen(
     repository: householdRepository,
     initialToken: pendingInvitationToken,
+    invitationLinkBaseUrl: widget.config.invitationLinkBaseUrl,
     onAccepted: transactionRepository.useHousehold,
     onComplete: finishInvitation,
   );
@@ -783,7 +718,9 @@ class _BudgetAppState extends State<BudgetApp> {
                       messenger.currentState?.showSnackBar(
                         SnackBar(
                           content: Text(
-                            _l10n.transactionSaveFailedCode(error.code),
+                            error.code == 'idempotency_conflict'
+                                ? _l10n.transactionIdempotencyConflict
+                                : _l10n.transactionSaveFailedCode(error.code),
                           ),
                         ),
                       );

@@ -9,12 +9,14 @@ class InvitationOnboardingScreen extends StatefulWidget {
     super.key,
     required this.repository,
     this.initialToken,
+    this.invitationLinkBaseUrl = 'https://smart-budget.app/invite',
     this.onAccepted,
     required this.onComplete,
   });
 
   final HouseholdRepository repository;
   final String? initialToken;
+  final String invitationLinkBaseUrl;
   final ValueChanged<String>? onAccepted;
   final VoidCallback onComplete;
 
@@ -46,8 +48,11 @@ class _InvitationOnboardingScreenState
   }
 
   Future<void> accept() async {
-    final token = controller.text.trim();
-    if (!isInvitationToken(token)) {
+    final token = invitationTokenFromInput(
+      controller.text,
+      allowedWebHost: Uri.parse(widget.invitationLinkBaseUrl).host,
+    );
+    if (token == null) {
       _showError('invitation_invalid');
       return;
     }
@@ -116,7 +121,7 @@ class _InvitationOnboardingScreenState
                   TextField(
                     key: const ValueKey('onboarding-invitation-token'),
                     controller: controller,
-                    maxLength: 48,
+                    maxLength: 200,
                     autocorrect: false,
                     decoration: InputDecoration(
                       labelText: l10n.invitationCode,

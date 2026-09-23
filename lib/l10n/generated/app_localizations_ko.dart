@@ -357,6 +357,18 @@ class AppLocalizationsKo extends AppLocalizations {
   String get voucher => '상품권';
 
   @override
+  String get voucherInitialBalance => '초기 보유 잔액';
+
+  @override
+  String get voucherPurchase => '유상 구매';
+
+  @override
+  String get actualUserRequired => '실제 사용자를 선택해 주세요.';
+
+  @override
+  String get sourcePaymentMethodRequired => '구매에 사용한 결제 수단을 선택해 주세요.';
+
+  @override
   String get paymentMethodManagement => '결제 수단 관리';
 
   @override
@@ -529,6 +541,10 @@ class AppLocalizationsKo extends AppLocalizations {
   String transactionSaveFailedCode(String code) {
     return '거래를 저장하지 못했어요. ($code)';
   }
+
+  @override
+  String get transactionIdempotencyConflict =>
+      '이전 저장 요청과 입력 내용이 달라 저장하지 못했어요. 내용을 다시 확인해 주세요.';
 
   @override
   String get receiptSaveFailed => '선택 항목을 저장하지 못했어요. 값을 확인하고 다시 시도해 주세요.';

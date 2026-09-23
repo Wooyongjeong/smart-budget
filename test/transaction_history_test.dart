@@ -35,8 +35,23 @@ class _Repository implements TransactionRepository {
     this.paymentMethodId = paymentMethodId;
     this.category = category;
     if (cursor != null) {
-      return const TransactionQueryResult(
-        items: [],
+      return TransactionQueryResult(
+        items: [
+          {
+            'id': 'transaction',
+            'kind': 'expense',
+            'occurred_on': '2026-09-22',
+            'amount_won': 12000,
+            'merchant': '동네 마트',
+          },
+          {
+            'id': 'next',
+            'kind': 'expense',
+            'occurred_on': '2026-09-21',
+            'amount_won': 3000,
+            'merchant': '편의점',
+          },
+        ],
         totalIncome: 0,
         totalExpense: 0,
       );
@@ -71,8 +86,11 @@ class _Repository implements TransactionRepository {
     String? owner,
     int paid,
     int amount,
-    String? source,
-  ) => throw UnimplementedError();
+    String? source, {
+    required String mode,
+    required String actualMemberId,
+    String? requestId,
+  }) => throw UnimplementedError();
   @override
   Future<void> saveMany(
     String h,
@@ -145,5 +163,7 @@ void main() {
     await tester.tap(find.text('더 보기'));
     await tester.pumpAndSettle();
     expect(repository.calls.last.cursor, isNotNull);
+    expect(find.text('동네 마트'), findsOneWidget);
+    expect(find.text('편의점'), findsOneWidget);
   });
 }

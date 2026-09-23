@@ -782,6 +782,30 @@ abstract class AppLocalizations {
   /// **'상품권'**
   String get voucher;
 
+  /// No description provided for @voucherInitialBalance.
+  ///
+  /// In ko, this message translates to:
+  /// **'초기 보유 잔액'**
+  String get voucherInitialBalance;
+
+  /// No description provided for @voucherPurchase.
+  ///
+  /// In ko, this message translates to:
+  /// **'유상 구매'**
+  String get voucherPurchase;
+
+  /// No description provided for @actualUserRequired.
+  ///
+  /// In ko, this message translates to:
+  /// **'실제 사용자를 선택해 주세요.'**
+  String get actualUserRequired;
+
+  /// No description provided for @sourcePaymentMethodRequired.
+  ///
+  /// In ko, this message translates to:
+  /// **'구매에 사용한 결제 수단을 선택해 주세요.'**
+  String get sourcePaymentMethodRequired;
+
   /// No description provided for @paymentMethodManagement.
   ///
   /// In ko, this message translates to:
@@ -1099,6 +1123,12 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'거래를 저장하지 못했어요. ({code})'**
   String transactionSaveFailedCode(String code);
+
+  /// No description provided for @transactionIdempotencyConflict.
+  ///
+  /// In ko, this message translates to:
+  /// **'이전 저장 요청과 입력 내용이 달라 저장하지 못했어요. 내용을 다시 확인해 주세요.'**
+  String get transactionIdempotencyConflict;
 
   /// No description provided for @receiptSaveFailed.
   ///
