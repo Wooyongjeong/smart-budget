@@ -1,5 +1,13 @@
 # Construction 진행
 
+## DB01 — 직접 입력 재시도 request ID 보존
+
+구현 브랜치: `feat/db01-save-retry-request-id`.
+
+직접 입력 화면을 열 때 재시도 추적기를 만들고, 같은 초안으로 저장 요청이 실패하면 동일 idempotency request ID를 재사용하도록 했다. 금액·날짜·사용처·분류·결제 수단·구성원·메모 중 하나라도 바뀌면 새 ID를 발급하며, 저장 성공 또는 화면을 닫은 뒤에는 추적 상태를 폐기한다. 저장은 단건 `save` 대신 기존 `saveMany` 계약에 request ID를 전달한다.
+
+검증: 동일 초안 재시도/초안 변경/성공 후 초기화 단위 테스트, `flutter test test/entry_form_test.dart`, `flutter analyze`, `git diff --check` 통과.
+
 ## CAL01 — 캘린더 날짜별 수입·지출 표시
 
 구현 브랜치: `feat/cal01-calendar-day-summary`.
