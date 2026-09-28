@@ -849,7 +849,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get refresh => 'Refresh';
 
   @override
-  String get shareInvitation => 'Invite via KakaoTalk';
+  String get shareInvitation => 'Share invitation';
 
   @override
   String get invitationOnboardingTitle => 'Join the shared budget?';
@@ -907,4 +907,27 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get signOutFailed => 'Couldn\'t sign out. Try again.';
+
+  @override
+  String get deleteAccount => 'Permanently delete account';
+
+  @override
+  String get deleteAccountDescription =>
+      'Remove your login account and personal profile.';
+
+  @override
+  String get deleteAccountTitle => 'Permanently delete your account?';
+
+  @override
+  String get deleteAccountBody =>
+      'If another member remains, shared records stay and your name is anonymized. If you are the last member, the budget and its transactions are permanently deleted. This cannot be undone.';
+
+  @override
+  String get deleteAccountConfirmWord => 'DELETE';
+
+  @override
+  String get deleteAccountConfirmHint => 'Type DELETE to confirm.';
+
+  @override
+  String get deleteAccountFailed => 'Couldn\'t delete your account. Try again.';
 }

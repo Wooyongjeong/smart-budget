@@ -89,7 +89,7 @@ class _CalendarMonthPickerState extends State<CalendarMonthPicker> {
           crossAxisCount: 7,
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          childAspectRatio: 1.15,
+          mainAxisExtent: MediaQuery.textScalerOf(context).scale(48),
           children: [
             ...weekdays.map(
               (day) => Center(

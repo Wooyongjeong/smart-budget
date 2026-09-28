@@ -9,7 +9,7 @@ class InvitationOnboardingScreen extends StatefulWidget {
     super.key,
     required this.repository,
     this.initialToken,
-    this.invitationLinkBaseUrl = 'https://smart-budget.app/invite',
+    this.invitationLinkBaseUrl = 'smartbudget://invite',
     this.onAccepted,
     required this.onComplete,
   });

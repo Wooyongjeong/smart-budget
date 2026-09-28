@@ -123,7 +123,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
-      find.text('https://smart-budget.app/invite/${'a' * 48}'),
+      find.text('smartbudget://invite/${'a' * 48}'),
       findsOneWidget,
     );
     expect(find.byTooltip('초대 코드 복사'), findsOneWidget);

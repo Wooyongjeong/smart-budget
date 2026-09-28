@@ -28,9 +28,8 @@ select ok(
   'voucher onboarding uses the Seoul business date'
 );
 
-select like(
-  pg_get_expr(d.adbin, d.adrelid),
-  '%Asia/Seoul%',
+select ok(
+  position('Asia/Seoul' in pg_get_expr(d.adbin, d.adrelid)) > 0,
   'receipt quota default uses the Seoul business date'
 )
 from pg_attrdef d

@@ -6,6 +6,7 @@ abstract interface class AuthService {
   Stream<AuthState> get authStateChanges;
   Future<AuthResult> signInWithKakao();
   Future<void> signOut();
+  Future<void> deleteAccount();
 }
 
 sealed class AuthResult {
@@ -60,6 +61,22 @@ class SupabaseAuthService implements AuthService {
 
   @override
   Future<void> signOut() => client.auth.signOut();
+
+  @override
+  Future<void> deleteAccount() async {
+    final response = await client.functions.invoke('delete-account', body: {});
+    if (response.data is Map && (response.data as Map)['deleted'] == true) {
+      // The account is already gone; local sign-out must not report a false
+      // deletion failure if the remote sign-out endpoint rejects its old token.
+      try {
+        await client.auth.signOut();
+      } catch (_) {
+        // GoTrue clears the local session before contacting the auth server.
+      }
+      return;
+    }
+    throw const AuthException('delete_failed');
+  }
 }
 
 String? suggestedDisplayNameFromMetadata(Map<String, dynamic>? metadata) {

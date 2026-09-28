@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="460" viewBox="0 0 760 460">
+  <rect width="760" height="460" fill="#ffffff"/>
+  <rect x="36" y="34" width="688" height="392" rx="12" fill="#ffffff" stroke="#bbbbbb" stroke-width="2"/>
+  <text x="68" y="94" font-family="Arial, sans-serif" font-size="30" font-weight="bold" fill="#111111">CARD USAGE HISTORY</text>
+  <text x="68" y="148" font-family="Arial, sans-serif" font-size="21" fill="#555555">Date</text>
+  <text x="310" y="148" font-family="Arial, sans-serif" font-size="21" fill="#555555">Merchant</text>
+  <text x="615" y="148" font-family="Arial, sans-serif" font-size="21" fill="#555555">KRW</text>
+  <line x1="68" y1="165" x2="690" y2="165" stroke="#bbbbbb"/>
+  <text x="68" y="218" font-family="Arial, sans-serif" font-size="24" fill="#111111">2026-09-28</text>
+  <text x="310" y="218" font-family="Arial, sans-serif" font-size="24" fill="#111111">CAFE</text>
+  <text x="615" y="218" font-family="Arial, sans-serif" font-size="24" fill="#111111">4,500</text>
+  <text x="68" y="282" font-family="Arial, sans-serif" font-size="24" fill="#111111">2026-09-27</text>
+  <text x="310" y="282" font-family="Arial, sans-serif" font-size="24" fill="#111111">MART</text>
+  <text x="600" y="282" font-family="Arial, sans-serif" font-size="24" fill="#111111">12,000</text>
+  <line x1="68" y1="310" x2="690" y2="310" stroke="#bbbbbb"/>
+  <text x="310" y="363" font-family="Arial, sans-serif" font-size="24" fill="#555555">TOTAL</text>
+  <text x="600" y="363" font-family="Arial, sans-serif" font-size="24" fill="#555555">16,500</text>
+</svg>

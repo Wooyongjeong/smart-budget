@@ -815,7 +815,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get refresh => '새로고침';
 
   @override
-  String get shareInvitation => '카카오톡으로 초대하기';
+  String get shareInvitation => '초대 공유하기';
 
   @override
   String get invitationOnboardingTitle => '공동 가계부에 참여할까요?';
@@ -869,4 +869,26 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get signOutFailed => '로그아웃하지 못했어요. 다시 시도해 주세요.';
+
+  @override
+  String get deleteAccount => '계정 영구 삭제';
+
+  @override
+  String get deleteAccountDescription => '로그인 계정과 내 개인정보를 삭제해요.';
+
+  @override
+  String get deleteAccountTitle => '계정을 영구 삭제할까요?';
+
+  @override
+  String get deleteAccountBody =>
+      '다른 구성원이 있으면 공동 기록은 남고 내 이름은 익명화돼요. 마지막 구성원이라면 가계부와 거래도 영구 삭제돼요. 되돌릴 수 없어요.';
+
+  @override
+  String get deleteAccountConfirmWord => '삭제';
+
+  @override
+  String get deleteAccountConfirmHint => '확인하려면 \'삭제\'를 입력해 주세요.';
+
+  @override
+  String get deleteAccountFailed => '계정을 삭제하지 못했어요. 다시 시도해 주세요.';
 }

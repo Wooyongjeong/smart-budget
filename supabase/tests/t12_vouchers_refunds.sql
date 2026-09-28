@@ -1,10 +1,12 @@
 begin;
-select plan(6);
+select plan(8);
 select has_table('public','voucher_movements','voucher movements table exists');
 select has_function('public','record_voucher_event',array['uuid','text','uuid','bigint','date','text','uuid','uuid'],'voucher event RPC exists');
 select ok(has_table_privilege('authenticated','public.voucher_movements','SELECT'),'authenticated can read voucher movements');
 select ok(not has_table_privilege('authenticated','public.voucher_movements','INSERT'),'voucher movements cannot be directly inserted');
 select has_function('public','add_voucher_with_initial_topup',array['uuid','text','uuid','bigint','bigint','uuid'],'voucher onboarding RPC exists');
 select has_function('public','add_voucher_with_initial_topup',array['uuid','text','uuid','bigint','bigint','uuid','text','uuid','uuid'],'complete voucher onboarding RPC exists');
+select ok(not has_function_privilege('authenticated','public.add_voucher_with_initial_topup(uuid,text,uuid,bigint,bigint,uuid)','execute'),'legacy voucher onboarding is not callable by clients');
+select ok(has_function_privilege('authenticated','public.add_voucher_with_initial_topup(uuid,text,uuid,bigint,bigint,uuid,text,uuid,uuid)','execute'),'idempotent voucher onboarding is callable by clients');
 select * from finish();
 rollback;
