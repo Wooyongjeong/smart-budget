@@ -84,6 +84,14 @@ bash tool/run_configured.sh DEVICE_ID --dart-define=OLLAMA_BASE_URL=http://10.55
 
 Ollama 앱을 사용하지 않고 터미널에서 직접 서버를 실행한다면 `OLLAMA_HOST=0.0.0.0:11434 ollama serve`를 사용합니다. 연결이 안 되면 Mac 방화벽과 Wi-Fi의 클라이언트 격리 여부를 확인하세요. 상세 경계는 [AI 연결 기록](docs/construction.md)을 참고하세요.
 
+폰이 Mac들과 다른 네트워크 대역에 있으면 USB 디버깅 연결로 임시 중계할 수 있습니다. 첫 명령은 별도 터미널에서 계속 실행합니다. 앱은 이 방식으로 설치한 디버그 빌드와 USB 연결이 유지될 때만 Ollama에 접근합니다.
+
+```sh
+python3 tool/ollama_usb_bridge.py 10.55.251.29
+adb reverse tcp:11434 tcp:11434
+bash tool/run_configured.sh DEVICE_ID --dart-define=OLLAMA_BASE_URL=http://127.0.0.1:11434 --dart-define=OLLAMA_MODEL=qwen3-vl:2b-instruct-q4_K_M
+```
+
 ## Supabase와 카카오 설정
 
 1. Supabase 프로젝트에서 Kakao 공급자를 활성화하고 Kakao REST API 키와 client secret을 등록합니다.
