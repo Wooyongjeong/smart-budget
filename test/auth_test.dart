@@ -18,6 +18,8 @@ class FakeAuthService implements AuthService {
   Future<AuthResult> signInWithKakao() async => result;
   @override
   Future<void> signOut() async {}
+  @override
+  Future<void> deleteAccount() async {}
 }
 
 void main() {

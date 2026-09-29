@@ -240,7 +240,7 @@
   "leaveHouseholdBody": "You will immediately lose access to shared records and be signed out. Existing records remain available to the other member.",
   "retry": "Try again",
   "refresh": "Refresh"
-  ,"shareInvitation": "Invite via KakaoTalk",
+  ,"shareInvitation": "Share invitation",
   "invitationOnboardingTitle": "Join the shared budget?",
   "invitationOnboardingDescription": "This is an invitation from your partner. Confirm the code to start recording together.",
   "skipInvitation": "I'll join later",
@@ -258,4 +258,11 @@
   ,"signOutTitle": "Sign out?"
   ,"signOutBody": "Only this device will be signed out. Your budget data won't be deleted."
   ,"signOutFailed": "Couldn't sign out. Try again."
+  ,"deleteAccount": "Permanently delete account"
+  ,"deleteAccountDescription": "Remove your login account and personal profile."
+  ,"deleteAccountTitle": "Permanently delete your account?"
+  ,"deleteAccountBody": "If another member remains, shared records stay and your name is anonymized. If you are the last member, the budget and its transactions are permanently deleted. This cannot be undone."
+  ,"deleteAccountConfirmWord": "DELETE"
+  ,"deleteAccountConfirmHint": "Type DELETE to confirm."
+  ,"deleteAccountFailed": "Couldn't delete your account. Try again."
 }

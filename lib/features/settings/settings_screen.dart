@@ -19,6 +19,9 @@ class SettingsScreen extends StatelessWidget {
     required this.canSignOut,
     required this.signingOut,
     required this.onSignOut,
+    required this.canDeleteAccount,
+    required this.deletingAccount,
+    required this.onDeleteAccount,
   });
 
   final String displayName;
@@ -33,6 +36,9 @@ class SettingsScreen extends StatelessWidget {
   final bool canSignOut;
   final bool signingOut;
   final ValueChanged<BuildContext> onSignOut;
+  final bool canDeleteAccount;
+  final bool deletingAccount;
+  final ValueChanged<BuildContext> onDeleteAccount;
 
   @override
   Widget build(BuildContext context) {
@@ -166,6 +172,28 @@ class SettingsScreen extends StatelessWidget {
                   : const Icon(Icons.chevron_right_rounded),
               enabled: !signingOut,
               onTap: () => onSignOut(context),
+            ),
+          ),
+        ],
+        if (canDeleteAccount) ...[
+          const SizedBox(height: 8),
+          Card(
+            child: ListTile(
+              key: const ValueKey('delete-account'),
+              leading: Icon(
+                Icons.person_remove_outlined,
+                color: Theme.of(context).colorScheme.error,
+              ),
+              title: Text(l10n.deleteAccount),
+              subtitle: Text(l10n.deleteAccountDescription),
+              trailing: deletingAccount
+                  ? const SizedBox.square(
+                      dimension: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.chevron_right_rounded),
+              enabled: !deletingAccount,
+              onTap: () => onDeleteAccount(context),
             ),
           ),
         ],

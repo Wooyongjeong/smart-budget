@@ -16,7 +16,7 @@
 - 한국어·영어 전환 및 12개 앱 테마
 - macOS, iOS, Android Flutter 실행 대상
 
-이용내역 캡처는 이미지 선택 → OpenRouter 무료 멀티모달 모델 분석 → 사용자 확인·수정 → 일괄 저장 흐름을 제공합니다. 실제 운영 전에는 모델별 품질·rate limit·개인정보 정책 검증이 필요하며, 무료 모델의 출력은 저장 전에 서버 검증과 사용자 확인을 거칩니다. 배우자 초대 RPC는 있으나 앱 UI와 실시간 동기화도 후속 범위입니다. 자세한 차이는 [코드 리뷰](docs/code-review.md)에서 확인할 수 있습니다.
+이용내역 캡처는 이미지 선택 → 멀티모달 모델 분석 → 사용자 확인·수정 → 일괄 저장 흐름을 제공합니다. 현재 OpenRouter 기본 무료 모델은 404를 반환하며, 대체 무료 모델도 429 제한을 확인했으므로 운영 가능한 공급자 선택과 품질·개인정보 정책 검증이 남았습니다. 개발 중에는 별도 Mac의 Ollama 비전 모델에 직접 연결할 수 있습니다. 배우자 초대 UI는 구현했지만, HTTPS 원탭 링크는 도메인 확보 후 검증해야 합니다.
 
 ## 기술 구성
 
@@ -71,6 +71,27 @@ supabase functions deploy analyze-receipt
 
 무료 모델은 가용성·호출 제한이 바뀔 수 있습니다. 함수는 `OPENROUTER_MODEL`을 지정하지 않으면 위 무료 모델을 기본값으로 사용합니다. 개발·시연에는 개인정보 없는 합성 또는 비식별 이미지를 사용하세요.
 
+같은 LAN의 Ollama를 Android 디버그 앱에서 시험하려면 다른 Mac의 Ollama를 LAN에 바인딩하고 다음처럼 실행합니다. 이 경로는 개발용이며 인증·서버 일일 사용량 제한을 우회하고 이미지가 암호화되지 않은 LAN HTTP로 전송됩니다. 신뢰할 수 있는 사설 Wi-Fi에서 합성 이미지로만 시험하고 인터넷에 11434 포트를 공개하지 마세요.
+
+```sh
+# Ollama가 실행 중인 다른 Mac에서 (macOS 앱은 완전히 재시작)
+launchctl setenv OLLAMA_HOST "0.0.0.0:11434"
+# 이 저장소의 Mac에서 연결 확인
+curl http://10.55.251.29:11434/api/tags
+# 연결된 Android에서 디버그 실행
+bash tool/run_configured.sh DEVICE_ID --dart-define=OLLAMA_BASE_URL=http://10.55.251.29:11434 --dart-define=OLLAMA_MODEL=qwen3-vl:2b-instruct-q4_K_M
+```
+
+Ollama 앱을 사용하지 않고 터미널에서 직접 서버를 실행한다면 `OLLAMA_HOST=0.0.0.0:11434 ollama serve`를 사용합니다. 연결이 안 되면 Mac 방화벽과 Wi-Fi의 클라이언트 격리 여부를 확인하세요. 상세 경계는 [AI 연결 기록](docs/construction.md)을 참고하세요.
+
+폰이 Mac들과 다른 네트워크 대역에 있으면 USB 디버깅 연결로 임시 중계할 수 있습니다. 첫 명령은 별도 터미널에서 계속 실행합니다. 앱은 이 방식으로 설치한 디버그 빌드와 USB 연결이 유지될 때만 Ollama에 접근합니다.
+
+```sh
+python3 tool/ollama_usb_bridge.py 10.55.251.29
+adb reverse tcp:11434 tcp:11434
+bash tool/run_configured.sh DEVICE_ID --dart-define=OLLAMA_BASE_URL=http://127.0.0.1:11434 --dart-define=OLLAMA_MODEL=qwen3-vl:2b-instruct-q4_K_M
+```
+
 ## Supabase와 카카오 설정
 
 1. Supabase 프로젝트에서 Kakao 공급자를 활성화하고 Kakao REST API 키와 client secret을 등록합니다.
@@ -91,17 +112,18 @@ OAuth callback scheme은 macOS, iOS, Android 프로젝트에 포함되어 있습
 macOS 개발 실행:
 
 ```sh
-flutter run -d macos --dart-define-from-file=.env.json
+bash tool/run_configured.sh macos
 ```
 
 iPhone simulator 또는 연결된 기기:
 
 ```sh
 flutter devices
-flutter run -d DEVICE_ID --dart-define-from-file=.env.json
+bash tool/run_configured.sh DEVICE_ID
 ```
 
 설정이 없거나 올바르지 않으면 앱은 인증 설정 안내 화면을 표시합니다.
+실행 스크립트는 `jq`가 필요하며 `.env.json`에서 공개 앱 설정 세 값만 전달합니다. 추가 `--dart-define` 인자를 뒤에 넘길 수 있습니다. 로컬 파일에 AI 공급자 키가 있어도 `--dart-define-from-file=.env.json`으로 전체를 앱에 넣지 마세요. AI 키는 Supabase Edge Function Secret에만 둡니다.
 
 ## 검증
 

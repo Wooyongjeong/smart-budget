@@ -227,6 +227,7 @@ class _AuthRootState extends State<AuthRoot> {
     householdRepository: householdRepository,
     onHouseholdChanged: transactionRepository.useHousehold,
     onSignOut: auth.signOut,
+    onDeleteAccount: auth.deleteAccount,
     invitationLinkBaseUrl: widget.config.invitationLinkBaseUrl,
   );
 
@@ -255,8 +256,9 @@ class BudgetApp extends StatefulWidget {
     this.transactionRepository,
     this.householdRepository,
     this.onSignOut,
+    this.onDeleteAccount,
     this.onHouseholdChanged,
-    this.invitationLinkBaseUrl = 'https://smart-budget.app/invite',
+    this.invitationLinkBaseUrl = 'smartbudget://invite',
     this.entryPaymentMethods = const [],
     this.entryMembers = const [],
     this.businessDateProvider = const BusinessDateProvider(),
@@ -268,6 +270,7 @@ class BudgetApp extends StatefulWidget {
   final TransactionRepository? transactionRepository;
   final HouseholdRepository? householdRepository;
   final Future<void> Function()? onSignOut;
+  final Future<void> Function()? onDeleteAccount;
   final ValueChanged<String>? onHouseholdChanged;
   final String invitationLinkBaseUrl;
   final List<PaymentMethodOption> entryPaymentMethods;
@@ -287,6 +290,7 @@ class _BudgetAppState extends State<BudgetApp> with WidgetsBindingObserver {
   int tab = 0;
   bool saving = false;
   bool signingOut = false;
+  bool deletingAccount = false;
   bool refreshingOverview = false;
   bool overviewRefreshFailed = false;
   TransactionQueryResult? currentOverviewResult;
@@ -546,7 +550,7 @@ class _BudgetAppState extends State<BudgetApp> with WidgetsBindingObserver {
           builder: (_) => AiReviewScreen(
             repository: repository,
             contextData: data,
-            analysisClient: SupabaseReceiptAnalysisClient(),
+            analysisClient: configuredReceiptAnalysisClient(),
             businessDateProvider: widget.businessDateProvider,
           ),
         ),
@@ -642,6 +646,58 @@ class _BudgetAppState extends State<BudgetApp> with WidgetsBindingObserver {
       );
     } finally {
       if (mounted) setState(() => signingOut = false);
+    }
+  }
+
+  Future<void> confirmDeleteAccount(BuildContext context) async {
+    if (deletingAccount || widget.onDeleteAccount == null) return;
+    final l10n = lookupAppLocalizations(locale);
+    var confirmation = '';
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (dialogContext, setDialogState) => AlertDialog(
+          scrollable: true,
+          title: Text(l10n.deleteAccountTitle),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(l10n.deleteAccountBody),
+              const SizedBox(height: 16),
+              TextField(
+                decoration: InputDecoration(
+                  labelText: l10n.deleteAccountConfirmHint,
+                ),
+                onChanged: (value) =>
+                    setDialogState(() => confirmation = value),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: Text(l10n.cancel),
+            ),
+            FilledButton(
+              onPressed: confirmation == l10n.deleteAccountConfirmWord
+                  ? () => Navigator.pop(dialogContext, true)
+                  : null,
+              child: Text(l10n.deleteAccount),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    setState(() => deletingAccount = true);
+    try {
+      await widget.onDeleteAccount!.call();
+    } catch (_) {
+      messenger.currentState?.showSnackBar(
+        SnackBar(content: Text(l10n.deleteAccountFailed)),
+      );
+    } finally {
+      if (mounted) setState(() => deletingAccount = false);
     }
   }
 
@@ -835,6 +891,9 @@ class _BudgetAppState extends State<BudgetApp> with WidgetsBindingObserver {
                   canSignOut: widget.onSignOut != null,
                   signingOut: signingOut,
                   onSignOut: confirmSignOut,
+                  canDeleteAccount: widget.onDeleteAccount != null,
+                  deletingAccount: deletingAccount,
+                  onDeleteAccount: confirmDeleteAccount,
                 )
               : ListView(
                   padding: const EdgeInsets.fromLTRB(20, 18, 20, 124),

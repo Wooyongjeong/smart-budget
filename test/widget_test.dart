@@ -181,6 +181,38 @@ void main() {
     expect(find.descendant(of: day, matching: find.text('−')), findsOneWidget);
   });
 
+  testWidgets('calendar day summary fits on an Android-width screen', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(384, 800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    for (final textScale in [1.0, 1.5]) {
+      await tester.pumpWidget(
+        localizedTestApp(
+          home: MediaQuery(
+            data: MediaQueryData(textScaler: TextScaler.linear(textScale)),
+            child: Scaffold(
+              body: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: CalendarMonthPicker(
+                  selectedDate: DateTime(2026, 9, 22),
+                  summaries: {
+                    DateTime(2026, 9, 22): const CalendarDaySummary(
+                      income: 100,
+                      expense: 50,
+                    ),
+                  },
+                  onDateChanged: (_) {},
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      expect(tester.takeException(), isNull);
+    }
+  });
+
   testWidgets('calendar query error offers retry instead of endless loading', (
     tester,
   ) async {
@@ -499,6 +531,70 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('로그아웃하지 못했어요. 다시 시도해 주세요.'), findsOneWidget);
+    expect(find.text('설정'), findsOneWidget);
+  });
+
+  testWidgets('account deletion requires typed confirmation', (tester) async {
+    var deleteCount = 0;
+    await tester.pumpWidget(
+      BudgetApp(
+        saveTheme: (_) async {},
+        onDeleteAccount: () async => deleteCount++,
+      ),
+    );
+    await tester.tap(find.text('설정'));
+    await tester.pumpAndSettle();
+    final deleteTile = find.byKey(const ValueKey('delete-account'));
+    await tester.scrollUntilVisible(deleteTile, 300);
+
+    await tester.tap(deleteTile);
+    await tester.pumpAndSettle();
+    expect(find.text('계정을 영구 삭제할까요?'), findsOneWidget);
+    expect(
+      tester
+          .widget<FilledButton>(find.widgetWithText(FilledButton, '계정 영구 삭제'))
+          .onPressed,
+      isNull,
+    );
+    await tester.tap(find.text('취소'));
+    await tester.pumpAndSettle();
+    expect(deleteCount, 0);
+
+    await tester.tap(deleteTile);
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), '삭제');
+    await tester.pump();
+    await tester.tap(find.widgetWithText(FilledButton, '계정 영구 삭제'));
+    await tester.pumpAndSettle();
+    expect(deleteCount, 1);
+  });
+
+  testWidgets('account deletion failure keeps the settings screen', (
+    tester,
+  ) async {
+    var deleteCount = 0;
+    await tester.pumpWidget(
+      BudgetApp(
+        saveTheme: (_) async {},
+        onDeleteAccount: () async {
+          deleteCount++;
+          throw Exception('network');
+        },
+      ),
+    );
+    await tester.tap(find.text('설정'));
+    await tester.pumpAndSettle();
+    final deleteTile = find.byKey(const ValueKey('delete-account'));
+    await tester.scrollUntilVisible(deleteTile, 300);
+    await tester.tap(deleteTile);
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), '삭제');
+    await tester.pump();
+    await tester.tap(find.widgetWithText(FilledButton, '계정 영구 삭제'));
+    await tester.pumpAndSettle();
+
+    expect(deleteCount, 1);
+    expect(find.text('계정을 삭제하지 못했어요. 다시 시도해 주세요.'), findsOneWidget);
     expect(find.text('설정'), findsOneWidget);
   });
 }

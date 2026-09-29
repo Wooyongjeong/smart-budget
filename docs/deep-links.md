@@ -2,10 +2,10 @@
 
 앱은 다음 두 형식을 수신한다.
 
-- 운영 링크: `https://<INVITATION_LINK_BASE_URL>/invite/<48자리 토큰>`
-- 개발 링크: `smartbudget://invite/<48자리 토큰>`
+- 개발 기본값: `smartbudget://invite/<48자리 토큰>`
+- 향후 운영 링크: `https://<host>/invite/<48자리 토큰>`
 
-`INVITATION_LINK_BASE_URL`은 `--dart-define`으로 실제 HTTPS 도메인을 전달한다. 기본값 `https://smart-budget.app/invite`는 예시 도메인이다.
+현재 소유한 HTTPS 도메인이 없으므로 기본값은 커스텀 스킴이다. `INVITATION_LINK_BASE_URL`은 도메인과 검증 파일을 준비한 뒤 `--dart-define`으로 `https://<host>/invite`를 전달한다. 종전 예시 `smart-budget.app`은 DNS가 없어 운영 링크로 사용할 수 없다. Android에서 커스텀 스킴의 앱 인텐트 해석은 확인했으나 카카오톡에서 원탭 링크로 인식되는지는 별도 실기기 검증이 필요하다. 공유 메시지에는 복사용 초대 코드도 포함한다.
 
 ## iOS
 

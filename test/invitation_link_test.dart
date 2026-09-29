@@ -71,6 +71,10 @@ void main() {
       invitationLink('https://smart-budget.app/invite/', token),
       'https://smart-budget.app/invite/$token',
     );
+    expect(
+      invitationLink('smartbudget://invite', token),
+      'smartbudget://invite/$token',
+    );
   });
 
   test('normalizes pasted tokens and full links to the token', () {

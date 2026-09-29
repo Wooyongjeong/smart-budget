@@ -312,3 +312,15 @@ T01은 별도 `feat/transaction-draft` 브랜치에서 진행한다. `Transactio
 - 사용자 요청으로 macOS 실행 대상을 추가했다. `flutter build macos --debug` 성공. 아이폰 실기기 검증을 대체하지는 않는다.
 
 위젯 테스트 절차: 초기 화면 구성 → 초기 상태 확인 → 탭/테마 선택 → 프레임 갱신 → 결과 확인 → 실행 결과 검토.
+# 2026-09-28 — MVP Android 점검 및 계정 삭제
+
+- Android 384dp 달력 overflow를 재현하는 widget test를 추가하고 날짜 셀 높이를 글자 배율에 맞게 고정했다. 1.0배·1.5배에서 회귀 테스트한다.
+- 원격 DB에 누락된 WAL01/TIME01 migration을 순서대로 적용했다. 레거시 비멱등 상품권 RPC의 클라이언트 실행 권한을 철회하는 migration도 추가·적용했다.
+- 계정 삭제 정책: 두 명 이상이면 거래를 유지하되 삭제자의 구성원 프로필을 비활성화·익명화하고 남은 구성원을 owner로 승격한다. 마지막 구성원이면 가계부와 하위 기록을 삭제한다. 인증된 본인만 `delete-account` Edge Function을 호출할 수 있다. 설정 화면은 `삭제` 재입력 확인을 요구한다.
+- 로컬 pgTAP에서 공유/단독 가계부 삭제 정책을 검증한다. 로컬 Supabase의 임시 사용자·단독 가계부로 삭제 함수도 호출해 인증 사용자와 가계부가 제거되는 것을 확인했다. 실제 사용자의 삭제는 실행하지 않았다.
+- HTTPS 초대 도메인이 아직 없으므로 기본 공유 주소는 `smartbudget://invite/<token>`이며, 커스텀 스킴 인텐트 해석만 확인했다. 카카오톡 원탭 공유는 배포 도메인 확보 전까지 미완료다.
+- OpenRouter 기존 무료 비전 모델은 합성 이미지에서 404, 대체 모델은 429였다. `openrouter/free`는 합성 이미지 두 건을 올바르게 추출했지만 모델이 가변적이므로 원격 모델을 전환하지 않았다.
+- 같은 Wi-Fi의 Ollama에 직접 보내는 Android 디버그 전용 분석 클라이언트를 추가했다. `OLLAMA_BASE_URL`과 `OLLAMA_MODEL`을 둘 다 전달할 때만 활성화되며 release/profile은 기존 Supabase 함수를 사용한다. 로컬 개발 경로는 서버 인증·일일 quota를 거치지 않으며 평문 HTTP이므로 합성 이미지와 신뢰할 수 있는 LAN에서만 사용한다. 실제 `10.55.251.29:11434`는 현재 연결 거부 상태여서 실기기 분석은 미검증이다.
+- `.env.json`의 비공개 키를 Flutter define으로 전달하지 않도록 공개 앱 설정만 추출하는 `tool/run_configured.sh`를 추가했다.
+- 검증: `flutter test` 80개, `flutter analyze --fatal-infos`, Android debug APK 빌드, `supabase db test` 77개(12파일), `git diff --check` 통과. 원격 migration 목록은 로컬과 일치하고 `delete-account`/`analyze-receipt` 함수는 ACTIVE다. 연결된 Android에 Ollama define을 넣은 debug 앱을 설치했으나 원격 Mac의 Ollama 포트가 열리지 않아 실제 비전 추론은 남았다.
+- 후속 실연결: 다른 Mac에서 `OLLAMA_HOST=0.0.0.0:11434 ollama serve`를 실행하자 직접 API 호출이 성공했다. 합성 이미지에서 CAFE 4,500원·MART 12,000원을 추출하고 TOTAL은 제외했으며 첫 응답은 약 13초였다. Android 폰은 `10.21.38.88`, 두 Mac은 `10.55.251.x`로 폰→Ollama 직접 연결은 시간 초과였다. ADB reverse와 현재 Mac의 loopback 전용 중계로 폰에서 동일 이미지·앱 프롬프트의 Ollama API 호출도 성공했고, 같은 설정의 디버그 앱을 다시 설치했다. 실기기 앱 UI에서도 합성 이미지를 선택해 두 거래가 검토 화면에 표시되고 TOTAL이 제외된 것을 확인했다. 결제 수단 확인 전이므로 저장은 비활성화된 상태였고 실제 가계부에는 저장하지 않았다. 시험용 이미지는 폰의 Download에서 제거했다.

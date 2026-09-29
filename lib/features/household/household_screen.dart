@@ -15,7 +15,7 @@ class HouseholdScreen extends StatefulWidget {
     required this.onLeft,
     this.onHouseholdChanged,
     this.onDisplayNameChanged,
-    this.invitationLinkBaseUrl = 'https://smart-budget.app/invite',
+    this.invitationLinkBaseUrl = 'smartbudget://invite',
     this.refreshSignal,
   });
 

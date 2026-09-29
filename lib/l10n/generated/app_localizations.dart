@@ -1637,7 +1637,7 @@ abstract class AppLocalizations {
   /// No description provided for @shareInvitation.
   ///
   /// In ko, this message translates to:
-  /// **'카카오톡으로 초대하기'**
+  /// **'초대 공유하기'**
   String get shareInvitation;
 
   /// No description provided for @invitationOnboardingTitle.
@@ -1741,6 +1741,48 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'로그아웃하지 못했어요. 다시 시도해 주세요.'**
   String get signOutFailed;
+
+  /// No description provided for @deleteAccount.
+  ///
+  /// In ko, this message translates to:
+  /// **'계정 영구 삭제'**
+  String get deleteAccount;
+
+  /// No description provided for @deleteAccountDescription.
+  ///
+  /// In ko, this message translates to:
+  /// **'로그인 계정과 내 개인정보를 삭제해요.'**
+  String get deleteAccountDescription;
+
+  /// No description provided for @deleteAccountTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'계정을 영구 삭제할까요?'**
+  String get deleteAccountTitle;
+
+  /// No description provided for @deleteAccountBody.
+  ///
+  /// In ko, this message translates to:
+  /// **'다른 구성원이 있으면 공동 기록은 남고 내 이름은 익명화돼요. 마지막 구성원이라면 가계부와 거래도 영구 삭제돼요. 되돌릴 수 없어요.'**
+  String get deleteAccountBody;
+
+  /// No description provided for @deleteAccountConfirmWord.
+  ///
+  /// In ko, this message translates to:
+  /// **'삭제'**
+  String get deleteAccountConfirmWord;
+
+  /// No description provided for @deleteAccountConfirmHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'확인하려면 \'삭제\'를 입력해 주세요.'**
+  String get deleteAccountConfirmHint;
+
+  /// No description provided for @deleteAccountFailed.
+  ///
+  /// In ko, this message translates to:
+  /// **'계정을 삭제하지 못했어요. 다시 시도해 주세요.'**
+  String get deleteAccountFailed;
 }
 
 class _AppLocalizationsDelegate
