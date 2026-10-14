@@ -80,11 +80,22 @@ void main() {
       {'occurred_on': '2026-09-18', 'kind': 'income', 'amount_won': 5000},
       {'occurred_on': '2026-09-19', 'kind': 'expense', 'amount_won': 300},
       {'occurred_on': '2026-09-19', 'kind': 'refund', 'amount_won': 100},
+      {
+        'occurred_on': '2026-09-19',
+        'kind': 'voucher_topup',
+        'amount_won': 9300,
+      },
+      {'occurred_on': '2026-09-19', 'kind': 'voucher_use', 'amount_won': 2000},
+      {
+        'occurred_on': '2026-09-19',
+        'kind': 'voucher_initial_balance',
+        'amount_won': 5000,
+      },
     ]);
     expect(result[DateTime(2026, 9, 18)]?.income, 5000);
     expect(result[DateTime(2026, 9, 18)]?.expense, 1200);
     expect(result[DateTime(2026, 9, 19)]?.hasTransactions, isTrue);
-    expect(result[DateTime(2026, 9, 19)]?.expense, 300);
+    expect(result[DateTime(2026, 9, 19)]?.expense, 9600);
   });
 
   testWidgets('calendar today button selects today and resets the picker', (

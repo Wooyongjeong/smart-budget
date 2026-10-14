@@ -201,7 +201,7 @@ Map<DateTime, CalendarDaySummary> groupCalendarTransactions(
         income: previous.income + amount,
         expense: previous.expense,
       );
-    } else if (item['kind'] == 'expense') {
+    } else if (item['kind'] == 'expense' || item['kind'] == 'voucher_topup') {
       grouped[day] = CalendarDaySummary(
         income: previous.income,
         expense: previous.expense + amount,
