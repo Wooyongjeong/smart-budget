@@ -55,6 +55,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
   bool refreshing = false;
   Object? refreshError;
   Object? error;
+  int _queryRevision = 0;
 
   @override
   void initState() {
@@ -118,9 +119,11 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
   }
 
   Future<void> _reload() async {
+    final revision = ++_queryRevision;
     if (mounted) {
       setState(() {
         loading = true;
+        loadingMore = false;
         error = null;
         refreshError = null;
         items = [];
@@ -129,8 +132,9 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
     }
     try {
       contextData ??= await widget.repository.loadContext();
+      if (!mounted || revision != _queryRevision) return;
       final result = await _query(null);
-      if (!mounted) return;
+      if (!mounted || revision != _queryRevision) return;
       setState(() {
         items = result.items;
         totalIncome = result.totalIncome;
@@ -139,7 +143,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
         loading = false;
       });
     } catch (value) {
-      if (!mounted) return;
+      if (!mounted || revision != _queryRevision) return;
       setState(() {
         loading = false;
         error = value;
@@ -149,11 +153,18 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
 
   Future<void> _loadMore() async {
     final next = cursor;
-    if (next == null || loadingMore || contextData == null) return;
+    if (next == null ||
+        loading ||
+        loadingMore ||
+        refreshing ||
+        contextData == null) {
+      return;
+    }
+    final revision = _queryRevision;
     setState(() => loadingMore = true);
     try {
       final result = await _query(next);
-      if (!mounted) return;
+      if (!mounted || revision != _queryRevision) return;
       setState(() {
         final existingIds = items.map((item) => item['id']).toSet();
         items.addAll(result.items.where((item) => existingIds.add(item['id'])));
@@ -162,7 +173,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
         error = null;
       });
     } catch (value) {
-      if (!mounted) return;
+      if (!mounted || revision != _queryRevision) return;
       setState(() {
         loadingMore = false;
         error = value;
@@ -172,6 +183,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
 
   Future<void> _refresh() async {
     if (refreshing || loading || loadingMore) return;
+    final revision = ++_queryRevision;
     setState(() {
       refreshing = true;
       refreshError = null;
@@ -179,7 +191,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
     try {
       final refreshedContext = await widget.repository.loadContext();
       final result = await _query(null, withContext: refreshedContext);
-      if (!mounted) return;
+      if (!mounted || revision != _queryRevision) return;
       setState(() {
         contextData = refreshedContext;
         items = result.items;
@@ -190,7 +202,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
         error = null;
       });
     } catch (value) {
-      if (!mounted) return;
+      if (!mounted || revision != _queryRevision) return;
       setState(() {
         refreshing = false;
         refreshError = value;

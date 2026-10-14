@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:smart_budget/features/transactions/transaction_draft.dart';
@@ -152,7 +154,84 @@ class _Repository implements TransactionRepository {
   Future<int> voucherBalance(String h, String v) async => 0;
 }
 
+class _DelayedPageRepository extends _Repository {
+  final pending = Completer<TransactionQueryResult>();
+
+  @override
+  Future<TransactionQueryResult> query(
+    String householdId,
+    DateTime start,
+    DateTime end, {
+    String? memberId,
+    String? paymentMethodId,
+    String? category,
+    TransactionQueryCursor? cursor,
+    int limit = 50,
+  }) {
+    if (cursor != null) return pending.future;
+    return super.query(
+      householdId,
+      start,
+      end,
+      memberId: memberId,
+      paymentMethodId: paymentMethodId,
+      category: category,
+      limit: limit,
+    );
+  }
+}
+
 void main() {
+  for (final fail in [false, true]) {
+    testWidgets(
+      'ignores stale pagination ${fail ? "error" : "rows"} after changing period',
+      (tester) async {
+        final repository = _DelayedPageRepository();
+        await tester.pumpWidget(
+          localizedTestApp(
+            home: Scaffold(
+              body: TransactionHistoryScreen(
+                repository: repository,
+                initialDate: DateTime(2026, 9, 22),
+                onTransactionTap: (_) {},
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('더 보기'));
+        await tester.pump();
+        await tester.tap(find.byTooltip('다음 기간'));
+        await tester.pump();
+        await tester.pump();
+        if (fail) {
+          repository.pending.completeError(Exception('old page failed'));
+        } else {
+          repository.pending.complete(
+            TransactionQueryResult(
+              items: [
+                {
+                  'id': 'stale',
+                  'kind': 'expense',
+                  'occurred_on': '2026-09-01',
+                  'amount_won': 500,
+                  'merchant': 'Stale transaction',
+                },
+              ],
+              totalIncome: 0,
+              totalExpense: 500,
+            ),
+          );
+        }
+        await tester.pumpAndSettle();
+        expect(repository.calls.last.start, DateTime(2026, 10, 1));
+        expect(find.text('Stale transaction'), findsNothing);
+        expect(find.text('내역을 불러오지 못했어요. 다시 시도해 주세요.'), findsNothing);
+        expect(find.text('더 보기'), findsOneWidget);
+      },
+    );
+  }
+
   testWidgets('history changes period and loads the next page', (tester) async {
     final repository = _Repository();
     await tester.pumpWidget(

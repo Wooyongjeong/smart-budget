@@ -348,10 +348,23 @@ class _BudgetAppState extends State<BudgetApp> with WidgetsBindingObserver {
     return () async {
       final month = anchor ?? selectedDate;
       final context = await repository.loadContext();
-      return repository.query(
-        context.householdId,
-        DateTime(month.year, month.month),
-        DateTime(month.year, month.month + 1),
+      final items = <Map<String, dynamic>>[];
+      TransactionQueryCursor? cursor;
+      late TransactionQueryResult page;
+      do {
+        page = await repository.query(
+          context.householdId,
+          DateTime(month.year, month.month),
+          DateTime(month.year, month.month + 1),
+          cursor: cursor,
+        );
+        items.addAll(page.items);
+        cursor = page.nextCursor;
+      } while (cursor != null);
+      return TransactionQueryResult(
+        items: items,
+        totalIncome: page.totalIncome,
+        totalExpense: page.totalExpense,
       );
     }();
   }

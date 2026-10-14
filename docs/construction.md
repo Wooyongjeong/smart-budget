@@ -324,3 +324,17 @@ T01은 별도 `feat/transaction-draft` 브랜치에서 진행한다. `Transactio
 - `.env.json`의 비공개 키를 Flutter define으로 전달하지 않도록 공개 앱 설정만 추출하는 `tool/run_configured.sh`를 추가했다.
 - 검증: `flutter test` 80개, `flutter analyze --fatal-infos`, Android debug APK 빌드, `supabase db test` 77개(12파일), `git diff --check` 통과. 원격 migration 목록은 로컬과 일치하고 `delete-account`/`analyze-receipt` 함수는 ACTIVE다. 연결된 Android에 Ollama define을 넣은 debug 앱을 설치했으나 원격 Mac의 Ollama 포트가 열리지 않아 실제 비전 추론은 남았다.
 - 후속 실연결: 다른 Mac에서 `OLLAMA_HOST=0.0.0.0:11434 ollama serve`를 실행하자 직접 API 호출이 성공했다. 합성 이미지에서 CAFE 4,500원·MART 12,000원을 추출하고 TOTAL은 제외했으며 첫 응답은 약 13초였다. Android 폰은 `10.21.38.88`, 두 Mac은 `10.55.251.x`로 폰→Ollama 직접 연결은 시간 초과였다. ADB reverse와 현재 Mac의 loopback 전용 중계로 폰에서 동일 이미지·앱 프롬프트의 Ollama API 호출도 성공했고, 같은 설정의 디버그 앱을 다시 설치했다. 실기기 앱 UI에서도 합성 이미지를 선택해 두 거래가 검토 화면에 표시되고 TOTAL이 제외된 것을 확인했다. 결제 수단 확인 전이므로 저장은 비활성화된 상태였고 실제 가계부에는 저장하지 않았다. 시험용 이미지는 폰의 Download에서 제거했다.
+
+## 2026-10-14 — 전체 코드 리뷰와 조회·분석 오류 수정
+
+- 브랜치: `fix/comprehensive-code-review-20261014`, 기준 main `b28b410`.
+- 캘린더 월 조회의 다음 페이지를 모두 읽어 50건 이후 거래 누락을 수정했다.
+  일별 지출에는 상품권 충전의 실제 결제액을 반영한다.
+- 내역 더 보기 중 기간 변경 시 이전 응답/오류가 새 기간을 덮지 않도록
+  조회 세대 검사를 추가했다.
+- Supabase AI 함수의 디코딩된 Map 오류에서도 업무 코드를 보존한다.
+- 회귀 테스트는 수정 전 7개 실패를 확인했다. 최종 Flutter 전체 90개,
+  정적 분석, macOS debug build, 로컬 pgTAP 77개(12파일), diff check 통과.
+- 원격 DB/함수 배포와 실제 사용자 자료 변경은 수행하지 않았다. 외부
+  OAuth/AI 및 모바일 실기기는 이번에 재검증하지 않았다.
+- 전체 리뷰의 상세 결과와 후속 개선 항목은 `docs/code-review.md`에 기록했다.

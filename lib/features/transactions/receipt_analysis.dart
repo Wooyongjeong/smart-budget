@@ -201,15 +201,16 @@ class SupabaseReceiptAnalysisClient implements ReceiptAnalysisClient {
       );
     } on FunctionException catch (error) {
       var code = 'network_error';
-      if (error.details is String) {
+      Object? details = error.details;
+      if (details is String) {
         try {
-          final decoded = jsonDecode(error.details as String);
-          if (decoded is Map<String, dynamic> && decoded['code'] is String) {
-            code = decoded['code'] as String;
-          }
+          details = jsonDecode(details);
         } on FormatException {
           // Keep the transport-specific fallback code.
         }
+      }
+      if (details is Map<String, dynamic> && details['code'] is String) {
+        code = details['code'] as String;
       }
       throw ReceiptAnalysisException(code);
     }
